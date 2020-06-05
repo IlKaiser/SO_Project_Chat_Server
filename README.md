@@ -1,2 +1,2 @@
-# SO Project Chat Server (DJBalduz99=chatprivata)
+# SO Project Chat Server
 SO project by Marco Calamo and Ghenadie Artic
