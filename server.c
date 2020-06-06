@@ -71,8 +71,8 @@ void connection_handler(int socket_desc, struct sockaddr_in* client_addr) {
     uint16_t client_port = ntohs(client_addr->sin_port); // port number is an unsigned short
 
     // send welcome message
-    sprintf(buf, "Hi! I'm an echo server. You are %s talking on port %hu.\nI will send you back whatever"
-            " you send me. I will stop if you send me %s :-)\n", client_ip, client_port, quit_command);
+    sprintf(buf, "Welcome to our private chat server :) You are %s talking on port %hu.\n"
+            "I will stop if you send me %s :-)\n", client_ip, client_port, quit_command);
     msg_len = strlen(buf);
     int bytes_sent = 0;
 	while ( bytes_sent < msg_len) {
@@ -83,7 +83,7 @@ void connection_handler(int socket_desc, struct sockaddr_in* client_addr) {
     }
 
 
-    // echo loop
+    // echo loop 
     while (1) {
         // read message from client
         memset(buf, 0, buf_len);
@@ -101,12 +101,17 @@ void connection_handler(int socket_desc, struct sockaddr_in* client_addr) {
         // ... or if I have to send the message back
         bytes_sent=0;
         while ( bytes_sent < recv_bytes) {
+            //scrive sul db
+            // prova a mandarlo
+                //se non lo manda dice a from che la connessione è caduta
+                //se lo manda messaggio inviato
             ret = send(socket_desc, buf + bytes_sent, recv_bytes - bytes_sent, 0);
             if (ret == -1 && errno == EINTR) continue;
             if (ret == -1) handle_error("Cannot write to the socket");
             bytes_sent += ret;
         }
     }
+    
     // close socket
     ret = close(socket_desc);
     if (ret) handle_error("Cannot close socket for incoming connection");
@@ -125,6 +130,17 @@ void *thread_connection_handler(void *arg) {
     free(args->client_addr);
     free(args);
     pthread_exit(NULL);
+}
+// function that takes handler_args_m and 
+void *thread_message_handler(void *arg){
+    handler_args_m *args = (handler_args_m*) arg;
+    
+    
+
+}
+
+void message_handler(){
+   
 }
 
 void mthreadServer(int server_desc) {
