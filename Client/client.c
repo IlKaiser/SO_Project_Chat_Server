@@ -9,6 +9,8 @@
 
 #include "client.h"
 
+///TODO:LOGIN NEL CLIENT
+
 int main(int argc, char* argv[]) {
     int ret,bytes_sent,recv_bytes;
 
