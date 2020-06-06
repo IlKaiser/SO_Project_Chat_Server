@@ -16,16 +16,3 @@ typedef struct handler_args_s
     int socket_desc;
     struct sockaddr_in* client_addr;
 } handler_args_t;
-
-
-//Functions prototypes
-//main threads
-void mthreadServer(int server_desc) ;
-void *thread_connection_handler(void *arg);
-void connection_handler(int socket_desc, struct sockaddr_in* client_addr);
-
-// function that formats the user list that server sends
-void list_formatter(int i,char buf[]);
-
-//function that sends message to reciver
-void send_mess(int index,char buff[]);

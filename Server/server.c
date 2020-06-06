@@ -83,6 +83,9 @@ void connection_handler(int socket_desc, struct sockaddr_in* client_addr) {
     inet_ntop(AF_INET, &(client_addr->sin_addr), client_ip, INET_ADDRSTRLEN);
     uint16_t client_port = ntohs(client_addr->sin_port); // port number is an unsigned short
 
+    ///TODO: aggiorna l'array delle socket
+    ///TODO: apre la connessione con il DB
+
     // send welcome message
     ///TODO: Manda lista utenti 
     /*sprintf(buf, "Welcome to our private chat server :) You are %s talking on port %hu.\n"
@@ -100,10 +103,11 @@ void connection_handler(int socket_desc, struct sockaddr_in* client_addr) {
         if (ret == -1) handle_error("Cannot write to the socket");
         bytes_sent += ret;
     }
-    ///TODO: in attesa di risposta
+    ///TODO: in attesa di risposta del numero che corrisponde all'id
 
+    ///TODO: manda l'ack (stesso id) se manda stesso id significa che è ancora in lista altrimenti errore(0xAFFAF)
 
-    // echo loop 
+    // reciver loop 
     while (1) {
         // read message from client
         memset(buf, 0, buf_len);
@@ -119,13 +123,18 @@ void connection_handler(int socket_desc, struct sockaddr_in* client_addr) {
         if (recv_bytes == quit_command_len && !memcmp(buf, quit_command, quit_command_len)) break;
 
         // ... or if I have to send the message back
-        ///TODO: manda messaggio al nostro client
+        ///TODO: mette nel db il messaggio
+
+        ///TODO: prova manda messaggio al nostro client
     }
     
     // close socket
+    ///TODO: levare il client quando si disconnette dalla lista di socket
     ret = close(socket_desc);
     if (ret) handle_error("Cannot close socket for incoming connection");
 }
+
+
 
 
 // Wrapper function that take as input handler_args_t struct and then call 
