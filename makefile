@@ -1,9 +1,9 @@
 CC=gcc
 CFLAGS= -Wall -g -O2 
-DEPS = server.h
+
 
 all: server
-%.o: %.c $(DEPS)
+server.o: server.c server.h
 	$(CC) -c -o $@ $< $(CFLAGS)
 server: server.o
 		  $(CC) -o server server.o -lpthread
