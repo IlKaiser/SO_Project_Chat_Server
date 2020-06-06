@@ -12,10 +12,23 @@
 #include "server.h"
 
 
+/* Memory shared between all threads */
+
+//Connection Arrays
+char* user_names[128];
+struct sockaddr_in sockets[128];
+
+//Previous size of connection arrays
+int previous_size=0;
+//Current size of connection arrays
+int current_size=0;
+
+
 int main(int argc, char* argv[]) {
     int ret;
 
     int socket_desc;
+
 
     // some fields are required to be filled with 0
     struct sockaddr_in server_addr = {0};
@@ -71,8 +84,14 @@ void connection_handler(int socket_desc, struct sockaddr_in* client_addr) {
     uint16_t client_port = ntohs(client_addr->sin_port); // port number is an unsigned short
 
     // send welcome message
-    sprintf(buf, "Welcome to our private chat server :) You are %s talking on port %hu.\n"
-            "I will stop if you send me %s :-)\n", client_ip, client_port, quit_command);
+    ///TODO: Manda lista utenti 
+    /*sprintf(buf, "Welcome to our private chat server :) You are %s talking on port %hu.\n"
+            "I will stop if you send me %s :-)\n", client_ip, client_port, quit_command);*/
+    int i;
+    for(i=0;i<current_size;i++){
+        list_formatter(i,buf);
+    }
+    strcat(buf,"\0");
     msg_len = strlen(buf);
     int bytes_sent = 0;
 	while ( bytes_sent < msg_len) {
@@ -81,6 +100,7 @@ void connection_handler(int socket_desc, struct sockaddr_in* client_addr) {
         if (ret == -1) handle_error("Cannot write to the socket");
         bytes_sent += ret;
     }
+    ///TODO: in attesa di risposta
 
 
     // echo loop 
@@ -99,17 +119,7 @@ void connection_handler(int socket_desc, struct sockaddr_in* client_addr) {
         if (recv_bytes == quit_command_len && !memcmp(buf, quit_command, quit_command_len)) break;
 
         // ... or if I have to send the message back
-        bytes_sent=0;
-        while ( bytes_sent < recv_bytes) {
-            //scrive sul db
-            // prova a mandarlo
-                //se non lo manda dice a from che la connessione è caduta
-                //se lo manda messaggio inviato
-            ret = send(socket_desc, buf + bytes_sent, recv_bytes - bytes_sent, 0);
-            if (ret == -1 && errno == EINTR) continue;
-            if (ret == -1) handle_error("Cannot write to the socket");
-            bytes_sent += ret;
-        }
+        ///TODO: manda messaggio al nostro client
     }
     
     // close socket
@@ -133,15 +143,10 @@ void *thread_connection_handler(void *arg) {
 }
 // function that takes handler_args_m and 
 void *thread_message_handler(void *arg){
-    handler_args_m *args = (handler_args_m*) arg;
-    
-    
-
+    return NULL;
 }
 
-void message_handler(){
-   
-}
+void message_handler(){}
 
 void mthreadServer(int server_desc) {
     int ret = 0;
@@ -175,4 +180,11 @@ void mthreadServer(int server_desc) {
         ret = pthread_detach(thread); // I won't phtread_join() on this thread
         if (ret) handle_error_en(ret, "Could not detach the thread");
     }
+}
+void list_formatter(int i,char buf[]){
+    char number[4];
+    sprintf(number, "%d",i);
+    strcat(buf,number);
+    strcat(buf,user_names[i]);
+    strcat(buf,"\n");
 }

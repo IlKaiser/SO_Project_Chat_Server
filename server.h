@@ -16,11 +16,6 @@ typedef struct handler_args_s
     struct sockaddr_in* client_addr;
 } handler_args_t;
 
-typedef struct message{
-    char message[1024];
-    char *from;
-    char *to;
-}handler_args_m;
 
 //Functions prototypes
 void connection_handler(int socket_desc, struct sockaddr_in* client_addr);
@@ -28,3 +23,4 @@ void *thread_connection_handler(void *arg);
 void message_handler();
 void *thread_message_handler(void *arg);
 void mthreadServer(int server_desc) ;
+void list_formatter(int i,char buf[]);
