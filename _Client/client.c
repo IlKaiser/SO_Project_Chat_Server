@@ -50,7 +50,7 @@ int main(int argc, char* argv[]) {
     memset(ack, 0, ack_len);
     recv_bytes = 0;
     do {
-        ret = recv(socket_desc, ack + recv_bytes, ack_len - recv_bytes, 0);
+        ret = recv(socket_desc, ack + recv_bytes, 1, 0);
         if (ret == -1 && errno == EINTR) continue;
         if (ret == -1) handle_error("Cannot read from the socket");
         if (ret == 0) break;
@@ -72,22 +72,22 @@ int main(int argc, char* argv[]) {
         memset(buf, 0, buf_len);
         recv_bytes = 0;
         do {
-            ret = recv(socket_desc, buf + recv_bytes, buf_len - recv_bytes, 0);
+            ret = recv(socket_desc, buf + recv_bytes, 1, 0);
             if (ret == -1 && errno == EINTR) continue;
             if (ret == -1) handle_error("Cannot read from the socket");
             if (ret == 0) break;
-        recv_bytes += ret;
+            recv_bytes += ret;
         } while ( buf[recv_bytes-1] != '\n' );
-        printf("%s", buf);
+        printf("il buffer è: %s\n", buf);
 
         //check if recived errore msg from server
         if (strcmp(buf,ALONE_MSG)==0){
-            printf("you are alone");
+            printf("you are alone\n");
         }
     }while (strcmp(buf,ALONE_MSG)==0);
 
     ///TODO:input numero di return
-    printf("select a username with his number");
+    printf("select a username with his number: ");
    if (fgets(buf, sizeof(buf), stdin) != (char*)buf) {
         fprintf(stderr, "Error while reading from stdin, exiting...\n");
         exit(EXIT_FAILURE);
@@ -137,10 +137,13 @@ int main(int argc, char* argv[]) {
          *
          * fgets() reads up to sizeof(buf)-1 bytes and on success
          * returns the first argument passed to it. */
+        memset(buf,0,buf_len);
         if (fgets(buf, sizeof(buf), stdin) != (char*)buf) {
             fprintf(stderr, "Error while reading from stdin, exiting...\n");
             exit(EXIT_FAILURE);
         }
+        //strcpy(buf,"ciao come va\n");
+        printf("hai scritto: %s",buf);
 
         msg_len = strlen(buf);
         // send message to server
