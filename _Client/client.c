@@ -88,6 +88,7 @@ int main(int argc, char* argv[]) {
 
     ///TODO:input numero di return
     printf("select a username with his number: ");
+    memset(buf,0,buf_len);
     if (fgets(buf, sizeof(buf), stdin) != (char*)buf) {
         fprintf(stderr, "Error while reading from stdin, exiting...\n");
         exit(EXIT_FAILURE);
