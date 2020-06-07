@@ -170,7 +170,7 @@ void connection_handler(int socket_desc, struct sockaddr_in* client_addr) {
         #endif // DEBUG
         msg_len = strlen(buf);
          #ifdef DEBUG
-            printf("Buf %s\n",buf);
+            printf("Buf: %s\n",buf);
         #endif // DEBUG
         bytes_sent = 0;
 	    while ( bytes_sent < msg_len) {
