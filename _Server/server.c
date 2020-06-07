@@ -94,7 +94,7 @@ void connection_handler(int socket_desc, struct sockaddr_in* client_addr) {
     uint16_t client_port = ntohs(client_addr->sin_port); // port number is an unsigned short
 
     #ifdef DEBUG
-        printf("Client ip %s, client port %hu",client_ip,client_port);
+        printf("Client ip %s, client port %hu\n",client_ip,client_port);
     #endif // DEBUG
     // get client username
     memset(user_name, 0, sizeof(user_name));
@@ -112,6 +112,7 @@ void connection_handler(int socket_desc, struct sockaddr_in* client_addr) {
 
     //Updates global variables info
     if(previous_size==MAX_SIZE){
+        memset(buf, 0, buf_len);
         strcpy(buf,ERROR_MSG);
         bytes_sent = 0;
         msg_len = strlen(buf);
@@ -140,6 +141,7 @@ void connection_handler(int socket_desc, struct sockaddr_in* client_addr) {
             handle_error("Err sem post");
         }
         //send ack to client
+        memset(buf, 0, buf_len);
         strcpy(buf,OK_MSG);
         bytes_sent = 0;
         msg_len = strlen(buf);
@@ -158,8 +160,15 @@ void connection_handler(int socket_desc, struct sockaddr_in* client_addr) {
 
     // check if there is only one client
     while(current_size<2){
+        memset(buf, 0, buf_len);
         strcpy(buf,ALONE_MSG);
+        #ifdef DEBUG
+            printf("Alone\n");
+        #endif // DEBUG
         msg_len = strlen(buf);
+         #ifdef DEBUG
+            printf("Buf %s\n",buf);
+        #endif // DEBUG
         bytes_sent = 0;
 	    while ( bytes_sent < msg_len) {
             ret = send(socket_desc, buf + bytes_sent, msg_len - bytes_sent, 0);
@@ -203,6 +212,7 @@ void connection_handler(int socket_desc, struct sockaddr_in* client_addr) {
     int socket_target=sockets[user_id];
 
     if(socket_target){
+        memset(buf, 0, buf_len);
         strcpy(buf,OK_MSG);
         bytes_sent = 0;
         msg_len = strlen(buf);
@@ -213,6 +223,7 @@ void connection_handler(int socket_desc, struct sockaddr_in* client_addr) {
             bytes_sent += ret;
         }
     }else{
+        memset(buf, 0, buf_len);
         strcpy(buf,ERROR_MSG);
         bytes_sent = 0;
         msg_len = strlen(buf);
@@ -329,6 +340,7 @@ void mthreadServer(int server_desc) {
     }
 }
 void list_formatter(int i,char buf[]){
+    memset(buf, 0,strlen(buf));
     char number[4];
     sprintf(number, "%d",i);
     strcat(buf,number);
