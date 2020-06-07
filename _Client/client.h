@@ -9,9 +9,9 @@
 #define SERVER_ADDRESS  "127.0.0.1"
 #define SERVER_COMMAND  "QUIT\n"
 #define SERVER_PORT     2015
-#define ERROR_MSG       "0xAFFAF"
-#define OK_MSG          "OK"
-#define ALONE_MSG       "Alone"
+#define ERROR_MSG       "0xAFFAF\n"
+#define OK_MSG          "OK\n"
+#define ALONE_MSG       "Alone\n"
 //Struct define
 typedef struct handler_args_s
 {
