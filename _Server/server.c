@@ -250,6 +250,10 @@ void connection_handler(int socket_desc, struct sockaddr_in* client_addr) {
         if (recv_bytes == 0) break;
         if (recv_bytes == quit_command_len && !memcmp(buf, quit_command, quit_command_len)) break;
 
+        #ifdef DEBUG
+            printf("Message %s from %s",buf,user_name);
+        #endif // DEBUG
+
         // ... or if I have to send the message back
         ///TODO: mette nel db il messaggio
 
