@@ -1,6 +1,12 @@
-CC=gcc
-CFLAGS= -Wall -g -O2 
-SERVERFOLDER=Server
+
+OS := $(shell uname)
+ifeq ($(OS),Darwin)
+	CC=gcc-9
+else 
+	CC=gcc
+endif
+CFLAGS= -m64 -Wall -g -O2 
+SERVERFOLDER=Server_
 
 all: server
 server.o: $(SERVERFOLDER)/server.c $(SERVERFOLDER)/server.h
