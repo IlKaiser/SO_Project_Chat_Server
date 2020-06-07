@@ -66,11 +66,11 @@ int main(int argc, char* argv[]) {
 
     char buf[1024];
     size_t buf_len = sizeof(buf);
-    memset(buf, 0, buf_len);
     // DISPLAYS LIST OF LOGGED USERNAMES
     ///TODO: riceve e stampa la lista delle connessioni
-    recv_bytes = 0;
     do{
+        memset(buf, 0, buf_len);
+        recv_bytes = 0;
         do {
             ret = recv(socket_desc, buf + recv_bytes, buf_len - recv_bytes, 0);
             if (ret == -1 && errno == EINTR) continue;
