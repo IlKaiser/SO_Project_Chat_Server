@@ -11,6 +11,7 @@
 #define MAX_SIZE        128
 #define SERVER_PORT     2015
 #define ERROR_MSG       "0xAFFAF"
+#define ALONE_MSG       "Alone"
 #define OK_MSG          "OK"
 //Struct define
 typedef struct handler_args_s
