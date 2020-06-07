@@ -6,7 +6,7 @@ else
 	CC=gcc
 endif
 CFLAGS= -m64 -Wall -g -O2 
-SERVERFOLDER=_server
+SERVERFOLDER=_Server
 
 all: server
 server.o: $(SERVERFOLDER)/server.c $(SERVERFOLDER)/server.h
