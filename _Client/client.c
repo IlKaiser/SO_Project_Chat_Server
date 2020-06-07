@@ -56,7 +56,7 @@ int main(int argc, char* argv[]) {
         if (ret == 0) break;
 	   recv_bytes += ret;
     } while ( ack[recv_bytes-1] != '\n' );
-    printf("%s", ack);
+    printf("l'ack è: %s\n", ack);
     if(strcmp(ack,ERROR_MSG)==0){
         //close connection with the server
         ret = close(socket_desc);
@@ -88,17 +88,16 @@ int main(int argc, char* argv[]) {
 
     ///TODO:input numero di return
     printf("select a username with his number: ");
-   if (fgets(buf, sizeof(buf), stdin) != (char*)buf) {
+    if (fgets(buf, sizeof(buf), stdin) != (char*)buf) {
         fprintf(stderr, "Error while reading from stdin, exiting...\n");
         exit(EXIT_FAILURE);
     }
-    int pick = atoi(buf);
     ///TODO: manda il numero scelto
-    int pick_len = sizeof(pick);
+    int pick_len = sizeof(buf);
     // send message to server
     bytes_sent=0;
     while ( bytes_sent < pick_len) {
-        ret = send(socket_desc, &pick + bytes_sent, pick_len - bytes_sent, 0);
+        ret = send(socket_desc, buf + bytes_sent, pick_len - bytes_sent, 0);
         if (ret == -1 && errno == EINTR) continue;
         if (ret == -1) handle_error("Cannot write to the socket");
         bytes_sent += ret;
@@ -116,7 +115,8 @@ int main(int argc, char* argv[]) {
         if (ret == 0) break;
 	   recv_bytes += ret;
     } while ( ack[recv_bytes-1] != '\n' );
-    printf("%s", ack);
+    printf("l'ack è: %s\n", ack);
+    fflush(stdout);
     if(strcmp(ack,ERROR_MSG)==0){
         //close connection with the server
         ret = close(socket_desc);
