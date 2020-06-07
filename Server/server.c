@@ -191,6 +191,10 @@ void mthreadServer(int server_desc) {
     }
 }
 void list_formatter(int i,char buf[]){
+    if(!current_size){
+        buf="Ancora nessun altro client connesso :(";
+        return;
+    }
     char number[4];
     sprintf(number, "%d",i);
     strcat(buf,number);
