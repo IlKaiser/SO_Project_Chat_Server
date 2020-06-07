@@ -8,8 +8,10 @@
 #define MAX_CONN_QUEUE  3   // max number of connections the server can queue
 #define SERVER_ADDRESS  "127.0.0.1"
 #define SERVER_COMMAND  "QUIT\n"
+#define MAX_SIZE        128
 #define SERVER_PORT     2015
-#define ERROR_MSG       0xAFFAF
+#define ERROR_MSG       "0xAFFAF"
+#define OK_MSG          "OK"
 //Struct define
 typedef struct handler_args_s
 {
