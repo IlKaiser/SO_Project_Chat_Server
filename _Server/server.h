@@ -13,6 +13,8 @@
 #define ERROR_MSG       "0xAFFAF\n"
 #define ALONE_MSG       "Alone\n"
 #define OK_MSG          "OK\n"
+
+#define SEM_NAME        "/server"
 //Struct define
 typedef struct handler_args_s
 {

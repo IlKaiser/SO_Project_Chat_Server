@@ -4,11 +4,13 @@
 #include <string.h>
 #include <time.h>
 #include <unistd.h>
+#include <pthread.h>
+#include <semaphore.h>
 #include <arpa/inet.h>  // htons()
 #include <netinet/in.h> // struct sockaddr_in
 #include <sys/socket.h>
-#include <pthread.h>
-#include <semaphore.h>
+#include <fcntl.h>           /* For O_* constants */
+#include <sys/stat.h>        /* For mode constants */
 
 #include "server.h"
 
@@ -24,7 +26,7 @@ int previous_size=0;
 //Current size of connection arrays
 int current_size=0;
 //Semaphore for mutual exclusion
-sem_t sem;
+sem_t* sem;
 
 
 int main(int argc, char* argv[]) {
@@ -33,8 +35,9 @@ int main(int argc, char* argv[]) {
     int socket_desc;
 
     //init semaphore
-    ret=sem_init(&sem,0,1);
-    if(ret){
+    sem_unlink(SEM_NAME);
+    sem=sem_open(SEM_NAME,O_CREAT|O_EXCL,0644,1);
+    if(sem==SEM_FAILED){
         handle_error("Error creating semaphore");
     }    
 
@@ -128,7 +131,7 @@ void connection_handler(int socket_desc, struct sockaddr_in* client_addr) {
     }else{
         //Critical section shared mem writing
         //updates shared array
-        ret=sem_wait(&sem);
+        ret=sem_wait(sem);
         if(ret){
             handle_error("Err sem wait");
         }
@@ -136,7 +139,7 @@ void connection_handler(int socket_desc, struct sockaddr_in* client_addr) {
         user_names[current_size]=user_name;
         sockets[current_size]=socket_desc;
         current_size++;
-        ret=sem_post(&sem);
+        ret=sem_post(sem);
         if(ret){
             handle_error("Err sem post");
         }
@@ -273,13 +276,13 @@ void connection_handler(int socket_desc, struct sockaddr_in* client_addr) {
 
     //Critical section shared mem writing
     //remove shared array
-    ret=sem_wait(&sem);
+    ret=sem_wait(sem);
     if(ret){
         handle_error("Err sem wait");
     }
     previous_size=current_size;
     current_size--;
-    ret=sem_post(&sem);
+    ret=sem_post(sem);
     if(ret){
         handle_error("Err sem post");
     }
