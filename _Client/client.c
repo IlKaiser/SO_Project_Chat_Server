@@ -143,7 +143,6 @@ int main(int argc, char* argv[]) {
         }
 
         msg_len = strlen(buf);
-        buf[strlen(buf) - 1] = '\n'; // remove '\n' from the end of the message
         // send message to server
         bytes_sent=0;
         while ( bytes_sent < msg_len) {
