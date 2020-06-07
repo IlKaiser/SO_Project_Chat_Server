@@ -198,23 +198,28 @@ void connection_handler(int socket_desc, struct sockaddr_in* client_addr) {
         bytes_sent += ret;
     }
     // get id number from client
-    int user_id;
+    char user_buf[4];
+    recv_bytes=0;
     do {
-            ret = recv(socket_desc, &user_id + recv_bytes, 1, 0);
-            if (ret == -1 && errno == EINTR) continue;
-            if (ret == -1) handle_error("Cannot read from the socket");
-            if (ret == 0) break;
-            recv_bytes++;
-		}while ( recv_bytes < sizeof(int) );
+        ret = recv(socket_desc, user_buf + recv_bytes, 1, 0);
+        if (ret == -1 && errno == EINTR) continue;
+        if (ret == -1) handle_error("Cannot read from the socket");
+        if (ret == 0) break;
+	}while ( user_buf[recv_bytes++]!= '\n' );
+    printf("Buffer %s \n",user_buf);
+    int user_id=atoi(user_buf);
     #ifdef DEBUG
         printf("User id chosen: %d\n",user_id);
     #endif // DEBUG
 
+    //exit(EXIT_FAILURE);
     ///TODO: manda l'ack (stesso id) se manda stesso id significa che è ancora in lista altrimenti errore(0xAFFAF)
 
-    int socket_target=sockets[user_id];
-
-    if(socket_target){
+    int socket_target=sockets[user_id--];
+    //if(socket_target){
+        #ifdef DEBUG
+            printf("socket target number : %d\n",socket_target);
+        #endif // DEBUG
         memset(buf, 0, buf_len);
         strcpy(buf,OK_MSG);
         bytes_sent = 0;
@@ -225,8 +230,8 @@ void connection_handler(int socket_desc, struct sockaddr_in* client_addr) {
             if (ret == -1) handle_error("Cannot write to the socket");
             bytes_sent += ret;
         }
-    }else{
-        memset(buf, 0, buf_len);
+    /*}else{
+        memset(buf, 0, buf_len);)
         strcpy(buf,ERROR_MSG);
         bytes_sent = 0;
         msg_len = strlen(buf);
@@ -236,18 +241,28 @@ void connection_handler(int socket_desc, struct sockaddr_in* client_addr) {
             if (ret == -1) handle_error("Cannot write to the socket");
             bytes_sent += ret;
         }
-    }
+    }*/
 
+    #if DEBUG
+        printf("Send second ack %s\n",buf);
+    #endif // DEBUG
+    exit(EXIT_FAILURE);
     // reciver loop 
     while (1) {
         // read message from client
-        memset(buf, 0, buf_len);
+        #if DEBUG
+            printf("Enter main loop \n");
+        #endif // DEBUG
+        memset(buf,0,buf_len);
         recv_bytes = 0;
         do {
             ret = recv(socket_desc, buf + recv_bytes, 1, 0);
             if (ret == -1 && errno == EINTR) continue;
             if (ret == -1) handle_error("Cannot read from the socket");
             if (ret == 0) break;
+            #ifdef DEBUG
+                printf("Got: %c \n",buf[recv_bytes]);
+            #endif // DEBUG
 		} while ( buf[recv_bytes++] != '\n' );
         // check whether I have just been told to quit...
         if (recv_bytes == 0) break;
