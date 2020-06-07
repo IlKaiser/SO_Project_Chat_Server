@@ -349,7 +349,7 @@ void mthreadServer(int server_desc) {
 void list_formatter(int i,char buf[]){
     memset(buf, 0,strlen(buf));
     char number[4];
-    sprintf(number, "%d",i);
+    sprintf(number, "%d: ",i);
     strcat(buf,number);
     strcat(buf,user_names[i]);
     strcat(buf,"\n");
