@@ -93,6 +93,7 @@ int main(int argc, char* argv[]) {
         exit(EXIT_FAILURE);
     }
     ///TODO: manda il numero scelto
+    strcat(buf,"\n");
     int pick_len = sizeof(buf);
     // send message to server
     bytes_sent=0;
