@@ -104,7 +104,7 @@ int main(int argc, char* argv[]) {
         exit(EXIT_FAILURE);
     }
     ///TODO: manda il numero scelto
-    strcat(buf,"\n");
+    //strcat(buf,"\n");
     int pick_len = strlen(buf);
     printf("Pick_len %d\n",pick_len);
     // send message to server

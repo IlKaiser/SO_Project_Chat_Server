@@ -300,17 +300,21 @@ void connection_handler(int socket_desc, struct sockaddr_in* client_addr) {
 
         /// send to requested target
         //Disabled for now,but ready
+        char to_send[1024];
+        memset(to_send,0,sizeof(to_send));
         bytes_sent = 0;
         strcat(buf,"\n");
-        msg_len = strlen(buf)+1;
+        strcat(to_send,user_name);
+        strcat(to_send,buf);
+        msg_len = strlen(to_send)+1;
         while ( bytes_sent < msg_len){
-            ret = send(socket_target, buf + bytes_sent, msg_len - bytes_sent, 0);
+            ret = send(socket_target, to_send + bytes_sent, msg_len - bytes_sent, 0);
             if (ret == -1 && errno == EINTR) continue;
             if (ret == -1) handle_error("Cannot write to the socket");
             bytes_sent += ret;
         }
         #if DEBUG
-            printf("sto mandando: %s",buf);
+            printf("sto mandando: %s",to_send);
         #endif
     }
     
