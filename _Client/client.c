@@ -6,6 +6,7 @@
 #include <arpa/inet.h>  // htons() and inet_addr()
 #include <netinet/in.h> // struct sockaddr_in
 #include <sys/socket.h>
+#include <pthread.h>
 
 #include "client.h"
 
@@ -13,8 +14,14 @@
 
 int main(int argc, char* argv[]) {
     int ret,bytes_sent,recv_bytes;
-    char username[8]={'c','l','i','e','n','t','\n','\0'};
-
+    char username[32];
+    if (argv[1]!=NULL){
+        strcpy(username,argv[1]);
+        strcat(username,"\n");
+    }
+    else{
+        strcpy(username,"client\n");
+    }
     // variables for handling a socket
     int socket_desc;
     struct sockaddr_in server_addr = {0}; // some fields are required to be filled with 0
@@ -53,17 +60,18 @@ int main(int argc, char* argv[]) {
         ret = recv(socket_desc, ack + recv_bytes, 1, 0);
         if (ret == -1 && errno == EINTR) continue;
         if (ret == -1) handle_error("Cannot read from the socket");
-        if (ret == 0) break;
+        if (ret == 0) handle_error_en(0xDEAD,"server is offline");
     } while ( ack[recv_bytes++] != '\n' );
     
     printf("l'ack è: %s\n, recv_bytes %d\n", ack,recv_bytes);
+    fflush(stdout);
 
     if(strcmp(ack,ERROR_MSG)==0){
+        handle_error_en(-1,"recived ERROR_MSG");
         //close connection with the server
         ret = close(socket_desc);
         if(ret) handle_error("Cannot close socket");
     }
-
 
     char buf[1024];
     size_t buf_len = sizeof(buf);
@@ -76,10 +84,11 @@ int main(int argc, char* argv[]) {
             ret = recv(socket_desc, buf + recv_bytes, 1, 0);
             if (ret == -1 && errno == EINTR) continue;
             if (ret == -1) handle_error("Cannot read from the socket");
-            if (ret == 0) break;
+            if (ret == 0) handle_error_en(0xDEAD,"server is offline");
             //recv_bytes += ret;
         } while ( buf[recv_bytes++] != '\0' );
         printf("il buffer è: %s\n", buf);
+        fflush(stdout);
 
         //check if recived errore msg from server
         if (strcmp(buf,ALONE_MSG)==0){
@@ -115,18 +124,32 @@ int main(int argc, char* argv[]) {
         ret = recv(socket_desc, ack + recv_bytes,1, 0);
         if (ret == -1 && errno == EINTR) continue;
         if (ret == -1) handle_error("Cannot read from the socket");
-        if (ret == 0) break;
+        if (ret == 0) handle_error_en(0xDEAD,"server is offline");
 	   //recv_bytes += ret;
     } while (ack[recv_bytes++]!='\n');
     printf("l'ack 2 è: %s, recv_bytes %d\n", ack,recv_bytes);
     fflush(stdout);
     if(strcmp(ack,ERROR_MSG)==0){
         //close connection with the server
+        handle_error_en(-1,"recived ERROR_MSG");
         ret = close(socket_desc);
         if(ret) handle_error("Cannot close socket");
     }
 
     ///TODO: creare il thread di recive(per ricevere messaggi solo dal numero che hai selezionato async)
+    pthread_t thread;
+
+    // prepare arguments for the new thread
+    handler_args_m *thread_args = malloc(sizeof(handler_args_m));
+    thread_args->socket_desc = socket_desc;
+    ret = pthread_create(&thread, NULL, thread_reciver, (void *)thread_args);
+    if (ret) handle_error_en(ret, "Could not create a new thread");
+    
+    if (DEBUG) fprintf(stderr, "New thread created to handle the request!\n");
+    
+    ret = pthread_detach(thread); // I won't phtread_join() on this thread
+    if (ret) handle_error_en(ret, "Could not detach the thread");
+    
 
     // main loop
     int msg_len;
@@ -173,4 +196,23 @@ int main(int argc, char* argv[]) {
     if (DEBUG) fprintf(stderr, "Exiting...\n");
 
     exit(EXIT_SUCCESS);
+}
+void* thread_reciver(void *arg){
+    handler_args_m *args = (handler_args_m *)arg;
+    int socket_desc = args->socket_desc;
+    char buf1[1024];
+    int ret;
+    while(1){
+        int recv_bytes=0;
+        memset(buf1,0,sizeof(buf1));
+        do {
+            ret = recv(socket_desc, buf1 + recv_bytes,1, 0);
+            if (ret == -1 && errno == EINTR) continue;
+            if (ret == -1) handle_error("Cannot read from the socket");
+            if (ret == 0) handle_error_en(0xDEAD,"server is offline");
+        } while (buf1[recv_bytes++]!='\0');
+        fprintf(stderr,"\nmessaggio di: %s", buf1);
+    }
+
+    return NULL;
 }

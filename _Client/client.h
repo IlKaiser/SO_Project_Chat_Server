@@ -9,12 +9,15 @@
 #define SERVER_ADDRESS  "127.0.0.1"
 #define SERVER_COMMAND  "QUIT\n"
 #define SERVER_PORT     2015
-#define ERROR_MSG       "0xAFFAF"
-#define OK_MSG          "OK"
+#define ERROR_MSG       "0xAFFAF\n"
+#define ERROR_OFF       0xDEAD
+#define OK_MSG          "OK\n"
 #define ALONE_MSG       "Alone\n"
 //Struct define
-typedef struct handler_args_s
+typedef struct handler_args_m
 {
     int socket_desc;
-    struct sockaddr_in* client_addr;
-} handler_args_t;
+} handler_args_m;
+
+//manages incoming messages
+void* thread_reciver(void *arg);

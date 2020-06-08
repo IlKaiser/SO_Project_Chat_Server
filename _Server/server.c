@@ -190,10 +190,7 @@ void connection_handler(int socket_desc, struct sockaddr_in* client_addr) {
         }
     }
     // 3. send user list
-    int i;
-    for(i=0;i<current_size;i++){
-        list_formatter(i,buf);
-    }
+    list_formatter(buf);
     #if DEBUG
         printf("List %s",buf);
     #endif
@@ -222,6 +219,19 @@ void connection_handler(int socket_desc, struct sockaddr_in* client_addr) {
 
     // 4.1 get target socket desc
     int socket_target=sockets[user_id-1];
+    //check if user his number
+    if (socket_target==socket_desc){
+        memset(buf, 0, buf_len);
+        strcpy(buf,ERROR_MSG);
+        bytes_sent = 0;
+        msg_len = strlen(buf);
+        while ( bytes_sent < msg_len){
+            ret = send(socket_desc, buf + bytes_sent, msg_len - bytes_sent, 0);
+            if (ret == -1 && errno == EINTR) continue;
+            if (ret == -1) handle_error("Cannot write to the socket");
+            bytes_sent += ret;
+        }
+    }
 
     if(socket_target){
         #if DEBUG
@@ -290,14 +300,18 @@ void connection_handler(int socket_desc, struct sockaddr_in* client_addr) {
 
         /// send to requested target
         //Disabled for now,but ready
-        /*bytes_sent = 0;
-        msg_len = strlen(buf);
+        bytes_sent = 0;
+        strcat(buf,"\n");
+        msg_len = strlen(buf)+1;
         while ( bytes_sent < msg_len){
             ret = send(socket_target, buf + bytes_sent, msg_len - bytes_sent, 0);
             if (ret == -1 && errno == EINTR) continue;
             if (ret == -1) handle_error("Cannot write to the socket");
             bytes_sent += ret;
-        }*/
+        }
+        #if DEBUG
+            printf("sto mandando: %s",buf);
+        #endif
     }
     
     // close socket
@@ -375,11 +389,13 @@ void mthreadServer(int server_desc) {
         if (ret) handle_error_en(ret, "Could not detach the thread");
     }
 }
-void list_formatter(int i,char buf[]){
+void list_formatter(char buf[]){
     memset(buf, 0,strlen(buf));
-    char number[4];
-    sprintf(number, "%d: ",i);
-    strcat(buf,number);
-    strcat(buf,user_names[i]);
-    strcat(buf,"\n");
+    int i;
+    for (i=0;i<current_size;i++){  
+        char number[15];
+        sprintf(number, "%d: ",i+1);
+        strcat(buf,number);
+        strcat(buf,user_names[i]);
+    }
 }
