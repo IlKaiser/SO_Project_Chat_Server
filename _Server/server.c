@@ -51,9 +51,11 @@ int main(int argc, char* argv[]) {
     socket_desc = socket(AF_INET , SOCK_STREAM , 0);
     if (socket_desc < 0) handle_error("Could not create socket");
 
-    server_addr.sin_addr.s_addr = INADDR_ANY; // we want to accept connections from any interface
+    //server_addr.sin_addr.s_addr = INADDR_ANY; // we want to accept connections from any interface
+    
     server_addr.sin_family      = AF_INET;
     server_addr.sin_port        = htons(SERVER_PORT); // don't forget about network byte order!
+    inet_aton(SERVER_ADDRESS, &server_addr.sin_addr);
 
     /* We enable SO_REUSEADDR to quickly restart our server after a crash:
      * for more details, read about the TIME_WAIT state in the TCP protocol */
@@ -65,15 +67,12 @@ int main(int argc, char* argv[]) {
     ret = bind(socket_desc, (struct sockaddr*) &server_addr, sizeof(struct sockaddr_in));
     if (ret) handle_error("Cannot bind address to socket");
 
-    printf("%s","Server Online\n");
-    fflush(stdout);
-
-
     // start listening
     ret = listen(socket_desc, MAX_CONN_QUEUE);
     if (ret) handle_error("Cannot listen on socket");
 
-    
+    printf("%s","Server Online\n");
+    fflush(stdout);
 
     mthreadServer(socket_desc);
 
