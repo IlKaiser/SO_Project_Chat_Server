@@ -41,7 +41,7 @@ int main(int argc, char* argv[]) {
         handle_error("Error creating semaphore");
     }    
 
-
+    
     // some fields are required to be filled with 0
     struct sockaddr_in server_addr = {0};
 
@@ -91,15 +91,20 @@ void connection_handler(int socket_desc, struct sockaddr_in* client_addr) {
     char  user_name[32];
     size_t quit_command_len = strlen(quit_command);
 
+    #if DEBUG
+        //Print socket desc number for double checking
+        printf("Got socket desc %d\n",socket_desc);
+    #endif
+
     // parse client IP address and port
     char client_ip[INET_ADDRSTRLEN];
     inet_ntop(AF_INET, &(client_addr->sin_addr), client_ip, INET_ADDRSTRLEN);
     uint16_t client_port = ntohs(client_addr->sin_port); // port number is an unsigned short
 
-    #ifdef DEBUG
+    #if DEBUG
         printf("Client ip %s, client port %hu\n",client_ip,client_port);
     #endif // DEBUG
-    // get client username
+    // 1. get client username
     memset(user_name, 0, sizeof(user_name));
         recv_bytes = 0;
         do {
@@ -109,11 +114,11 @@ void connection_handler(int socket_desc, struct sockaddr_in* client_addr) {
             if (ret == 0) break;
 	} while ( user_name[recv_bytes++] != '\n' );
 
-    #ifdef DEBUG
+    #if DEBUG
         printf("Username get: %s\n",user_name);
     #endif // DEBUG
 
-    //Updates global variables info
+    // 1.1 Updates global variables info
     if(previous_size==MAX_SIZE){
         memset(buf, 0, buf_len);
         strcpy(buf,ERROR_MSG);
@@ -143,7 +148,7 @@ void connection_handler(int socket_desc, struct sockaddr_in* client_addr) {
         if(ret){
             handle_error("Err sem post");
         }
-        //send ack to client
+        // 1.2 send first ack to client
         memset(buf, 0, buf_len);
         strcpy(buf,OK_MSG);
         bytes_sent = 0;
@@ -161,15 +166,15 @@ void connection_handler(int socket_desc, struct sockaddr_in* client_addr) {
     ///TODO: apre la connessione con il DB
 
 
-    // check if there is only one client
+    // 2. check if there is only one client
     while(current_size<2){
         memset(buf, 0, buf_len);
         strcpy(buf,ALONE_MSG);
-        #ifdef DEBUG
+        #if DEBUG
             printf("Alone\n");
         #endif // DEBUG
-        msg_len = strlen(buf);
-         #ifdef DEBUG
+        msg_len = strlen(buf)+1;//we include \0
+         #if DEBUG
             printf("Buf: %s\n",buf);
         #endif // DEBUG
         bytes_sent = 0;
@@ -184,12 +189,15 @@ void connection_handler(int socket_desc, struct sockaddr_in* client_addr) {
             handle_error("Err sleep");
         }
     }
-    // send user list
+    // 3. send user list
     int i;
     for(i=0;i<current_size;i++){
         list_formatter(i,buf);
     }
-    msg_len = strlen(buf);
+    #if DEBUG
+        printf("List %s",buf);
+    #endif
+    msg_len = strlen(buf)+1; //we include \0
     bytes_sent = 0;
 	while ( bytes_sent < msg_len) {
         ret = send(socket_desc, buf + bytes_sent, msg_len - bytes_sent, 0);
@@ -197,7 +205,7 @@ void connection_handler(int socket_desc, struct sockaddr_in* client_addr) {
         if (ret == -1) handle_error("Cannot write to the socket");
         bytes_sent += ret;
     }
-    // get id number from client
+    // 4. get id number from client
     char user_buf[4];
     recv_bytes=0;
     do {
@@ -208,30 +216,36 @@ void connection_handler(int socket_desc, struct sockaddr_in* client_addr) {
 	}while ( user_buf[recv_bytes++]!= '\n' );
     printf("Buffer %s \n",user_buf);
     int user_id=atoi(user_buf);
-    #ifdef DEBUG
+    #if DEBUG
         printf("User id chosen: %d\n",user_id);
     #endif // DEBUG
 
-    //exit(EXIT_FAILURE);
-    ///TODO: manda l'ack (stesso id) se manda stesso id significa che è ancora in lista altrimenti errore(0xAFFAF)
+    // 4.1 get target socket desc
+    int socket_target=sockets[user_id-1];
 
-    int socket_target=sockets[user_id--];
-    //if(socket_target){
-        #ifdef DEBUG
+    if(socket_target){
+        #if DEBUG
             printf("socket target number : %d\n",socket_target);
         #endif // DEBUG
+
+        //4.2 send second ack
         memset(buf, 0, buf_len);
         strcpy(buf,OK_MSG);
         bytes_sent = 0;
         msg_len = strlen(buf);
+        #if DEBUG
+            printf("Sending 2nd ack %s with len %d \n",buf,msg_len);
+        #endif
         while ( bytes_sent < msg_len){
             ret = send(socket_desc, buf + bytes_sent, msg_len - bytes_sent, 0);
             if (ret == -1 && errno == EINTR) continue;
             if (ret == -1) handle_error("Cannot write to the socket");
             bytes_sent += ret;
+            printf("bytes sent %d\n",bytes_sent);
         }
-    /*}else{
-        memset(buf, 0, buf_len);)
+
+    }else{
+        memset(buf, 0, buf_len);
         strcpy(buf,ERROR_MSG);
         bytes_sent = 0;
         msg_len = strlen(buf);
@@ -241,14 +255,16 @@ void connection_handler(int socket_desc, struct sockaddr_in* client_addr) {
             if (ret == -1) handle_error("Cannot write to the socket");
             bytes_sent += ret;
         }
-    }*/
+    }
 
     #if DEBUG
         printf("Send second ack %s\n",buf);
     #endif // DEBUG
-    exit(EXIT_FAILURE);
     // reciver loop 
     while (1) {
+
+        //5. loop
+
         // read message from client
         #if DEBUG
             printf("Enter main loop \n");
@@ -260,30 +276,28 @@ void connection_handler(int socket_desc, struct sockaddr_in* client_addr) {
             if (ret == -1 && errno == EINTR) continue;
             if (ret == -1) handle_error("Cannot read from the socket");
             if (ret == 0) break;
-            #ifdef DEBUG
-                printf("Got: %c \n",buf[recv_bytes]);
-            #endif // DEBUG
 		} while ( buf[recv_bytes++] != '\n' );
         // check whether I have just been told to quit...
         if (recv_bytes == 0) break;
         if (recv_bytes == quit_command_len && !memcmp(buf, quit_command, quit_command_len)) break;
 
-        #ifdef DEBUG
+        #if DEBUG
             printf("Message %s from %s",buf,user_name);
         #endif // DEBUG
 
         // ... or if I have to send the message back
         ///TODO: mette nel db il messaggio
 
-        // send to requested target
-        bytes_sent = 0;
+        /// send to requested target
+        //Disabled for now,but ready
+        /*bytes_sent = 0;
         msg_len = strlen(buf);
         while ( bytes_sent < msg_len){
             ret = send(socket_target, buf + bytes_sent, msg_len - bytes_sent, 0);
             if (ret == -1 && errno == EINTR) continue;
             if (ret == -1) handle_error("Cannot write to the socket");
             bytes_sent += ret;
-        }
+        }*/
     }
     
     // close socket

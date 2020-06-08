@@ -45,7 +45,7 @@ int main(int argc, char* argv[]) {
         bytes_sent += ret;
     }
 
-    char ack[8];
+    char ack[15];
     size_t ack_len = sizeof(ack);
     memset(ack, 0, ack_len);
     recv_bytes = 0;
@@ -54,9 +54,10 @@ int main(int argc, char* argv[]) {
         if (ret == -1 && errno == EINTR) continue;
         if (ret == -1) handle_error("Cannot read from the socket");
         if (ret == 0) break;
-	   recv_bytes += ret;
-    } while ( ack[recv_bytes-1] != '\n' );
-    printf("l'ack è: %s\n", ack);
+    } while ( ack[recv_bytes++] != '\n' );
+    
+    printf("l'ack è: %s\n, recv_bytes %d\n", ack,recv_bytes);
+
     if(strcmp(ack,ERROR_MSG)==0){
         //close connection with the server
         ret = close(socket_desc);
@@ -76,8 +77,8 @@ int main(int argc, char* argv[]) {
             if (ret == -1 && errno == EINTR) continue;
             if (ret == -1) handle_error("Cannot read from the socket");
             if (ret == 0) break;
-            recv_bytes += ret;
-        } while ( buf[recv_bytes-1] != '\n' );
+            //recv_bytes += ret;
+        } while ( buf[recv_bytes++] != '\0' );
         printf("il buffer è: %s\n", buf);
 
         //check if recived errore msg from server
@@ -95,29 +96,29 @@ int main(int argc, char* argv[]) {
     }
     ///TODO: manda il numero scelto
     strcat(buf,"\n");
-    int pick_len = sizeof(buf);
+    int pick_len = strlen(buf);
+    printf("Pick_len %d\n",pick_len);
     // send message to server
     bytes_sent=0;
     while ( bytes_sent < pick_len) {
         ret = send(socket_desc, buf + bytes_sent, pick_len - bytes_sent, 0);
         if (ret == -1 && errno == EINTR) continue;
-        if (ret == -1) handle_error("Cannot write to the socket");
-        bytes_sent += ret;
+        if (ret == -1) handle_error("Cannot write to the socket");memset(ack, 0, ack_len);
+        bytes_sent+=ret;
     }
-
-
+    
 
     ///TODO: riceve l'ack e entra nel loop
     memset(ack, 0, ack_len);
     recv_bytes = 0;
     do {
-        ret = recv(socket_desc, ack + recv_bytes, ack_len - recv_bytes, 0);
+        ret = recv(socket_desc, ack + recv_bytes,1, 0);
         if (ret == -1 && errno == EINTR) continue;
         if (ret == -1) handle_error("Cannot read from the socket");
         if (ret == 0) break;
-	   recv_bytes += ret;
-    } while ( ack[recv_bytes-1] != '\n' );
-    printf("l'ack è: %s\n", ack);
+	   //recv_bytes += ret;
+    } while (ack[recv_bytes++]!='\n');
+    printf("l'ack 2 è: %s, recv_bytes %d\n", ack,recv_bytes);
     fflush(stdout);
     if(strcmp(ack,ERROR_MSG)==0){
         //close connection with the server
