@@ -6,7 +6,12 @@
 /* Configuration parameters */
 #define DEBUG           1   // display debug messages
 #define MAX_CONN_QUEUE  3   // max number of connections the server can queue
-#define SERVER_ADDRESS  "35.180.35.239" //AWS
+#define AWS             0
+#if AWS
+    #define SERVER_ADDRESS  "35.180.35.239" //AWS
+#else
+    #define SERVER_ADDRESS  "127.0.0.1" //AWS
+#endif
 #define SERVER_COMMAND  "QUIT\n"
 #define SERVER_PORT     2015
 #define ERROR_MSG       "0xAFFAF\n"
@@ -19,5 +24,9 @@ typedef struct handler_args_m
     int socket_desc;
 } handler_args_m;
 
+//client thread
+void* client(void *arg);
 //manages incoming messages
 void* thread_reciver(void *arg);
+//gtk thread
+static void activate (GtkApplication *app,gpointer user_data);

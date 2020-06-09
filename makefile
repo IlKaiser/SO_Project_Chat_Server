@@ -9,15 +9,19 @@ CFLAGS= -m64 -Wall -g -O2
 SERVERFOLDER=_Server
 CLIENTFOLDER=_Client
 
+GTK1= `pkg-config --cflags gtk+-3.0`
+GTK2=`pkg-config --libs gtk+-3.0`
+
+
 all: server client
 server.o: $(SERVERFOLDER)/server.c $(SERVERFOLDER)/server.h
 	$(CC) -c -o $@ $< $(CFLAGS)
 server: server.o
 		  $(CC) -o server server.o -lpthread
 client.o: $(CLIENTFOLDER)/client.c $(CLIENTFOLDER)/client.h
-	$(CC) -c -o $@ $< $(CFLAGS)
+	$(CC) $(GTK1) -c -o $@ $<  $(CFLAGS)
 client: client.o
-		  $(CC) -o client client.o -lpthread
+		  $(CC) $(GTK2) -o client client.o  -lpthread
 
 clean:
 		rm -rf *.o	

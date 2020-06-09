@@ -3,19 +3,55 @@
 #include <stdlib.h>
 #include <string.h>
 #include <unistd.h>
+#include <pthread.h>
 #include <arpa/inet.h>  // htons() and inet_addr()
 #include <netinet/in.h> // struct sockaddr_in
 #include <sys/socket.h>
-#include <pthread.h>
+#include <gtk/gtk.h>
 
 #include "client.h"
 
 ///TODO:LOGIN NEL CLIENT
 
 int main(int argc, char* argv[]) {
+    
+    //GTK init
+    GtkApplication *app;
+    int status;
+
+    app = gtk_application_new ("so.chat_server", G_APPLICATION_FLAGS_NONE);
+    g_signal_connect (app, "activate", G_CALLBACK (activate),&argv[1]);
+    status = g_application_run (G_APPLICATION (app), argc, argv);
+    g_object_unref (app);
+    return status;
+}
+
+
+void* thread_reciver(void *arg){
+    handler_args_m *args = (handler_args_m *)arg;
+    int socket_desc = args->socket_desc;
+    char buf1[1024];
+    int ret;
+    while(1){
+        int recv_bytes=0;
+        memset(buf1,0,sizeof(buf1));
+        do {
+            ret = recv(socket_desc, buf1 + recv_bytes,1, 0);
+            if (ret == -1 && errno == EINTR) continue;
+            if (ret == -1) handle_error("Cannot read from the socket");
+            if (ret == 0) handle_error_en(0xDEAD,"server is offline");
+        } while (buf1[recv_bytes++]!='\0');
+        fprintf(stderr,"\nmessaggio di: %s", buf1);
+    }
+
+    return NULL;
+}
+
+void* client(void* arg){
     int ret,bytes_sent,recv_bytes;
     char username[32];
-    if (argv[1]!=NULL){
+    char** argv=(char**)arg;
+    if (*argv!=NULL){
         strcpy(username,argv[1]);
         strcat(username,"\n");
     }
@@ -197,22 +233,90 @@ int main(int argc, char* argv[]) {
 
     exit(EXIT_SUCCESS);
 }
-void* thread_reciver(void *arg){
-    handler_args_m *args = (handler_args_m *)arg;
-    int socket_desc = args->socket_desc;
-    char buf1[1024];
-    int ret;
-    while(1){
-        int recv_bytes=0;
-        memset(buf1,0,sizeof(buf1));
-        do {
-            ret = recv(socket_desc, buf1 + recv_bytes,1, 0);
-            if (ret == -1 && errno == EINTR) continue;
-            if (ret == -1) handle_error("Cannot read from the socket");
-            if (ret == 0) handle_error_en(0xDEAD,"server is offline");
-        } while (buf1[recv_bytes++]!='\0');
-        fprintf(stderr,"\nmessaggio di: %s", buf1);
-    }
 
-    return NULL;
+static void activate (GtkApplication *app,gpointer user_data){
+    
+    int ret;
+    pthread_t thread;
+    char** argv=(char**)user_data;
+    
+    // prepare arguments for the new thread
+    ret = pthread_create(&thread, NULL,client,argv);
+    if (ret) handle_error_en(ret, "Could not create a new thread");
+    
+    if (DEBUG) fprintf(stderr, "New thread created to handle the request!\n");
+    
+    ret = pthread_detach(thread); // I won't phtread_join() on this thread
+    if (ret) handle_error_en(ret, "Could not detach the thread");
+    
+    GtkWidget *window;
+    GtkWidget *paned;
+    GtkWidget *grid;
+    GtkWidget *button;
+    GtkWidget *im;
+    GtkWidget *scrolled_window;
+    GtkWidget *view;
+    
+    
+
+    /* create a new window, and set its title */
+    window = gtk_application_window_new (app);
+    gtk_window_set_title (GTK_WINDOW (window), "Window");
+    gtk_container_set_border_width (GTK_CONTAINER (window), 10);
+    gtk_window_set_default_size(GTK_WINDOW(window),400,400);
+
+
+
+    im=gtk_entry_new ();
+
+
+    view=gtk_text_view_new();
+    gtk_text_view_set_wrap_mode (GTK_TEXT_VIEW (view), GTK_WRAP_WORD); 
+    gtk_text_view_set_editable (GTK_TEXT_VIEW(view),FALSE);
+    gtk_text_view_set_cursor_visible (GTK_TEXT_VIEW(view),FALSE);
+    //gtk_text_view_set_border_window_size(GTK_TEXT_VIEW(view),GTK_TEXT_WINDOW_TEXT);GTK_TEXT_WINDOW_TEXT
+
+
+
+    scrolled_window = gtk_scrolled_window_new (NULL, NULL);
+    gtk_scrolled_window_set_policy (GTK_SCROLLED_WINDOW (scrolled_window), 
+                                    GTK_POLICY_AUTOMATIC, 
+                                    GTK_POLICY_AUTOMATIC);
+
+    paned=gtk_paned_new(GTK_ORIENTATION_VERTICAL);
+
+    /* The function directly below is used to add children to the scrolled window 
+    * with scrolling capabilities (e.g text_view), otherwise, 
+    * gtk_scrolled_window_add_with_viewport() would have been used
+    */
+    /* Here we construct the container that is going pack our buttons */
+    grid = gtk_grid_new ();
+
+    /* Pack the container in the window */
+    //gtk_container_add (GTK_CONTAINER (window), scrolled_window);
+    gtk_container_add (GTK_CONTAINER (window), paned);
+    gtk_widget_set_size_request(paned,300,-1);
+    gtk_paned_pack1 (GTK_PANED (paned), view,FALSE,FALSE);
+    gtk_paned_add2 (GTK_PANED (paned), grid);
+
+
+
+    /* Place the Quit button in the grid cell (0, 1), and make itvoid
+    * span 2 columns.void
+    */
+    gtk_grid_attach(GTK_GRID (grid), scrolled_window,0,0,10,10);
+
+    button = gtk_button_new_with_label ("Send");
+    gtk_grid_attach(GTK_GRID(grid),im,11,11,4,1);
+    gtk_grid_attach (GTK_GRID (grid), button, 11,16,2,1);
+
+
+    /* Now that we are done packing our widgets, we show them all
+    * in one go, by calling gtk_widget_show_all() on the window.
+    * This call recursively calls gtk_widget_show() on all widgets
+    * that are contained in the window, directly or indirectly.
+    */
+    gtk_widget_show_all (window);
+   
+
 }
