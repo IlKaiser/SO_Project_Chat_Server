@@ -18,11 +18,20 @@
 #define ERROR_OFF       0xDEAD
 #define OK_MSG          "OK\n"
 #define ALONE_MSG       "Alone\n"
+
 //Struct define
 typedef struct handler_args_m
 {
     int socket_desc;
 } handler_args_m;
+struct mesg_buffer { 
+    long mesg_type; 
+    char mesg_text[100]; 
+} message;
+typedef struct handler_args_u{
+    GtkWidget * view;
+}handler_args_u;
+
 
 //client thread
 void* client(void *arg);
@@ -30,3 +39,5 @@ void* client(void *arg);
 void* thread_reciver(void *arg);
 //gtk thread
 static void activate (GtkApplication *app,gpointer user_data);
+//update gtk thread
+void* update (void* arg);

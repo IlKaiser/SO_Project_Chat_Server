@@ -8,6 +8,8 @@
 #include <netinet/in.h> // struct sockaddr_in
 #include <sys/socket.h>
 #include <gtk/gtk.h>
+#include <sys/ipc.h>
+#include <sys/msg.h>
 
 #include "client.h"
 
@@ -18,8 +20,12 @@ int main(int argc, char* argv[]) {
     //GTK init
     GtkApplication *app;
     int status;
-
-    app = gtk_application_new ("so.chat_server", G_APPLICATION_FLAGS_NONE);
+    /*char* input_n;
+    char *name = (char *) malloc(1 + strlen("test.")+ strlen(argv[1]) );
+    input_n = argv[1];
+    strcpy(name, "test.");
+    strcat(name,input_n);*/
+    app = gtk_application_new (argv[1]/*name*/, G_APPLICATION_FLAGS_NONE);
     g_signal_connect (app, "activate", G_CALLBACK (activate),&argv[1]);
     status = g_application_run (G_APPLICATION (app), argc, argv);
     g_object_unref (app);
@@ -32,6 +38,17 @@ void* thread_reciver(void *arg){
     int socket_desc = args->socket_desc;
     char buf1[1024];
     int ret;
+
+    //creating the message queue between client thread anch gtk thread
+    key_t key; 
+    int msgid;
+
+    key = ftok("msg_queue", 65); 
+    // msgget creates a message queue 
+    // and returns identifier 
+    msgid = msgget(key, 0666 | IPC_CREAT); 
+    message.mesg_type = 1;
+
     while(1){
         int recv_bytes=0;
         memset(buf1,0,sizeof(buf1));
@@ -42,12 +59,29 @@ void* thread_reciver(void *arg){
             if (ret == 0) handle_error_en(0xDEAD,"server is offline");
         } while (buf1[recv_bytes++]!='\0');
         fprintf(stderr,"\nmessaggio di: %s", buf1);
+        // msgsnd to send message
+        memset(message.mesg_text,0,sizeof(message.mesg_text));
+        strcpy(message.mesg_text,buf1);
+        msgsnd(msgid, &message, sizeof(message), 0);
     }
 
     return NULL;
 }
 
 void* client(void* arg){
+
+    //creating the message queue between client thread anch gtk thread
+    key_t key; 
+    int msgid;
+
+    key = ftok("msg_queue", 65); 
+    // msgget creates a message queue 
+    // and returns identifier 
+    msgid = msgget(key, 0666 | IPC_CREAT); 
+    message.mesg_type = 1; 
+    
+
+
     int ret,bytes_sent,recv_bytes;
     char username[32];
     char** argv=(char**)arg;
@@ -101,6 +135,10 @@ void* client(void* arg){
     
     printf("l'ack è: %s\n, recv_bytes %d\n", ack,recv_bytes);
     fflush(stdout);
+    // msgsnd to send message
+    memset(message.mesg_text,0,sizeof(message.mesg_text));
+    strcpy(message.mesg_text,ack);
+    msgsnd(msgid, &message, sizeof(message), 0);
 
     if(strcmp(ack,ERROR_MSG)==0){
         handle_error_en(-1,"recived ERROR_MSG");
@@ -125,6 +163,9 @@ void* client(void* arg){
         } while ( buf[recv_bytes++] != '\0' );
         printf("il buffer è: %s\n", buf);
         fflush(stdout);
+        memset(message.mesg_text,0,sizeof(message.mesg_text));
+        strcpy(message.mesg_text,buf);
+        msgsnd(msgid, &message, sizeof(message), 0);
 
         //check if recived errore msg from server
         if (strcmp(buf,ALONE_MSG)==0){
@@ -165,6 +206,10 @@ void* client(void* arg){
     } while (ack[recv_bytes++]!='\n');
     printf("l'ack 2 è: %s, recv_bytes %d\n", ack,recv_bytes);
     fflush(stdout);
+    memset(message.mesg_text,0,sizeof(message.mesg_text));
+    strcpy(message.mesg_text,ack);
+    msgsnd(msgid, &message, sizeof(message), 0);
+
     if(strcmp(ack,ERROR_MSG)==0){
         //close connection with the server
         handle_error_en(-1,"recived ERROR_MSG");
@@ -231,7 +276,39 @@ void* client(void* arg){
 
     if (DEBUG) fprintf(stderr, "Exiting...\n");
 
+    // to destroy the message queue 
+    msgctl(msgid, IPC_RMID, NULL); 
+
     exit(EXIT_SUCCESS);
+}
+void* update (void* arg){
+    handler_args_u* args = (handler_args_u*)arg;
+    GtkWidget* view = args->view;
+
+    key_t key; 
+    int msgid; 
+  
+    // ftok to generate unique key 
+    key = ftok("msg_queue", 65); 
+  
+    // msgget creates a message queue 
+    // and returns identifier 
+    msgid = msgget(key, 0666 | IPC_CREAT); 
+    while (1){
+        // msgrcv to receive message 
+        msgrcv(msgid, &message, sizeof(message), 1, 0); 
+    
+        // display the message 
+        printf("Data Received is : %s \n",  message.mesg_text);
+        GtkTextBuffer* buffer = gtk_text_buffer_new(NULL);
+        
+        gtk_text_buffer_set_text(GTK_TEXT_BUFFER (buffer),message.mesg_text,strlen(message.mesg_text));
+        gtk_text_view_set_buffer(GTK_TEXT_VIEW (view),GTK_TEXT_BUFFER (buffer));
+    }
+   
+    // to destroy the message queue 
+    msgctl(msgid, IPC_RMID, NULL); 
+    return NULL;
 }
 
 static void activate (GtkApplication *app,gpointer user_data){
@@ -317,6 +394,17 @@ static void activate (GtkApplication *app,gpointer user_data){
     * that are contained in the window, directly or indirectly.
     */
     gtk_widget_show_all (window);
-   
 
+    // prepare arguments for the new thread
+    handler_args_u* arg_up = (handler_args_u*)malloc(sizeof(handler_args_u));
+    arg_up->view=view; 
+
+    ret = pthread_create(&thread, NULL,update,arg_up);
+    if (ret) handle_error_en(ret, "Could not create a new thread");
+    
+    if (DEBUG) fprintf(stderr, "New thread created to handle the request!\n");
+    
+    ret = pthread_detach(thread); // I won't phtread_join() on this thread
+    if (ret) handle_error_en(ret, "Could not detach the thread");
+ 
 }
