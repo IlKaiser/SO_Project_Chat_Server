@@ -196,6 +196,7 @@ void* client(void* arg){
     //strcat(buf,"\n");
     int pick_len = strlen(buf);
     printf("Pick_len %d\n",pick_len);
+    printf("Pick %s\n",buf);
     // send message to server
     bytes_sent=0;
     while ( bytes_sent < pick_len) {
