@@ -362,7 +362,6 @@ void* update (void* arg){
 		exit(EXIT_FAILURE);
 	}
     
-    
     GtkTextIter* iter;
     while (1){
         // msgrcv to receive message 
@@ -398,7 +397,8 @@ static void callback( GtkWidget *widget,gpointer data )
     key = ftok("msg_queue", 65); 
     // msgget creates a message queue 
     // and returns identifier 
-   
+    msgid = msgget(key, 0666 | IPC_CREAT); 
+    
     input_m.mesg_type = 1;
     memset(input_m.mesg_text,0,sizeof(input_m.mesg_text));
     strcpy(input_m.mesg_text,input);
