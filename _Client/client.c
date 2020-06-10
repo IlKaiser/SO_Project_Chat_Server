@@ -49,7 +49,7 @@ void* thread_reciver(void *arg){
     msgid = msgget(key, 0666 | IPC_CREAT); 
     message.mesg_type = 1;
     #if DEBUG
-    printf("thread reciver msg\n: %s",message.mesg_text);
+    printf("thread reciver msg\n: %s\n",message.mesg_text);
     #endif
 
     while(1){
@@ -92,10 +92,10 @@ void* client(void* arg){
 		//exit(EXIT_SUCCESS);
 	}
 
-	if (msgctl(msgid, IPC_RMID, NULL) == -1) {
+	/*if (msgctl(msgid, IPC_RMID, NULL) == -1) {
 		fprintf(stderr, "Message queue could not be deleted.\n");
 		exit(EXIT_FAILURE);
-	}
+	}*/
 
     #if DEBUG
     printf("thread client start msg: %s",message.mesg_text);
@@ -106,7 +106,7 @@ void* client(void* arg){
     int msgid1; 
   
     // ftok to generate unique key 
-    key1 = ftok("input_queue", 65); 
+    key1 = ftok("input_msg", 65); 
   
     // msgget creates a message queue 
     // and returns identifier 
@@ -386,7 +386,7 @@ static void callback( GtkWidget *widget,gpointer data )
     int msgid;
 	
 
-    key = ftok("msg_queue", 65); 
+    key = ftok("input_msg", 65); 
     // msgget creates a message queue 
     // and returns identifier 
     msgid = msgget(key, 0666 | IPC_CREAT); 
