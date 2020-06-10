@@ -85,6 +85,17 @@ void* client(void* arg){
     // and returns identifier 
     msgid = msgget(key, 0666 | IPC_CREAT); 
     message.mesg_type = 1; 
+    
+    //reset queue
+	if (msgid == -1) {
+		printf("Message queue does not exists.\n");
+		//exit(EXIT_SUCCESS);
+	}
+
+	if (msgctl(msgid, IPC_RMID, NULL) == -1) {
+		fprintf(stderr, "Message queue could not be deleted.\n");
+		exit(EXIT_FAILURE);
+	}
 
     #if DEBUG
     printf("thread client start msg: %s",message.mesg_text);
@@ -341,6 +352,8 @@ void* update (void* arg){
     // msgget creates a message queue 
     // and returns identifier 
     msgid = msgget(key, 0666 | IPC_CREAT); 
+    
+    
     GtkTextIter iter;
     while (1){
         // msgrcv to receive message 
@@ -371,11 +384,21 @@ static void callback( GtkWidget *widget,gpointer data )
     char* input = (char*)gtk_entry_get_text(GTK_ENTRY(id));
     key_t key; 
     int msgid;
+	
 
     key = ftok("msg_queue", 65); 
     // msgget creates a message queue 
     // and returns identifier 
     msgid = msgget(key, 0666 | IPC_CREAT); 
+    if (msgid == -1) {
+		printf("Message queue input does not exists.\n");
+		//exit(EXIT_SUCCESS);
+	}
+
+	if (msgctl(msgid, IPC_RMID, NULL) == -1) {
+		fprintf(stderr, "Message queue could not be deleted.\n");
+		exit(EXIT_FAILURE);
+	}
     input_m.mesg_type = 1;
     memset(input_m.mesg_text,0,sizeof(input_m.mesg_text));
     strcpy(input_m.mesg_text,input);
