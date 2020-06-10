@@ -192,6 +192,7 @@ void* client(void* arg){
     /*fprintf(stderr, "Error while reading from stdin, exiting...\n");
     exit(EXIT_FAILURE);*/
     ///TODO: manda il numero scelto
+    strcpy(buf,input_m.mesg_text);
     //strcat(buf,"\n");
     int pick_len = strlen(buf);
     printf("Pick_len %d\n",pick_len);
@@ -200,7 +201,7 @@ void* client(void* arg){
     while ( bytes_sent < pick_len) {
         ret = send(socket_desc, buf + bytes_sent, pick_len - bytes_sent, 0);
         if (ret == -1 && errno == EINTR) continue;
-        if (ret == -1) handle_error("Cannot write to the socket");memset(ack, 0, ack_len);
+        if (ret == -1) handle_error("Cannot write to the socket");
         bytes_sent+=ret;
     }
     
@@ -260,6 +261,7 @@ void* client(void* arg){
         msgrcv(msgid1, &input_m, sizeof(input_m), 1, 0);
         /*fprintf(stderr, "Error while reading from stdin, exiting...\n");
         exit(EXIT_FAILURE);*/
+        strcpy(buf,input_m.mesg_text);
         //strcpy(buf,"ciao come va\n");
         printf("hai scritto: %s",buf);
 
@@ -326,9 +328,8 @@ static void callback( GtkWidget *widget,gpointer data )
     if (data==NULL){
         return;
     }
-    GtkEntry** wid = (GtkEntry**)data;
-    GtkEntry* id = *wid;
-    char* input = (char*)gtk_entry_get_text(id);
+    GtkWidget* id = data;
+    char* input = (char*)gtk_entry_get_text(GTK_ENTRY(id));
     key_t key; 
     int msgid;
 
@@ -337,9 +338,9 @@ static void callback( GtkWidget *widget,gpointer data )
     // and returns identifier 
     msgid = msgget(key, 0666 | IPC_CREAT); 
     input_m.mesg_type = 1;
-    memset(input_m.mesg_text,0,sizeof(message.mesg_text));
+    memset(input_m.mesg_text,0,sizeof(input_m.mesg_text));
     strcpy(input_m.mesg_text,input);
-    msgsnd(msgid, &input_m, sizeof(message), 0);
+    msgsnd(msgid, &input_m, sizeof(input_m), 0);
 }
 
 
@@ -415,7 +416,7 @@ static void activate (GtkApplication *app,gpointer user_data){
     */
     gtk_grid_attach(GTK_GRID (grid), scrolled_window,0,0,10,10);
     button = gtk_button_new_with_label ("Send");
-    g_signal_connect (button, "clicked",G_CALLBACK (callback),&im);
+    g_signal_connect (button, "clicked",G_CALLBACK (callback),im);
 
     gtk_grid_attach(GTK_GRID(grid),im,11,11,4,1);
     gtk_grid_attach (GTK_GRID (grid), button, 11,16,2,1);
