@@ -106,7 +106,7 @@ void* client(void* arg){
     int msgid1; 
   
     // ftok to generate unique key 
-    key1 = ftok("input_msg", 65); 
+    key1 = ftok("input_msg", 64); 
   
     // msgget creates a message queue 
     // and returns identifier 
@@ -386,7 +386,7 @@ static void callback( GtkWidget *widget,gpointer data )
     int msgid;
 	
 
-    key = ftok("input_msg", 65); 
+    key = ftok("input_msg", 64); 
     // msgget creates a message queue 
     // and returns identifier 
     msgid = msgget(key, 0666 | IPC_CREAT); 
