@@ -352,9 +352,18 @@ void* update (void* arg){
     // msgget creates a message queue 
     // and returns identifier 
     msgid = msgget(key, 0666 | IPC_CREAT); 
+    if (msgid == -1) {
+		printf("Message queue input does not exists.\n");
+		//exit(EXIT_SUCCESS);
+	}
+
+	if (msgctl(msgid, IPC_RMID, NULL) == -1) {
+		fprintf(stderr, "Message queue could not be deleted.\n");
+		exit(EXIT_FAILURE);
+	}
     
     
-    GtkTextIter iter;
+    GtkTextIter* iter;
     while (1){
         // msgrcv to receive message 
         msgrcv(msgid, &message, sizeof(message), 1, 0); 
@@ -365,9 +374,9 @@ void* update (void* arg){
         // display the message 
         printf("Data Received is : %s \n",  message.mesg_text);
         GtkTextBuffer* buffer = gtk_text_view_get_buffer(GTK_TEXT_VIEW(view));
-        gtk_text_buffer_get_end_iter (buffer,&iter);
+        gtk_text_buffer_get_end_iter (buffer,iter);
         
-        gtk_text_buffer_insert(GTK_TEXT_BUFFER (buffer),&iter,message.mesg_text,strlen(message.mesg_text));
+        gtk_text_buffer_insert(GTK_TEXT_BUFFER (buffer),iter,message.mesg_text,strlen(message.mesg_text));
         gtk_text_view_set_buffer(GTK_TEXT_VIEW (view),GTK_TEXT_BUFFER (buffer));
     }
    
@@ -389,16 +398,7 @@ static void callback( GtkWidget *widget,gpointer data )
     key = ftok("msg_queue", 65); 
     // msgget creates a message queue 
     // and returns identifier 
-    msgid = msgget(key, 0666 | IPC_CREAT); 
-    if (msgid == -1) {
-		printf("Message queue input does not exists.\n");
-		//exit(EXIT_SUCCESS);
-	}
-
-	if (msgctl(msgid, IPC_RMID, NULL) == -1) {
-		fprintf(stderr, "Message queue could not be deleted.\n");
-		exit(EXIT_FAILURE);
-	}
+   
     input_m.mesg_type = 1;
     memset(input_m.mesg_text,0,sizeof(input_m.mesg_text));
     strcpy(input_m.mesg_text,input);
