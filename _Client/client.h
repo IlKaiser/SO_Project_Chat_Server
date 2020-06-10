@@ -28,6 +28,10 @@ struct mesg_buffer {
     long mesg_type; 
     char mesg_text[100]; 
 } message;
+struct input_m { 
+    long mesg_type; 
+    char mesg_text[100]; 
+} input_m;
 typedef struct handler_args_u{
     GtkWidget * view;
 }handler_args_u;

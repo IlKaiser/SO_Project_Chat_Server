@@ -70,7 +70,7 @@ void* thread_reciver(void *arg){
 
 void* client(void* arg){
 
-    //creating the message queue between client thread anch gtk thread
+    //creating the message queue between client thread anch gtk thread for output
     key_t key; 
     int msgid;
 
@@ -79,6 +79,17 @@ void* client(void* arg){
     // and returns identifier 
     msgid = msgget(key, 0666 | IPC_CREAT); 
     message.mesg_type = 1; 
+
+    //creating the message queue between client thread anch gtk thread for input
+    key_t key1; 
+    int msgid1; 
+  
+    // ftok to generate unique key 
+    key1 = ftok("input_queue", 65); 
+  
+    // msgget creates a message queue 
+    // and returns identifier 
+    msgid1 = msgget(key1, 0666 | IPC_CREAT); 
     
 
 
@@ -176,10 +187,10 @@ void* client(void* arg){
     ///TODO:input numero di return
     printf("select a username with his number: ");
     memset(buf,0,buf_len);
-    if (fgets(buf, sizeof(buf), stdin) != (char*)buf) {
-        fprintf(stderr, "Error while reading from stdin, exiting...\n");
-        exit(EXIT_FAILURE);
-    }
+    //if (fgets(buf, sizeof(buf), stdin) != (char*)buf) {
+    msgrcv(msgid1, &input_m, sizeof(input_m), 1, 0);
+    /*fprintf(stderr, "Error while reading from stdin, exiting...\n");
+    exit(EXIT_FAILURE);*/
     ///TODO: manda il numero scelto
     //strcat(buf,"\n");
     int pick_len = strlen(buf);
@@ -245,10 +256,10 @@ void* client(void* arg){
          * fgets() reads up to sizeof(buf)-1 bytes and on success
          * returns the first argument passed to it. */
         memset(buf,0,buf_len);
-        if (fgets(buf, sizeof(buf), stdin) != (char*)buf) {
-            fprintf(stderr, "Error while reading from stdin, exiting...\n");
-            exit(EXIT_FAILURE);
-        }
+        //if (fgets(buf, sizeof(buf), stdin) != (char*)buf) {
+        msgrcv(msgid1, &input_m, sizeof(input_m), 1, 0);
+        /*fprintf(stderr, "Error while reading from stdin, exiting...\n");
+        exit(EXIT_FAILURE);*/
         //strcpy(buf,"ciao come va\n");
         printf("hai scritto: %s",buf);
 
@@ -310,6 +321,27 @@ void* update (void* arg){
     msgctl(msgid, IPC_RMID, NULL); 
     return NULL;
 }
+static void callback( GtkWidget *widget,gpointer data )
+{
+    if (data==NULL){
+        return;
+    }
+    GtkEntry** wid = (GtkEntry**)data;
+    GtkEntry* id = *wid;
+    char* input = (char*)gtk_entry_get_text(id);
+    key_t key; 
+    int msgid;
+
+    key = ftok("msg_queue", 65); 
+    // msgget creates a message queue 
+    // and returns identifier 
+    msgid = msgget(key, 0666 | IPC_CREAT); 
+    input_m.mesg_type = 1;
+    memset(input_m.mesg_text,0,sizeof(message.mesg_text));
+    strcpy(input_m.mesg_text,input);
+    msgsnd(msgid, &input_m, sizeof(message), 0);
+}
+
 
 static void activate (GtkApplication *app,gpointer user_data){
     
@@ -382,10 +414,12 @@ static void activate (GtkApplication *app,gpointer user_data){
     * span 2 columns.void
     */
     gtk_grid_attach(GTK_GRID (grid), scrolled_window,0,0,10,10);
-
     button = gtk_button_new_with_label ("Send");
+    g_signal_connect (button, "clicked",G_CALLBACK (callback),&im);
+
     gtk_grid_attach(GTK_GRID(grid),im,11,11,4,1);
     gtk_grid_attach (GTK_GRID (grid), button, 11,16,2,1);
+
 
 
     /* Now that we are done packing our widgets, we show them all
