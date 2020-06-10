@@ -14,9 +14,16 @@
 #include "client.h"
 
 ///TODO:LOGIN NEL CLIENT
+int update_msg;
+int input_msg;
 
 int main(int argc, char* argv[]) {
-    
+    int flags = 0666;
+    update_msg = msgget(IPC_PRIVATE, flags);
+    input_msg = msgget(IPC_PRIVATE, flags);
+
+    input_m.mesg_type = 1;
+    message.mesg_type = 1;
     //GTK init
     GtkApplication *app;
     int status;
@@ -29,6 +36,9 @@ int main(int argc, char* argv[]) {
     g_signal_connect (app, "activate", G_CALLBACK (activate),&argv[1]);
     status = g_application_run (G_APPLICATION (app), argc, argv);
     g_object_unref (app);
+    // to destroy the message queue  
+    msgctl(input_msg,IPC_RMID,NULL); 
+    msgctl(update_msg,IPC_RMID,NULL);
     return status;
 }
 
@@ -39,15 +49,8 @@ void* thread_reciver(void *arg){
     char buf1[1024];
     int ret;
 
-    //creating the message queue between client thread anch gtk thread
-    key_t key; 
-    int msgid;
-
-    key = ftok("msg_queue", 65); 
     // msgget creates a message queue 
-    // and returns identifier 
-    msgid = msgget(key, 0666 | IPC_CREAT); 
-    message.mesg_type = 1;
+    // and returns identifier
     #if DEBUG
     printf("thread reciver msg\n: %s\n",message.mesg_text);
     #endif
@@ -63,9 +66,10 @@ void* thread_reciver(void *arg){
         } while (buf1[recv_bytes++]!='\0');
         fprintf(stderr,"\nmessaggio di\n: %s", buf1);
         // msgsnd to send message
+        message.mesg_type = 1;
         memset(message.mesg_text,0,sizeof(message.mesg_text));
         strcpy(message.mesg_text,buf1);
-        msgsnd(msgid, &message, sizeof(message), 0);
+        msgsnd(update_msg, &message, sizeof(message), 0);
         #if DEBUG
         printf("thread reciver msg snd\n: %s",message.mesg_text);
         #endif
@@ -76,18 +80,11 @@ void* thread_reciver(void *arg){
 
 void* client(void* arg){
 
-    //creating the message queue between client thread anch gtk thread for output
-    key_t key; 
-    int msgid;
 
-    key = ftok("msg_queue", 65); 
-    // msgget creates a message queue 
-    // and returns identifier 
-    msgid = msgget(key, 0666 | IPC_CREAT); 
-    message.mesg_type = 1; 
+    
     
     //reset queue
-	if (msgid == -1) {
+	if (update_msg == -1) {
 		printf("Message queue does not exists.\n");
 		//exit(EXIT_SUCCESS);
 	}
@@ -101,17 +98,7 @@ void* client(void* arg){
     printf("thread client start msg: %s",message.mesg_text);
     #endif
 
-    //creating the message queue between client thread anch gtk thread for input
-    key_t key1; 
-    int msgid1; 
-  
-    // ftok to generate unique key 
-    key1 = ftok("input_msg", 64); 
-  
-    // msgget creates a message queue 
-    // and returns identifier 
-    msgid1 = msgget(key1, 0666 | IPC_CREAT); 
-
+    
     #if DEBUG
     printf("thread client start input msg\n: %s",input_m.mesg_text);
     #endif
@@ -174,7 +161,7 @@ void* client(void* arg){
     // msgsnd to send message
     memset(message.mesg_text,0,sizeof(message.mesg_text));
     strcpy(message.mesg_text,ack);
-    msgsnd(msgid, &message, sizeof(message), 0);
+    msgsnd(update_msg, &message, sizeof(message), 0);
     #if DEBUG
     printf("thread client primo ack msg\n: %s",message.mesg_text);
     #endif
@@ -205,7 +192,7 @@ void* client(void* arg){
         if (!(strcmp(buf,ALONE_MSG)==0)){
             memset(message.mesg_text,0,sizeof(message.mesg_text));
             strcpy(message.mesg_text,buf);
-            msgsnd(msgid, &message, sizeof(message), 0);
+            msgsnd(update_msg, &message, sizeof(message), 0);
         }
         else{
             printf("you are alone\n");
@@ -221,7 +208,7 @@ void* client(void* arg){
     //printf("select a username with his number: ");
     memset(buf,0,buf_len);
     //if (fgets(buf, sizeof(buf), stdin) != (char*)buf) {
-    msgrcv(msgid1, &input_m, sizeof(input_m), 1, 0);
+    msgrcv(input_msg, &input_m, sizeof(input_m), 1, 0);
     #if DEBUG
     printf("thread client input msg : %s",input_m.mesg_text);
     #endif
@@ -257,7 +244,7 @@ void* client(void* arg){
     fflush(stdout);
     memset(message.mesg_text,0,sizeof(message.mesg_text));
     strcpy(message.mesg_text,ack);
-    msgsnd(msgid, &message, sizeof(message), 0);
+    msgsnd(update_msg, &message, sizeof(message), 0);
 
     #if DEBUG
     printf("thread client secondo ack msg\n: %s",message.mesg_text);
@@ -299,7 +286,7 @@ void* client(void* arg){
          * returns the first argument passed to it. */
         memset(buf,0,buf_len);
         //if (fgets(buf, sizeof(buf), stdin) != (char*)buf) {
-        msgrcv(msgid1, &input_m, sizeof(input_m), 1, 0);
+        msgrcv(input_msg, &input_m, sizeof(input_m), 1, 0);
 
         #if DEBUG
         printf("thread client input msg tuo msg: %s",input_m.mesg_text);
@@ -334,30 +321,18 @@ void* client(void* arg){
 
     if (DEBUG) fprintf(stderr, "Exiting...\n");
 
-    // to destroy the message queue 
-    msgctl(msgid, IPC_RMID, NULL); 
-
     exit(EXIT_SUCCESS);
 }
 void* update (void* arg){
     handler_args_u* args = (handler_args_u*)arg;
     GtkWidget* view = args->view;
 
-    key_t key; 
-    int msgid; 
-  
-    // ftok to generate unique key 
-    key = ftok("msg_queue", 65); 
-  
-    // msgget creates a message queue 
-    // and returns identifier 
-    msgid = msgget(key, 0666 | IPC_CREAT); 
     
     
     GtkTextIter iter;
     while (1){
         // msgrcv to receive message 
-        msgrcv(msgid, &message, sizeof(message), 1, 0); 
+        msgrcv(update_msg, &message, sizeof(message), 1, 0); 
 
         #if DEBUG
             printf("thread update msg\n: %s\n",message.mesg_text);
@@ -371,8 +346,6 @@ void* update (void* arg){
         gtk_text_view_set_buffer(GTK_TEXT_VIEW (view),GTK_TEXT_BUFFER (buffer));
     }
    
-    // to destroy the message queue 
-    msgctl(msgid, IPC_RMID, NULL); 
     return NULL;
 }
 static void callback( GtkWidget *widget,gpointer data )
@@ -382,21 +355,13 @@ static void callback( GtkWidget *widget,gpointer data )
     }
     GtkWidget* id = data;
     char* input = (char*)gtk_entry_get_text(GTK_ENTRY(id));
-    key_t key; 
-    int msgid;
-	
 
-    key = ftok("input_msg", 64); 
-    // msgget creates a message queue 
-    // and returns identifier 
-    msgid = msgget(key, 0666 | IPC_CREAT); 
     
-    input_m.mesg_type = 1;
     memset(input_m.mesg_text,0,sizeof(input_m.mesg_text));
     strcpy(input_m.mesg_text,input);
     printf("input: %s",input);
     printf("msg: %s",input_m.mesg_text);
-    msgsnd(msgid, &input_m, sizeof(input_m), 0);
+    msgsnd(input_msg, &input_m, sizeof(input_m), 0);
 }
 
 
