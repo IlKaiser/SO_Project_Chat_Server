@@ -48,6 +48,9 @@ void* thread_reciver(void *arg){
     // and returns identifier 
     msgid = msgget(key, 0666 | IPC_CREAT); 
     message.mesg_type = 1;
+    #if DEBUG
+    printf("thread reciver msg: %s",message.mesg_text);
+    #endif
 
     while(1){
         int recv_bytes=0;
@@ -63,6 +66,9 @@ void* thread_reciver(void *arg){
         memset(message.mesg_text,0,sizeof(message.mesg_text));
         strcpy(message.mesg_text,buf1);
         msgsnd(msgid, &message, sizeof(message), 0);
+        #if DEBUG
+        printf("thread reciver msg snd: %s",message.mesg_text);
+        #endif
     }
 
     return NULL;
@@ -80,6 +86,10 @@ void* client(void* arg){
     msgid = msgget(key, 0666 | IPC_CREAT); 
     message.mesg_type = 1; 
 
+    #if DEBUG
+    printf("thread client start msg: %s",message.mesg_text);
+    #endif
+
     //creating the message queue between client thread anch gtk thread for input
     key_t key1; 
     int msgid1; 
@@ -90,6 +100,10 @@ void* client(void* arg){
     // msgget creates a message queue 
     // and returns identifier 
     msgid1 = msgget(key1, 0666 | IPC_CREAT); 
+
+    #if DEBUG
+    printf("thread client start input msg: %s",input_m.mesg_text);
+    #endif
     
 
 
@@ -150,6 +164,9 @@ void* client(void* arg){
     memset(message.mesg_text,0,sizeof(message.mesg_text));
     strcpy(message.mesg_text,ack);
     msgsnd(msgid, &message, sizeof(message), 0);
+    #if DEBUG
+    printf("thread client primo ack msg: %s",message.mesg_text);
+    #endif
 
     if(strcmp(ack,ERROR_MSG)==0){
         handle_error_en(-1,"recived ERROR_MSG");
@@ -172,16 +189,21 @@ void* client(void* arg){
             if (ret == 0) handle_error_en(0xDEAD,"server is offline");
             //recv_bytes += ret;
         } while ( buf[recv_bytes++] != '\0' );
-        printf("il buffer è: %s\n", buf);
+        printf("la lista è:\n %s", buf);
         fflush(stdout);
-        memset(message.mesg_text,0,sizeof(message.mesg_text));
-        strcpy(message.mesg_text,buf);
-        msgsnd(msgid, &message, sizeof(message), 0);
-
-        //check if recived errore msg from server
-        if (strcmp(buf,ALONE_MSG)==0){
+        if (!(strcmp(buf,ALONE_MSG)==0)){
+            memset(message.mesg_text,0,sizeof(message.mesg_text));
+            strcpy(message.mesg_text,buf);
+            msgsnd(msgid, &message, sizeof(message), 0);
+        }
+        else{
             printf("you are alone\n");
         }
+        #if DEBUG
+        printf("thread client lista msg: %s",message.mesg_text);
+        #endif
+
+        //check if recived errore msg from server
     }while (strcmp(buf,ALONE_MSG)==0);
 
     ///TODO:input numero di return
@@ -189,6 +211,9 @@ void* client(void* arg){
     memset(buf,0,buf_len);
     //if (fgets(buf, sizeof(buf), stdin) != (char*)buf) {
     msgrcv(msgid1, &input_m, sizeof(input_m), 1, 0);
+    #if DEBUG
+    printf("thread client input msg : %s",input_m.mesg_text);
+    #endif
     /*fprintf(stderr, "Error while reading from stdin, exiting...\n");
     exit(EXIT_FAILURE);*/
     ///TODO: manda il numero scelto
@@ -222,6 +247,10 @@ void* client(void* arg){
     memset(message.mesg_text,0,sizeof(message.mesg_text));
     strcpy(message.mesg_text,ack);
     msgsnd(msgid, &message, sizeof(message), 0);
+
+    #if DEBUG
+    printf("thread client secondo ack msg: %s",message.mesg_text);
+    #endif
 
     if(strcmp(ack,ERROR_MSG)==0){
         //close connection with the server
@@ -260,6 +289,10 @@ void* client(void* arg){
         memset(buf,0,buf_len);
         //if (fgets(buf, sizeof(buf), stdin) != (char*)buf) {
         msgrcv(msgid1, &input_m, sizeof(input_m), 1, 0);
+
+        #if DEBUG
+        printf("thread client input msg tuo msg: %s",input_m.mesg_text);
+        #endif
         /*fprintf(stderr, "Error while reading from stdin, exiting...\n");
         exit(EXIT_FAILURE);*/
         strcpy(buf,input_m.mesg_text);
@@ -312,7 +345,10 @@ void* update (void* arg){
     while (1){
         // msgrcv to receive message 
         msgrcv(msgid, &message, sizeof(message), 1, 0); 
-    
+
+        #if DEBUG
+        printf("thread update msg: %s",message.mesg_text);
+        #endif
         // display the message 
         printf("Data Received is : %s \n",  message.mesg_text);
         GtkTextBuffer* buffer = gtk_text_view_get_buffer(GTK_TEXT_VIEW(view));
@@ -343,6 +379,8 @@ static void callback( GtkWidget *widget,gpointer data )
     input_m.mesg_type = 1;
     memset(input_m.mesg_text,0,sizeof(input_m.mesg_text));
     strcpy(input_m.mesg_text,input);
+    printf("input: %s",input);
+    printf("msg: %s",input_m.mesg_text);
     msgsnd(msgid, &input_m, sizeof(input_m), 0);
 }
 
