@@ -301,6 +301,7 @@ void* client(void* arg){
         /*fprintf(stderr, "Error while reading from stdin, exiting...\n");
         exit(EXIT_FAILURE);*/
         strcpy(buf,input_m.mesg_text);
+        strcat(buf,"\n");
         //strcpy(buf,"ciao come va\n");
         printf("hai scritto: %s",buf);
 
