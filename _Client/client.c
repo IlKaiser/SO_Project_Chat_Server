@@ -308,15 +308,17 @@ void* update (void* arg){
     // msgget creates a message queue 
     // and returns identifier 
     msgid = msgget(key, 0666 | IPC_CREAT); 
+    GtkTextIter iter;
     while (1){
         // msgrcv to receive message 
         msgrcv(msgid, &message, sizeof(message), 1, 0); 
     
         // display the message 
         printf("Data Received is : %s \n",  message.mesg_text);
-        GtkTextBuffer* buffer = gtk_text_buffer_new(NULL);
+        GtkTextBuffer* buffer = gtk_text_view_get_buffer(GTK_TEXT_VIEW(view));
+        gtk_text_buffer_get_end_iter (buffer,&iter);
         
-        gtk_text_buffer_set_text(GTK_TEXT_BUFFER (buffer),message.mesg_text,strlen(message.mesg_text));
+        gtk_text_buffer_insert(GTK_TEXT_BUFFER (buffer),&iter,message.mesg_text,strlen(message.mesg_text));
         gtk_text_view_set_buffer(GTK_TEXT_VIEW (view),GTK_TEXT_BUFFER (buffer));
     }
    
