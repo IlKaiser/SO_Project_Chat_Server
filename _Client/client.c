@@ -216,6 +216,7 @@ void* client(void* arg){
     exit(EXIT_FAILURE);*/
     ///TODO: manda il numero scelto
     strcpy(buf,input_m.mesg_text);
+    strcat(buf,"\n");
     //strcat(buf,"\n");
     int pick_len = strlen(buf);
     printf("Pick_len %d\n",pick_len);
@@ -228,11 +229,17 @@ void* client(void* arg){
         if (ret == -1) handle_error("Cannot write to the socket");
         bytes_sent+=ret;
     }
+    printf("inviata la scelta\n");
+    fflush(stdout);
+
     
 
     ///TODO: riceve l'ack e entra nel loop
     memset(ack, 0, ack_len);
     recv_bytes = 0;
+
+    printf("aspetto ack\n");
+    fflush(stdout);
     do {
         ret = recv(socket_desc, ack + recv_bytes,1, 0);
         if (ret == -1 && errno == EINTR) continue;
