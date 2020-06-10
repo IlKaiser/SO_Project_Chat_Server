@@ -352,15 +352,7 @@ void* update (void* arg){
     // msgget creates a message queue 
     // and returns identifier 
     msgid = msgget(key, 0666 | IPC_CREAT); 
-    if (msgid == -1) {
-		printf("Message queue input does not exists.\n");
-		//exit(EXIT_SUCCESS);
-	}
-
-	if (msgctl(msgid, IPC_RMID, NULL) == -1) {
-		fprintf(stderr, "Message queue could not be deleted.\n");
-		exit(EXIT_FAILURE);
-	}
+    
     
     GtkTextIter iter;
     while (1){
