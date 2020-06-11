@@ -12,7 +12,10 @@
 #include <fcntl.h>           /* For O_* constants */
 #include <sys/stat.h>        /* For mode constants */
 
+#include <libpq-fe.h>
+
 #include "server.h"
+
 
 
 /* Memory shared between all threads */
@@ -162,6 +165,23 @@ void connection_handler(int socket_desc, struct sockaddr_in* client_addr) {
 
 
     ///TODO: apre la connessione con il DB
+    const char *conninfo = "hostaddr=1database-1.csh3ixzgt0vm.eu-west-3.rds.amazonaws.com port=5432 dbname=postgres username=postgres password=Quindicimaggio_20 sslmode=disable";
+    PGconn *conn;
+    PGresult *res;
+    int nFields;
+
+    conn = PQconnectdb(conninfo);
+    if (PQstatus(conn) != CONNECTION_OK)
+    {
+        fprintf(stderr, "Connection to database failed: %s", PQerrorMessage(conn));
+        PQfinish(conn);
+        exit(1);
+    }
+
+
+
+
+
 
 
     // 2. check if there is only one client
@@ -295,6 +315,23 @@ void connection_handler(int socket_desc, struct sockaddr_in* client_addr) {
 
         // ... or if I have to send the message back
         ///TODO: mette nel db il messaggio
+        char *paramValue[3] = {user_name,"bho",buf};
+        res = PQexecParams(conn,
+                       "INSERT INTO messaggi (_from,_to,mes) VALUES ($1,$2,$3)",
+                       1,       /* one param */
+                       NULL,    /* let the backend deduce param type */
+                       paramValue,
+                       NULL,
+                       NULL,
+                       1);      /* ask for binary results */
+        if (PQresultStatus(res) != PGRES_COMMAND_OK)
+        {
+            fprintf(stderr, "INSERT failed: %s", PQerrorMessage(conn));
+            exit_nicely(conn,res);
+        }
+        PQclear(res);
+
+
 
         /// send to requested target
         //Disabled for now,but ready
