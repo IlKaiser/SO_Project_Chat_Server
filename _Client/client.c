@@ -39,6 +39,7 @@ int main(int argc, char* argv[]) {
     // to destroy the message queue  
     msgctl(input_msg,IPC_RMID,NULL); 
     msgctl(update_msg,IPC_RMID,NULL);
+    
     return status;
 }
 
@@ -450,8 +451,8 @@ static void activate (GtkApplication *app,gpointer user_data){
     button = gtk_button_new_with_label ("Send");
     g_signal_connect (button, "clicked",G_CALLBACK (callback),im);
 
-    gtk_grid_attach(GTK_GRID(grid),im,11,11,4,1);
-    gtk_grid_attach (GTK_GRID (grid), button, 11,16,2,1);
+    gtk_grid_attach(GTK_GRID(grid),im,0,0,4,1);
+    gtk_grid_attach (GTK_GRID (grid), button, 0,5,2,1);
 
 
 
