@@ -215,12 +215,13 @@ void* client(void* arg){
     /*fprintf(stderr, "Error while reading from stdin, exiting...\n");
     exit(EXIT_FAILURE);*/
     ///TODO: manda il numero scelto
+    printf("scelta nel msg è: %s\n",input_m.mesg_text);
     strcpy(buf,input_m.mesg_text);
     strcat(buf,"\n");
     //strcat(buf,"\n");
     int pick_len = strlen(buf);
     printf("Pick_len %d\n",pick_len);
-    printf("Pick %s\n",buf);
+    printf("Pick: %s\n",buf);
     // send message to server
     bytes_sent=0;
     while ( bytes_sent < pick_len) {
@@ -363,7 +364,6 @@ static void callback( GtkWidget *widget,gpointer data )
     }
     GtkWidget* id = data;
     char* input = (char*)gtk_entry_get_text(GTK_ENTRY(id));
-    gtk_entry_set_text(GTK_ENTRY(id),"");
 
     
     memset(input_m.mesg_text,0,sizeof(input_m.mesg_text));
@@ -371,6 +371,7 @@ static void callback( GtkWidget *widget,gpointer data )
     printf("input: %s",input);
     printf("msg: %s",input_m.mesg_text);
     msgsnd(input_msg, &input_m, sizeof(input_m), 0);
+    gtk_entry_set_text(GTK_ENTRY(id),"");
 }
 
 
