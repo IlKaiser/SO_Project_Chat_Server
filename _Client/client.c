@@ -16,13 +16,28 @@
 ///TODO:LOGIN NEL CLIENT
 int update_msg;
 int input_msg;
+int upin_msg;
+input_m* input_str;
+input_m* upin_str;
+
+
+struct msqid_ds buf;
 
 int main(int argc, char* argv[]) {
+    input_str = (input_m*)malloc(sizeof(input_m));
+    upin_str = (input_m*)malloc(sizeof(input_m));
     int flags = 0666;
+
+    key_t id1 =ftok("client.c", 1);
+    key_t id2 =ftok("client.c", 2);
+    key_t id3 =ftok("client.c", 3);
+
     update_msg = msgget(IPC_PRIVATE, flags);
     input_msg = msgget(IPC_PRIVATE, flags);
+    upin_msg = msgget(IPC_PRIVATE, flags);
 
-    input_m.mesg_type = 1;
+    input_str->mesg_type = 1;
+    upin_str->mesg_type = 1;
     message.mesg_type = 1;
     //GTK init
     GtkApplication *app;
@@ -37,8 +52,9 @@ int main(int argc, char* argv[]) {
     status = g_application_run (G_APPLICATION (app), argc, argv);
     g_object_unref (app);
     // to destroy the message queue  
-    msgctl(input_msg,IPC_RMID,NULL); 
-    msgctl(update_msg,IPC_RMID,NULL);
+    msgctl(id1,IPC_RMID,NULL); 
+    msgctl(id2,IPC_RMID,NULL);
+    msgctl(id3,IPC_RMID,NULL);
     
     return status;
 }
@@ -59,7 +75,7 @@ void* thread_reciver(void *arg){
     while(1){
         int recv_bytes=0;
         memset(buf1,0,sizeof(buf1));
-        do {
+        do {                                
             ret = recv(socket_desc, buf1 + recv_bytes,1, 0);
             if (ret == -1 && errno == EINTR) continue;
             if (ret == -1) handle_error("Cannot read from the socket");
@@ -101,7 +117,7 @@ void* client(void* arg){
 
     
     #if DEBUG
-    printf("thread client start input msg\n: %s",input_m.mesg_text);
+    printf("thread client start input msg\n: %s",input_str->mesg_text);
     #endif
     
 
@@ -209,15 +225,15 @@ void* client(void* arg){
     //printf("select a username with his number: ");
     memset(buf,0,buf_len);
     //if (fgets(buf, sizeof(buf), stdin) != (char*)buf) {
-    msgrcv(input_msg, &input_m, sizeof(input_m), 1, 0);
+    msgrcv(input_msg, input_str, sizeof(input_m), 1, 0);
     #if DEBUG
-    printf("thread client input msg : %s",input_m.mesg_text);
+    printf("thread client input msg : %s",input_str->mesg_text);
     #endif
     /*fprintf(stderr, "Error while reading from stdin, exiting...\n");
     exit(EXIT_FAILURE);*/
     ///TODO: manda il numero scelto
-    printf("scelta nel msg è: %s\n",input_m.mesg_text);
-    strcpy(buf,input_m.mesg_text);
+    printf("scelta nel msg è: %s\n",input_str->mesg_text);
+    strcpy(buf,input_str->mesg_text);
     strcat(buf,"\n");
     //strcat(buf,"\n");
     int pick_len = strlen(buf);
@@ -295,14 +311,14 @@ void* client(void* arg){
          * returns the first argument passed to it. */
         memset(buf,0,buf_len);
         //if (fgets(buf, sizeof(buf), stdin) != (char*)buf) {
-        msgrcv(input_msg, &input_m, sizeof(input_m), 1, 0);
+        msgrcv(input_msg, input_str, sizeof(input_m), 1, 0);
 
         #if DEBUG
-        printf("thread client input msg tuo msg: %s",input_m.mesg_text);
+        printf("thread client input msg tuo msg: %s",input_str->mesg_text);
         #endif
         /*fprintf(stderr, "Error while reading from stdin, exiting...\n");
         exit(EXIT_FAILURE);*/
-        strcpy(buf,input_m.mesg_text);
+        strcpy(buf,input_str->mesg_text);
         strcat(buf,"\n");
         //strcpy(buf,"ciao come va\n");
         printf("hai scritto: %s",buf);
@@ -342,18 +358,34 @@ void* update (void* arg){
     GtkTextIter iter;
     while (1){
         // msgrcv to receive message 
-        msgrcv(update_msg, &message, sizeof(message), 1, 0); 
-
-        #if DEBUG
-            printf("thread update msg\n: %s\n",message.mesg_text);
-        #endif
-        // display the message 
-        printf("Data Received is \n: %s \n",  message.mesg_text);
-        GtkTextBuffer* buffer = gtk_text_view_get_buffer(GTK_TEXT_VIEW(view));
-        gtk_text_buffer_get_end_iter (buffer,&iter);
-        
-        gtk_text_buffer_insert(GTK_TEXT_BUFFER (buffer),&iter,message.mesg_text,strlen(message.mesg_text));
-        gtk_text_view_set_buffer(GTK_TEXT_VIEW (view),GTK_TEXT_BUFFER (buffer));
+        msgctl(update_msg, IPC_STAT, &buf);
+        if (buf.msg_qnum > 0){
+            
+            msgrcv(update_msg, &message, sizeof(message), 1, 0);
+            #if DEBUG
+                printf("thread update msg\n: %s\n",message.mesg_text);
+            #endif
+            // display the message 
+            printf("Data Received is \n: %s \n",  message.mesg_text);
+            GtkTextBuffer* buffer = gtk_text_view_get_buffer(GTK_TEXT_VIEW(view));
+            gtk_text_buffer_get_end_iter (buffer,&iter);
+            
+            gtk_text_buffer_insert(GTK_TEXT_BUFFER (buffer),&iter,message.mesg_text,strlen(message.mesg_text));
+            gtk_text_view_set_buffer(GTK_TEXT_VIEW (view),GTK_TEXT_BUFFER (buffer));
+        }
+        msgctl(upin_msg, IPC_STAT, &buf);
+        if (buf.msg_qnum>0){
+            msgrcv(upin_msg, upin_str, sizeof(input_m), 1, 0);
+            #if DEBUG
+                printf("thread update msg\n: %s\n",upin_str->mesg_text);
+            #endif
+            // display the message 
+            printf("Data sent is \n: %s \n",  upin_str->mesg_text);
+            GtkTextBuffer* buffer = gtk_text_view_get_buffer(GTK_TEXT_VIEW(view));
+            gtk_text_buffer_get_end_iter (buffer,&iter);
+            gtk_text_buffer_insert(GTK_TEXT_BUFFER (buffer),&iter,upin_str->mesg_text,strlen(upin_str->mesg_text));
+            gtk_text_view_set_buffer(GTK_TEXT_VIEW (view),GTK_TEXT_BUFFER (buffer));
+        }
     }
    
     return NULL;
@@ -367,11 +399,14 @@ static void callback( GtkWidget *widget,gpointer data )
     char* input = (char*)gtk_entry_get_text(GTK_ENTRY(id));
 
     
-    memset(input_m.mesg_text,0,sizeof(input_m.mesg_text));
-    strcpy(input_m.mesg_text,input);
+    memset(input_str->mesg_text,0,sizeof(input_str->mesg_text));
+    memset(upin_str->mesg_text,0,sizeof(input_str->mesg_text));
+    strcpy(input_str->mesg_text,input);
+    strcpy(upin_str->mesg_text,input);
     printf("input: %s",input);
-    printf("msg: %s",input_m.mesg_text);
-    msgsnd(input_msg, &input_m, sizeof(input_m), 0);
+    printf("msg: %s",input_str->mesg_text);
+    msgsnd(input_msg, input_str, sizeof(input_m),0);
+    msgsnd(upin_msg, upin_str, sizeof(input_m), 0);
     gtk_entry_set_text(GTK_ENTRY(id),"");
 }
 
