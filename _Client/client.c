@@ -385,7 +385,7 @@ void* update (void* arg){
             printf("Data sent is \n: %s \n",  upin_str->mesg_text);
             GtkTextBuffer* buffer = gtk_text_view_get_buffer(GTK_TEXT_VIEW(view));
             gtk_text_buffer_get_end_iter (buffer,&iter);
-            gtk_text_buffer_insert(GTK_TEXT_BUFFER (buffer),&iter,upin_str->mesg_text,strlen(upin_str->mesg_text));
+            gtk_text_buffer_insert(GTK_TEXT_BUFFER (buffer),&iter,strcat(upin_str->mesg_text,"\n"),strlen(strcat(upin_str->mesg_text,"\n")));
             gtk_text_view_set_buffer(GTK_TEXT_VIEW (view),GTK_TEXT_BUFFER (buffer));
         }
     }
