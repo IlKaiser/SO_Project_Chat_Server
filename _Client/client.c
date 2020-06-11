@@ -28,13 +28,16 @@ int main(int argc, char* argv[]) {
     upin_str = (input_m*)malloc(sizeof(input_m));
     int flags = 0666;
 
-    key_t id1 =ftok("client.c", 1);
-    key_t id2 =ftok("client.c", 2);
-    key_t id3 =ftok("client.c", 3);
+    key_t id1 =ftok(argv[0], 1);
+    key_t id2 =ftok(argv[0], 2);
+    key_t id3 =ftok(argv[0], 3);
+    printf ("la chiave è :%d\n",id1);
+    printf ("la chiave è :%d\n",id2);
+    printf ("la chiave è :%d\n",id3);
 
-    update_msg = msgget(IPC_PRIVATE, flags);
-    input_msg = msgget(IPC_PRIVATE, flags);
-    upin_msg = msgget(IPC_PRIVATE, flags);
+    update_msg = msgget(id1, flags| IPC_CREAT);
+    input_msg = msgget(id2, flags| IPC_CREAT);
+    upin_msg = msgget(id3, flags| IPC_CREAT);
 
     input_str->mesg_type = 1;
     upin_str->mesg_type = 1;
@@ -51,10 +54,6 @@ int main(int argc, char* argv[]) {
     g_signal_connect (app, "activate", G_CALLBACK (activate),&argv[1]);
     status = g_application_run (G_APPLICATION (app), argc, argv);
     g_object_unref (app);
-    // to destroy the message queue  
-    msgctl(id1,IPC_RMID,NULL); 
-    msgctl(id2,IPC_RMID,NULL);
-    msgctl(id3,IPC_RMID,NULL);
     
     return status;
 }
@@ -92,6 +91,7 @@ void* thread_reciver(void *arg){
         #endif
     }
 
+    msgctl(update_msg, IPC_RMID, NULL); 
     return NULL;
 }
 
@@ -346,7 +346,9 @@ void* client(void* arg){
     if(ret) handle_error("Cannot close socket");
 
     if (DEBUG) fprintf(stderr, "Exiting...\n");
-
+    msgctl(update_msg, IPC_RMID, NULL);
+    msgctl(input_msg, IPC_RMID, NULL);
+    msgctl(upin_msg, IPC_RMID, NULL);
     exit(EXIT_SUCCESS);
 }
 void* update (void* arg){
@@ -387,7 +389,6 @@ void* update (void* arg){
             gtk_text_view_set_buffer(GTK_TEXT_VIEW (view),GTK_TEXT_BUFFER (buffer));
         }
     }
-   
     return NULL;
 }
 static void callback( GtkWidget *widget,gpointer data )
