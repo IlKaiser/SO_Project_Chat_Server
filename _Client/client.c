@@ -405,7 +405,6 @@ static void activate (GtkApplication *app,gpointer user_data){
     gtk_window_set_default_size(GTK_WINDOW(window),400,400);
 
 
-
     im=gtk_entry_new ();
 
 
@@ -422,6 +421,8 @@ static void activate (GtkApplication *app,gpointer user_data){
                                     GTK_POLICY_AUTOMATIC, 
                                     GTK_POLICY_AUTOMATIC);
 
+    gtk_container_add (GTK_CONTAINER (scrolled_window),view);
+
     paned=gtk_paned_new(GTK_ORIENTATION_VERTICAL);
 
     /* The function directly below is used to add children to the scrolled window 
@@ -433,17 +434,18 @@ static void activate (GtkApplication *app,gpointer user_data){
 
     /* Pack the container in the window */
     //gtk_container_add (GTK_CONTAINER (window), scrolled_window);
+    gtk_paned_add1 (GTK_PANED (paned),scrolled_window);
+    gtk_paned_add2 (GTK_PANED (paned), grid);
     gtk_container_add (GTK_CONTAINER (window), paned);
     gtk_widget_set_size_request(paned,300,-1);
-    gtk_paned_pack1 (GTK_PANED (paned), view,FALSE,FALSE);
-    gtk_paned_add2 (GTK_PANED (paned), grid);
+    
 
 
 
     /* Place the Quit button in the grid cell (0, 1), and make itvoid
     * span 2 columns.void
     */
-    gtk_grid_attach(GTK_GRID (grid), scrolled_window,0,0,10,10);
+    //gtk_grid_attach(GTK_GRID (grid), scrolled_window,0,0,10,10);
     button = gtk_button_new_with_label ("Send");
     g_signal_connect (button, "clicked",G_CALLBACK (callback),im);
 
