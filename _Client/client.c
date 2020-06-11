@@ -363,6 +363,7 @@ static void callback( GtkWidget *widget,gpointer data )
     }
     GtkWidget* id = data;
     char* input = (char*)gtk_entry_get_text(GTK_ENTRY(id));
+    gtk_entry_set_text(GTK_ENTRY(id),"");
 
     
     memset(input_m.mesg_text,0,sizeof(input_m.mesg_text));
