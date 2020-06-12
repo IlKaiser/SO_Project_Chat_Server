@@ -210,13 +210,14 @@ void* client(void* arg){
             memset(message.mesg_text,0,sizeof(message.mesg_text));
             strcpy(message.mesg_text,buf);
             msgsnd(update_msg, &message, sizeof(message), 0);
+            #if DEBUG
+                printf("thread client lista msg\n: %s",message.mesg_text);
+            #endif
         }
         else{
             printf("you are alone\n");
         }
-        #if DEBUG
-        printf("thread client lista msg\n: %s",message.mesg_text);
-        #endif
+        
 
         //check if recived errore msg from server
     }while (strcmp(buf,ALONE_MSG)==0);
