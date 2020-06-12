@@ -11,11 +11,9 @@
 #include <sys/socket.h>
 #include <fcntl.h>           /* For O_* constants */
 #include <sys/stat.h>        /* For mode constants */
-#if AWS 
-#include <postgres/libpq-fe.h> // for our server
-#else
-#include <libpq-fe.h>
-#endif
+
+ 
+#include <postgresql/libpq-fe.h> // for our server
 
 
 #include "server.h"
