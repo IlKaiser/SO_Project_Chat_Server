@@ -11,8 +11,12 @@
 #include <sys/socket.h>
 #include <fcntl.h>           /* For O_* constants */
 #include <sys/stat.h>        /* For mode constants */
-
+#if AWS 
+#include <postgres/libpq-fe.h> // for our server
+#else
 #include <libpq-fe.h>
+#endif
+
 
 #include "server.h"
 
@@ -228,7 +232,7 @@ void connection_handler(int socket_desc, struct sockaddr_in* client_addr) {
         if (ret == -1 && errno == EINTR) continue;
         if (ret == -1) handle_error("Cannot read from the socket");
         if (ret == 0) break;
-	}while ( user_buf[recv_bytes++]!= '\0' );
+	}while ( user_buf[recv_bytes++]!= '\n' );
     printf("Buffer %s \n",user_buf);
     int user_id=atoi(user_buf);
     #if DEBUG
@@ -308,7 +312,7 @@ void connection_handler(int socket_desc, struct sockaddr_in* client_addr) {
             if (ret == -1 && errno == EINTR) continue;
             if (ret == -1) handle_error("Cannot read from the socket");
             if (ret == 0) break;
-		} while ( buf[recv_bytes++] != '\0' );
+		} while ( buf[recv_bytes++] != '\n' );
         // check whether I have just been told to quit...
         if (recv_bytes == 0) break;
         if (recv_bytes == quit_command_len && !memcmp(buf, quit_command, quit_command_len)) break;
