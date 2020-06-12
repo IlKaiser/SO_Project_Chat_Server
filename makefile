@@ -1,11 +1,12 @@
-
+CFLAGS= -m64 -Wall -g -O2 
 OS := $(shell uname)
 ifeq ($(OS),Darwin)
-	CC=gcc-9
+	CC=gcc-9 
+	CFLAGS += -I/usr/local/opt/libpq/include
 else 
 	CC=gcc
 endif
-CFLAGS= -m64 -Wall -g -O2 
+
 SERVERFOLDER=_Server
 CLIENTFOLDER=_Client
 
