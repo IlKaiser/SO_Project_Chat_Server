@@ -113,7 +113,7 @@ void connection_handler(int socket_desc, struct sockaddr_in* client_addr) {
             if (ret == -1 && errno == EINTR) continue;
             if (ret == -1) handle_error("Cannot read from the socket");
             if (ret == 0) break;
-	} while ( user_name[recv_bytes++] != '\n' );
+	} while ( user_name[recv_bytes++] != '\0' );
 
     #if DEBUG
         printf("Username get: %s\n",user_name);
@@ -168,7 +168,7 @@ void connection_handler(int socket_desc, struct sockaddr_in* client_addr) {
     const char *conninfo = "hostaddr=1database-1.csh3ixzgt0vm.eu-west-3.rds.amazonaws.com port=5432 dbname=postgres username=postgres password=Quindicimaggio_20 sslmode=disable";
     PGconn *conn;
     PGresult *res;
-    int nFields;
+    
 
     conn = PQconnectdb(conninfo);
     if (PQstatus(conn) != CONNECTION_OK)
@@ -228,7 +228,7 @@ void connection_handler(int socket_desc, struct sockaddr_in* client_addr) {
         if (ret == -1 && errno == EINTR) continue;
         if (ret == -1) handle_error("Cannot read from the socket");
         if (ret == 0) break;
-	}while ( user_buf[recv_bytes++]!= '\n' );
+	}while ( user_buf[recv_bytes++]!= '\0' );
     printf("Buffer %s \n",user_buf);
     int user_id=atoi(user_buf);
     #if DEBUG
@@ -237,6 +237,10 @@ void connection_handler(int socket_desc, struct sockaddr_in* client_addr) {
 
     // 4.1 get target socket desc
     int socket_target=sockets[user_id-1];
+
+    //Look for target user name
+    char* target_user_name=user_names[user_id-1];
+
     //check if user his number
     if (socket_target==socket_desc){
         memset(buf, 0, buf_len);
@@ -304,7 +308,7 @@ void connection_handler(int socket_desc, struct sockaddr_in* client_addr) {
             if (ret == -1 && errno == EINTR) continue;
             if (ret == -1) handle_error("Cannot read from the socket");
             if (ret == 0) break;
-		} while ( buf[recv_bytes++] != '\n' );
+		} while ( buf[recv_bytes++] != '\0' );
         // check whether I have just been told to quit...
         if (recv_bytes == 0) break;
         if (recv_bytes == quit_command_len && !memcmp(buf, quit_command, quit_command_len)) break;
@@ -315,7 +319,7 @@ void connection_handler(int socket_desc, struct sockaddr_in* client_addr) {
 
         // ... or if I have to send the message back
         ///TODO: mette nel db il messaggio
-        char *paramValue[3] = {user_name,"bho",buf};
+        const char* paramValue[3] = {user_name,target_user_name,buf};
         res = PQexecParams(conn,
                        "INSERT INTO messaggi (_from,_to,mes) VALUES ($1,$2,$3)",
                        1,       /* one param */
@@ -437,4 +441,10 @@ void list_formatter(char buf[]){
         strcat(buf,number);
         strcat(buf,user_names[i]);
     }
+}
+static void exit_nicely(PGconn *conn, PGresult   *res)
+{
+    PQclear(res);
+    PQfinish(conn);
+    exit(1);
 }

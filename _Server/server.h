@@ -34,3 +34,6 @@ void list_formatter(char buf[]);
 
 //function that sends message to reciver
 void send_mess(int index,char buff[]);
+
+//close db connection
+static void exit_nicely(PGconn *conn, PGresult   *res);
