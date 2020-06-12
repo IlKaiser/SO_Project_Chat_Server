@@ -46,6 +46,9 @@ int main(int argc, char* argv[]) {
     printf ("la chiave è :%d\n",id2);
     printf ("la chiave è :%d\n",id3);
 
+    msgctl(msgget(id1, 0), IPC_RMID, NULL);
+    msgctl(msgget(id2, 0), IPC_RMID, NULL);
+    msgctl(msgget(id3, 0), IPC_RMID, NULL);
     update_msg = msgget(id1, flags| IPC_CREAT);
     input_msg = msgget(id2, flags| IPC_CREAT);
     upin_msg = msgget(id3, flags| IPC_CREAT);
