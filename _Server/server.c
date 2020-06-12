@@ -113,7 +113,7 @@ void connection_handler(int socket_desc, struct sockaddr_in* client_addr) {
             if (ret == -1 && errno == EINTR) continue;
             if (ret == -1) handle_error("Cannot read from the socket");
             if (ret == 0) break;
-	} while ( user_name[recv_bytes++] != '\0' );
+	} while ( user_name[recv_bytes++] != '\n' );
 
     #if DEBUG
         printf("Username get: %s\n",user_name);
@@ -165,7 +165,7 @@ void connection_handler(int socket_desc, struct sockaddr_in* client_addr) {
 
 
     ///TODO: apre la connessione con il DB
-    const char *conninfo = "hostaddr=1database-1.csh3ixzgt0vm.eu-west-3.rds.amazonaws.com port=5432 dbname=postgres username=postgres password=Quindicimaggio_20 sslmode=disable";
+    const char *conninfo = "hostaddr=15.236.174.17 port=5432 dbname=SO_chat user=postgres password=Quindicimaggio_20 sslmode=disable";
     PGconn *conn;
     PGresult *res;
     
