@@ -41,6 +41,7 @@ struct user_par{
     GtkWidget* password;
     GtkWidget* dialog;
     GtkWidget* window;
+    GtkApplication* app;
 } user_par;
 
 
@@ -49,8 +50,9 @@ void* client(void *arg);
 //manages incoming messages
 void* thread_reciver(void *arg);
 //gtk thread
-static void activate (GtkApplication *app,gpointer user_data);
-GtkWidget* activate_login(GtkApplication *app);
+static void activate (GtkApplication *app);
+//GtkWidget* activate_login(GtkApplication *app);
+void main_page(GtkApplication *app,char* user);
 //login checker 
 void login( GtkWidget *widget,gpointer data );
 //update gtk thread

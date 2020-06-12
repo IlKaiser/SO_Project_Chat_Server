@@ -29,7 +29,8 @@ int upin_msg;
 input_m* input_str;
 input_m* upin_str;
 
-GtkApplication *app;
+
+
 
 struct msqid_ds buf;
 
@@ -60,6 +61,7 @@ int main(int argc, char* argv[]) {
     input_n = argv[1];
     strcpy(name, "test.");
     strcat(name,input_n);*/
+    GtkApplication *app;
     app = gtk_application_new (argv[1]/*name*/, G_APPLICATION_FLAGS_NONE);
     g_signal_connect (app, "activate", G_CALLBACK (activate),&argv[1]);
     status = g_application_run (G_APPLICATION (app),argc, argv);
@@ -125,9 +127,11 @@ void* client(void* arg){
 
 
     int ret,bytes_sent,recv_bytes;
-    char username[32];
+    char* username = arg;
+    strcat(username,"\n");
+    //char username[32];
     //char** argv=(char**)arg;
-    strcpy(username,myname);
+    //strcpy(username,myname);
     /*    if (*argv!=NULL){
             strcpy(username,argv[1]);
             strcat(username,"\n");
@@ -359,8 +363,6 @@ void* update (void* arg){
     handler_args_u* args = (handler_args_u*)arg;
     GtkWidget* view = args->view;
 
-    
-    
     GtkTextIter iter;
     while (1){
         // msgrcv to receive message 
@@ -422,132 +424,20 @@ static void exit_nicely(PGconn *conn, PGresult   *res)
     PQfinish(conn);
     exit(1);
 }
-
-void login( GtkWidget *widget,gpointer data ){
-    struct user_par *arg = data; 
-    GtkWidget* window = arg->window;
-    GtkWidget* dialog = arg->dialog;
-    GtkWidget* user = arg->username;
-    GtkWidget* pas = arg->password;
-    
-    char* i_user = (char*)gtk_entry_get_text(GTK_ENTRY(user));
-    char* i_pas = (char*)gtk_entry_get_text(GTK_ENTRY(pas));
-
-    //connetto al db
-    const char *conninfo = "hostaddr=15.236.174.17 port=5432 dbname=SO_chat user=postgres password=Quindicimaggio_20 sslmode=disable";
-    PGconn *conn;
-    PGresult *res;
-    
-
-    conn = PQconnectdb(conninfo);
-    if (PQstatus(conn) != CONNECTION_OK)
-    {
-        fprintf(stderr, "Connection to database failed: %s", PQerrorMessage(conn));
-        PQfinish(conn);
-        exit(1);
-    }
-
-    const char* paramValue[2] = {i_user,i_pas};
-    res = PQexecParams(conn,
-                    "select Username from Users where Username=$1 and Password=$2",
-                    2,       /* two param */
-                    NULL,    /* let the backend deduce param type */
-                    paramValue,
-                    NULL,
-                    NULL,
-                    0);      /* ask for binary results */
-    if (PQresultStatus(res) != PGRES_TUPLES_OK)
-    {
-        fprintf(stderr, "SELECT failed: %s", PQerrorMessage(conn));
-        PQclear(res);
-        exit_nicely(conn,res);
-    }
-    printf("risposta del db: %s\n",(char *)res);
-
-
-    //GTK init
-    /*char* input_n;
-    char *name = (char *) malloc(1 + strlen("test.")+ strlen(argv[1]) );
-    input_n = argv[1];
-    strcpy(name, "test.");
-    strcat(name,input_n);
-    int status;
-    gtk_window_close(GTK_WINDOW (window));
-    g_signal_connect (app, "activate", G_CALLBACK (activate),i_user);
-    status = g_application_run (G_APPLICATION (app), 0, 0);
-    g_object_unref (app);*/
-    // prepare arguments for the new thread
+void main_page(GtkApplication *app,char* user){
+    //AFTER LOGIN CODE
     int ret;
     pthread_t thread;
-    ret = pthread_create(&thread, NULL,client,i_user);
+    //char* i_user = (char*)gtk_entry_get_text(GTK_ENTRY(user));
+    printf("il tuo nome è: %s\n",user);
+    // prepare arguments for the new thread
+    ret = pthread_create(&thread, NULL,client,user);
     if (ret) handle_error_en(ret, "Could not create a new thread");
     
     if (DEBUG) fprintf(stderr, "New thread created to handle the request!\n");
     
     ret = pthread_detach(thread); // I won't phtread_join() on this thread
     if (ret) handle_error_en(ret, "Could not detach the thread");
-    return;
-
-
-}
-
-GtkWidget * activate_login(GtkApplication *app){
-    GtkWidget *window;
-    GtkWidget *grid;
-    GtkWidget *button;
-    GtkWidget *in_user;
-    GtkWidget *in_pass;
-    GtkWidget *dialog;
-    GtkWidget * usr_label;
-    GtkWidget * pas_label;
-
-
-    window = gtk_application_window_new (app);
-    gtk_window_set_title (GTK_WINDOW (window), "Window");
-    gtk_container_set_border_width (GTK_CONTAINER (window), 10);
-    gtk_window_set_default_size(GTK_WINDOW(window),100,100);
-
-    in_user=gtk_entry_new ();
-    in_pass=gtk_entry_new ();
-    gtk_entry_set_visibility(GTK_ENTRY(in_pass),FALSE); 
-    usr_label=gtk_label_new("Username");
-    pas_label=gtk_label_new("Password");
-
-    dialog = gtk_message_dialog_new(GTK_WINDOW (window),GTK_DIALOG_DESTROY_WITH_PARENT , GTK_MESSAGE_INFO, GTK_BUTTONS_OK , "NOME UTENTE O PASSWORD SBAGLIATE" );
-    
-
-    grid = gtk_grid_new ();
-
-    button = gtk_button_new_with_label ("LOGIN");
-    user_par.username=in_user;
-    user_par.password=in_pass;
-    user_par.dialog=dialog;
-    user_par.window=window;
-    g_signal_connect (button, "clicked",G_CALLBACK (login),&user_par);
-
-    
-    gtk_grid_attach(GTK_GRID(grid),usr_label,3,1,4,1);
-    gtk_grid_attach(GTK_GRID(grid),in_user,3,2,4,1);
-
-    gtk_grid_attach(GTK_GRID(grid),pas_label,3,4,4,1);
-    gtk_grid_attach(GTK_GRID(grid),in_pass,3,5,4,1);
-
-    gtk_grid_attach(GTK_GRID(grid),button,3,7,4,1);
-
-
-    gtk_container_add (GTK_CONTAINER (window),grid);
-
-    return window;
-
-}
-
-static void activate (GtkApplication *app,gpointer user_data){
-
-
-    GtkWidget * login_win = activate_login(app);
-
-    gtk_widget_show_all (login_win);
-    
     
     GtkWidget *window;
     GtkWidget *paned;
@@ -625,8 +515,7 @@ static void activate (GtkApplication *app,gpointer user_data){
     // prepare arguments for the new thread
     handler_args_u* arg_up = (handler_args_u*)malloc(sizeof(handler_args_u));
     arg_up->view=view; 
-    int ret;
-    pthread_t thread;
+
     ret = pthread_create(&thread, NULL,update,arg_up);
     if (ret) handle_error_en(ret, "Could not create a new thread");
     
@@ -634,6 +523,103 @@ static void activate (GtkApplication *app,gpointer user_data){
     
     ret = pthread_detach(thread); // I won't phtread_join() on this thread
     if (ret) handle_error_en(ret, "Could not detach the thread");
- 
+    
+}
+void login( GtkWidget *widget,gpointer data ){
+    struct user_par *arg = data; 
+    GtkWidget* window = arg->window;
+    GtkWidget* dialog = arg->dialog;
+    GtkWidget* user = arg->username;
+    GtkWidget* pas = arg->password;
+    GtkApplication* app = arg->app;
+    
+    char* i_user = (char*)gtk_entry_get_text(GTK_ENTRY(user));
+    char* i_pas = (char*)gtk_entry_get_text(GTK_ENTRY(pas));
+
+    //connetto al db
+    const char *conninfo = "hostaddr=15.236.174.17 port=5432 dbname=SO_chat user=postgres password=Quindicimaggio_20 sslmode=disable";
+    PGconn *conn;
+    PGresult *res;
+    
+
+    conn = PQconnectdb(conninfo);
+    if (PQstatus(conn) != CONNECTION_OK)
+    {
+        fprintf(stderr, "Connection to database failed: %s", PQerrorMessage(conn));
+        PQfinish(conn);
+        exit(1);
+    }
+    printf("hai inserito: %s ,%s \n",i_user,i_pas);
+    const char* paramValue[2] = {i_user,i_pas};
+    res = PQexecParams(conn,
+                    "select username from users where username=$1 and password=$2",
+                    2,       /* two param */
+                    NULL,    /* let the backend deduce param type */
+                    paramValue,
+                    NULL,
+                    NULL,
+                    1);      /* ask for binary results */
+    if (PQresultStatus(res) != PGRES_TUPLES_OK)
+    {
+        fprintf(stderr, "SELECT failed: %s", PQerrorMessage(conn));
+        PQclear(res);
+        exit_nicely(conn,res);
+    }
+    int ris=PQntuples(res);
+    printf("risposta del db: %d\n",ris);
+    if (ris==1){
+        gtk_window_close(GTK_WINDOW(window));
+        main_page(app,i_user);
+    }
+
+}
+static void activate (GtkApplication *app){
+
+    GtkWidget *window;
+    GtkWidget *grid;
+    GtkWidget *button;
+    GtkWidget *in_user;
+    GtkWidget *in_pass;
+    GtkWidget *dialog;
+    GtkWidget * usr_label;
+    GtkWidget * pas_label;
+
+
+    window = gtk_application_window_new (app);
+    gtk_window_set_title (GTK_WINDOW (window), "Window");
+    gtk_container_set_border_width (GTK_CONTAINER (window), 10);
+    gtk_window_set_default_size(GTK_WINDOW(window),100,100);
+
+    in_user=gtk_entry_new ();
+    in_pass=gtk_entry_new ();
+    gtk_entry_set_visibility(GTK_ENTRY(in_pass),FALSE); 
+    usr_label=gtk_label_new("Username");
+    pas_label=gtk_label_new("Password");
+
+    dialog = gtk_message_dialog_new(GTK_WINDOW (window),GTK_DIALOG_DESTROY_WITH_PARENT , GTK_MESSAGE_INFO, GTK_BUTTONS_OK , "NOME UTENTE O PASSWORD SBAGLIATE" );
+    
+
+    grid = gtk_grid_new ();
+
+    button = gtk_button_new_with_label ("LOGIN");
+    user_par.username=in_user;
+    user_par.password=in_pass;
+    user_par.dialog=dialog;
+    user_par.window=window;
+    user_par.app=app;
+    g_signal_connect (button, "clicked",G_CALLBACK (login),&user_par);
+
+    
+    gtk_grid_attach(GTK_GRID(grid),usr_label,3,1,4,1);
+    gtk_grid_attach(GTK_GRID(grid),in_user,3,2,4,1);
+
+    gtk_grid_attach(GTK_GRID(grid),pas_label,3,4,4,1);
+    gtk_grid_attach(GTK_GRID(grid),in_pass,3,5,4,1);
+
+    gtk_grid_attach(GTK_GRID(grid),button,3,7,4,1);
+
+
+    gtk_container_add (GTK_CONTAINER (window),grid);
+    gtk_widget_show_all (window);
 }
 
