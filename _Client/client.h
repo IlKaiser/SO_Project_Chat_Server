@@ -35,6 +35,12 @@ typedef struct input_m {
 typedef struct handler_args_u{
     GtkWidget * view;
 }handler_args_u;
+struct user_par{
+    GtkWidget* username;
+    GtkWidget* password;
+    GtkWidget* dialog;
+    GtkWidget* window;
+} user_par;
 
 
 //client thread
@@ -43,5 +49,11 @@ void* client(void *arg);
 void* thread_reciver(void *arg);
 //gtk thread
 static void activate (GtkApplication *app,gpointer user_data);
+GtkWidget* activate_login(GtkApplication *app);
+//login checker 
+void login( GtkWidget *widget,gpointer data );
 //update gtk thread
 void* update (void* arg);
+
+//close db connection
+static void exit_nicely(PGconn *conn, PGresult   *res);
