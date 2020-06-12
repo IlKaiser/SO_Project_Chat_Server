@@ -15,7 +15,7 @@
 #define OK_MSG          "OK\n"
 
 #define SEM_NAME        "/server"
-#define AWS             0
+#define AWS             1
 //Struct define
 typedef struct handler_args_s
 {
