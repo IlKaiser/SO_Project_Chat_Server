@@ -13,6 +13,12 @@
 
 #include "client.h"
 
+#if __APPLE__
+char* myname="Ghenadie\n";
+#else
+char * myname="Marco\n";
+#endif
+
 ///TODO:LOGIN NEL CLIENT
 int update_msg;
 int input_msg;
@@ -96,10 +102,6 @@ void* thread_reciver(void *arg){
 }
 
 void* client(void* arg){
-
-
-    
-    
     //reset queue
 	if (update_msg == -1) {
 		printf("Message queue does not exists.\n");
@@ -124,14 +126,15 @@ void* client(void* arg){
 
     int ret,bytes_sent,recv_bytes;
     char username[32];
-    char** argv=(char**)arg;
-    if (*argv!=NULL){
-        strcpy(username,argv[1]);
-        strcat(username,"\n");
-    }
-    else{
-        strcpy(username,"client\n\0");
-    }
+    //char** argv=(char**)arg;
+    strcpy(username,myname);
+    /*    if (*argv!=NULL){
+            strcpy(username,argv[1]);
+            strcat(username,"\n");
+        }
+        else{
+            strcpy(username,"client\n\0");
+        }*/
     // variables for handling a socket
     int socket_desc;
     struct sockaddr_in server_addr = {0}; // some fields are required to be filled with 0

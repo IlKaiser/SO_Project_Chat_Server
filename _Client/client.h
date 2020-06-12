@@ -17,7 +17,8 @@
 #define ERROR_MSG       "0xAFFAF\n"
 #define ERROR_OFF       0xDEAD
 #define OK_MSG          "OK\n"
-#define ALONE_MSG       "Alone\n"
+#define ALONE_MSG       "Alone\n" 
+#define NAME            1
 
 //Struct define
 typedef struct handler_args_m
