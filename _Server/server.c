@@ -326,7 +326,7 @@ void connection_handler(int socket_desc, struct sockaddr_in* client_addr) {
         const char* paramValue[3] = {user_name,target_user_name,buf};
         res = PQexecParams(conn,
                        "INSERT INTO messaggi (_from,_to,mes) VALUES ($1,$2,$3)",
-                       1,       /* one param */
+                       3,       /* one param */
                        NULL,    /* let the backend deduce param type */
                        paramValue,
                        NULL,

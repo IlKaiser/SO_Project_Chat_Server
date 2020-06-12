@@ -6,7 +6,7 @@
 /* Configuration parameters */
 #define DEBUG           1   // display debug messages
 #define MAX_CONN_QUEUE  3   // max number of connections the server can queue
-#define AWS             0
+#define AWS             1
 #if AWS
     #define SERVER_ADDRESS  "35.180.35.239" //AWS
 #else
