@@ -531,7 +531,7 @@ void main_page(GtkApplication *app,char* user){
 void login( GtkWidget *widget,gpointer data ){
     struct user_par *arg = data; 
     GtkWidget* window = arg->window;
-    GtkWidget* dialog = arg->dialog;
+    GtkWidget* dialog; //= arg->dialog;
     GtkWidget* user = arg->username;
     GtkWidget* pas = arg->password;
     GtkApplication* app = arg->app;
@@ -574,6 +574,11 @@ void login( GtkWidget *widget,gpointer data ){
         gtk_window_close(GTK_WINDOW(window));
         main_page(app,i_user);
     }
+    else{
+        dialog = gtk_message_dialog_new(GTK_WINDOW (window),GTK_DIALOG_DESTROY_WITH_PARENT , GTK_MESSAGE_INFO,GTK_BUTTONS_NONE, "NOME UTENTE O PASSWORD SBAGLIATE" );
+        gtk_dialog_run(GTK_DIALOG(dialog));
+
+    }
 
 }
 static void activate (GtkApplication *app){
@@ -583,7 +588,7 @@ static void activate (GtkApplication *app){
     GtkWidget *button;
     GtkWidget *in_user;
     GtkWidget *in_pass;
-    GtkWidget *dialog;
+    //GtkWidget *dialog;
     GtkWidget * usr_label;
     GtkWidget * pas_label;
 
@@ -599,7 +604,7 @@ static void activate (GtkApplication *app){
     usr_label=gtk_label_new("Username");
     pas_label=gtk_label_new("Password");
 
-    dialog = gtk_message_dialog_new(GTK_WINDOW (window),GTK_DIALOG_DESTROY_WITH_PARENT , GTK_MESSAGE_INFO, GTK_BUTTONS_OK , "NOME UTENTE O PASSWORD SBAGLIATE" );
+    //dialog = gtk_message_dialog_new(GTK_WINDOW (window),GTK_DIALOG_DESTROY_WITH_PARENT , GTK_MESSAGE_INFO, GTK_BUTTONS_OK , "NOME UTENTE O PASSWORD SBAGLIATE" );
     
 
     grid = gtk_grid_new ();
@@ -607,7 +612,7 @@ static void activate (GtkApplication *app){
     button = gtk_button_new_with_label ("LOGIN");
     user_par.username=in_user;
     user_par.password=in_pass;
-    user_par.dialog=dialog;
+    //user_par.dialog=dialog;
     user_par.window=window;
     user_par.app=app;
     g_signal_connect (button, "clicked",G_CALLBACK (login),&user_par);
