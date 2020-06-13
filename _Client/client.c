@@ -28,7 +28,7 @@ int input_msg;
 int upin_msg;
 input_m* input_str;
 input_m* upin_str;
-
+input_m* message;
 
 
 
@@ -37,6 +37,7 @@ struct msqid_ds buf;
 int main(int argc, char* argv[]) {
     input_str = (input_m*)malloc(sizeof(input_m));
     upin_str = (input_m*)malloc(sizeof(input_m));
+    message = (input_m*)malloc(sizeof(input_m));
     int flags = 0666;
 
     key_t id1 =ftok(argv[0], 1);
@@ -55,7 +56,7 @@ int main(int argc, char* argv[]) {
 
     input_str->mesg_type = 1;
     upin_str->mesg_type = 1;
-    message.mesg_type = 1;
+    message->mesg_type = 1;
 
     //GTK init
     int status;
@@ -83,7 +84,7 @@ void* thread_reciver(void *arg){
     // msgget creates a message queue 
     // and returns identifier
     #if DEBUG
-    printf("thread reciver msg\n: %s\n",message.mesg_text);
+    printf("thread reciver msg\n: %s\n",message->mesg_text);
     #endif
 
     while(1){
@@ -97,12 +98,12 @@ void* thread_reciver(void *arg){
         } while (buf1[recv_bytes++]!='\0');
         fprintf(stderr,"\nmessaggio di\n: %s", buf1);
         // msgsnd to send message
-        message.mesg_type = 1;
-        memset(message.mesg_text,0,sizeof(message.mesg_text));
-        strcpy(message.mesg_text,buf1);
-        msgsnd(update_msg, &message, sizeof(message), 0);
+        message->mesg_type = 1;
+        memset(message->mesg_text,0,sizeof(message->mesg_text));
+        strcpy(message->mesg_text,buf1);
+        msgsnd(update_msg, message, sizeof(message), 0);
         #if DEBUG
-        printf("thread reciver msg snd\n: %s",message.mesg_text);
+        printf("thread reciver msg snd\n: %s",message->mesg_text);
         #endif
     }
 
@@ -119,7 +120,7 @@ void* client(void* arg){
 	}*/
 
     #if DEBUG
-    printf("thread client start msg: %s",message.mesg_text);
+    printf("thread client start msg: %s",message->mesg_text);
     #endif
 
     
@@ -186,11 +187,11 @@ void* client(void* arg){
     printf("l'ack è: %s\n, recv_bytes %d\n", ack,recv_bytes);
     fflush(stdout);
     // msgsnd to send message
-    memset(message.mesg_text,0,sizeof(message.mesg_text));
-    strcpy(message.mesg_text,ack);
-    msgsnd(update_msg, &message, sizeof(message), 0);
+    memset(message->mesg_text,0,sizeof(message->mesg_text));
+    strcpy(message->mesg_text,ack);
+    msgsnd(update_msg, message, sizeof(message), 0);
     #if DEBUG
-    printf("thread client primo ack msg\n: %s",message.mesg_text);
+    printf("thread client primo ack msg\n: %s",message->mesg_text);
     #endif
 
     if(strcmp(ack,ERROR_MSG)==0){
@@ -217,11 +218,11 @@ void* client(void* arg){
         printf("la lista è:\n %s", buf);
         fflush(stdout);
         if (!(strcmp(buf,ALONE_MSG)==0)){
-            memset(message.mesg_text,0,sizeof(message.mesg_text));
-            strcpy(message.mesg_text,buf);
-            msgsnd(update_msg, &message, sizeof(message), 0);
+            memset(message->mesg_text,0,sizeof(message->mesg_text));
+            strcpy(message->mesg_text,buf);
+            msgsnd(update_msg, message, sizeof(message), 0);
             #if DEBUG
-                printf("thread client lista msg\n: %s",message.mesg_text);
+                printf("thread client lista msg\n: %s",message->mesg_text);
             #endif
         }
         else{
@@ -278,12 +279,12 @@ void* client(void* arg){
     } while (ack[recv_bytes++]!='\n');
     printf("l'ack 2 è\n: %s, recv_bytes %d\n", ack,recv_bytes);
     fflush(stdout);
-    memset(message.mesg_text,0,sizeof(message.mesg_text));
-    strcpy(message.mesg_text,ack);
-    msgsnd(update_msg, &message, sizeof(message), 0);
+    memset(message->mesg_text,0,sizeof(message->mesg_text));
+    strcpy(message->mesg_text,ack);
+    msgsnd(update_msg, message, sizeof(message), 0);
 
     #if DEBUG
-    printf("thread client secondo ack msg\n: %s",message.mesg_text);
+    printf("thread client secondo ack msg\n: %s",message->mesg_text);
     #endif
 
     if(strcmp(ack,ERROR_MSG)==0){
@@ -372,16 +373,16 @@ void* update (void* arg){
         msgctl(update_msg, IPC_STAT, &buf);
         if (buf.msg_qnum > 0){
             
-            msgrcv(update_msg, &message, sizeof(message), 1, 0);
+            msgrcv(update_msg, message, sizeof(message), 1, 0);
             #if DEBUG
-                printf("thread update msg\n: %s\n",message.mesg_text);
+                printf("thread update msg\n: %s\n",message->mesg_text);
             #endif
             // display the message 
-            printf("Data Received is \n: %s \n",  message.mesg_text);
+            printf("Data Received is \n: %s \n",  message->mesg_text);
             GtkTextBuffer* buffer = gtk_text_view_get_buffer(GTK_TEXT_VIEW(view));
             gtk_text_buffer_get_end_iter (buffer,&iter);
             
-            gtk_text_buffer_insert(GTK_TEXT_BUFFER (buffer),&iter,message.mesg_text,strlen(message.mesg_text));
+            gtk_text_buffer_insert(GTK_TEXT_BUFFER (buffer),&iter,message->mesg_text,strlen(message->mesg_text));
             gtk_text_view_set_buffer(GTK_TEXT_VIEW (view),GTK_TEXT_BUFFER (buffer));
         }
         msgctl(upin_msg, IPC_STAT, &buf);
