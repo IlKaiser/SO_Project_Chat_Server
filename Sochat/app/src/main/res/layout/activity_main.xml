@@ -22,20 +22,24 @@
         app:layout_constraintTop_toTopOf="parent"
         app:layout_constraintVertical_bias="0.87" />
 
+
     <TextView
         android:id="@+id/textView"
-        android:layout_width="325dp"
-        android:layout_height="541dp"
+        android:layout_width="319dp"
+        android:layout_height="414dp"
         android:maxHeight="541dp"
-        android:text="@string/textview"
-        android:scrollbars="vertical"
         android:maxLines="25"
+        android:padding="20dp"
+        android:scrollbars="vertical"
+        android:windowSoftInputMode="adjustResize"
+        android:text="@string/textview"
+        android:elevation="@dimen/cardview_compat_inset_shadow"
         app:layout_constraintBottom_toBottomOf="parent"
         app:layout_constraintEnd_toEndOf="parent"
+        app:layout_constraintHorizontal_bias="0.417"
         app:layout_constraintStart_toStartOf="parent"
         app:layout_constraintTop_toTopOf="parent"
-        app:layout_constraintVertical_bias="0.242" />
-
+        app:layout_constraintVertical_bias="0.235" />
 
     <androidx.constraintlayout.widget.Guideline
         android:id="@+id/guideline2"
@@ -49,7 +53,7 @@
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
         android:orientation="horizontal"
-        app:layout_constraintGuide_begin="45dp" />
+        app:layout_constraintGuide_begin="16dp" />
 
     <androidx.constraintlayout.widget.Guideline
         android:id="@+id/guideline4"
@@ -63,7 +67,7 @@
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
         android:orientation="vertical"
-        app:layout_constraintGuide_begin="368dp" />
+        app:layout_constraintGuide_begin="357dp" />
 
     <com.google.android.material.floatingactionbutton.FloatingActionButton
         android:id="@+id/floatingActionButton"

@@ -43,20 +43,31 @@ class MainActivity : AppCompatActivity() {
         class UpdateThread: Thread(){
             override fun run() {
                 //Thread.sleep(2000)
+                Looper.prepare()
                 val reAlone=".*Alone".toRegex()
                 val reList=".*List.*".toRegex()
+                val reOk=".*OK.*".toRegex()
+                val reAffaf=".*AFFAF.*".toRegex()
                 Log.d(TAG, "run: update td start")
                 while(true){
                     try {
                         var line = reader!!.readLine()
                         var text: String = textView.text.toString()
-                        if (line !=null && line != "null" && line!="OK"&& reAlone.containsMatchIn(line)) {
+                        if (line !=null && line != "null" && !reAlone.containsMatchIn(line)
+                                && !reOk.containsMatchIn(line)) {
                             println("Got in {$line}")
                             if(reList.containsMatchIn(line)){
                                 Log.d(TAG, "run: Lista")
                                 textView.text=line.plus("\n")
                             }
-                            else {
+                            else if(reAffaf.containsMatchIn(line)){
+                                Log.d(TAG, "run: AFFAF, closing...")
+                                printWriter!!.println("QUIT\n");
+                                Toast.makeText(applicationContext,"Errore del server riprova pi� tardi",Toast.LENGTH_LONG).show()
+                                exitProcess(-1)
+
+                            }
+                            else{
                                 textView.text = text.plus("\n").plus(line)
                             }
                         }
@@ -69,15 +80,18 @@ class MainActivity : AppCompatActivity() {
         update.start()
 
         class SendThread:Thread(){
+
             override fun run() {
+                Looper.prepare()
                 var line=textToSend.text.toString()
                 textToSend.setText("")
                 val reNumber="[0-9]".toRegex()
+                val reQuit=".*QUIT.*".toRegex()
                 if(line != "") {
                     println(line)
                     Log.d(TAG, "sendText: Got $line")
                     line.plus("\n")
-                    if(!reNumber.containsMatchIn(line)) {
+                     if(!reNumber.containsMatchIn(line)) {
                         var view = textView.text.toString()
                         var msg = view.plus("\n").plus("Tu:\n").plus(line)
                         textView.text = msg
@@ -86,6 +100,11 @@ class MainActivity : AppCompatActivity() {
                     }
                     printWriter!!.println(line)
                     printWriter!!.flush()
+                    if(reQuit.containsMatchIn(line)){
+                        Log.d(TAG, "run: QUIT")
+                        Toast.makeText(applicationContext,"Ciao,alla prossima",Toast.LENGTH_LONG).show()
+                        exitProcess(0)
+                    }
                 }
             }
         }
