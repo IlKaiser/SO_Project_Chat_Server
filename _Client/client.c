@@ -113,37 +113,16 @@ void* thread_reciver(void *arg){
 
 void* client(void* arg){
     
-
-	/*if (msgctl(msgid, IPC_RMID, NULL) == -1) {
-		fprintf(stderr, "Message queue could not be deleted.\n");
-		exit(EXIT_FAILURE);
-	}*/
-
-    #if DEBUG
-    printf("thread client start msg: %s",message->mesg_text);
-    #endif
-
-    
-    #if DEBUG
-    printf("thread client start input msg\n: %s",input_str->mesg_text);
-    #endif
-    
-
-
     int ret,bytes_sent,recv_bytes;
-    char* username = arg;
-    strcat(username,"\n");
-    //char username[32];
-    //char** argv=(char**)arg;
-    //strcpy(username,myname);
-    /*    if (*argv!=NULL){
-            strcpy(username,argv[1]);
-            strcat(username,"\n");
-        }
-        else{
-            strcpy(username,"client\n\0");
-        }*/
-    // variables for handling a socket
+    char* user__name = arg;
+    char username[32];
+    strcat(user__name,"\n");
+    strcpy(username,user__name);
+
+    #if DEBUG
+        printf("Username got %s",username);
+    #endif
+    
     int socket_desc;
     struct sockaddr_in server_addr = {0}; // some fields are required to be filled with 0
 
@@ -164,6 +143,7 @@ void* client(void* arg){
 
     //SENDS HIS USERNAME TO THE SERVER
     int usr_len = strlen(username);
+    printf("Usr len:%d, username %s\n ",usr_len,username);
     // send message to server
     bytes_sent=0;
     while ( bytes_sent < usr_len) {
@@ -171,7 +151,12 @@ void* client(void* arg){
         if (ret == -1 && errno == EINTR) continue;
         if (ret == -1) handle_error("Cannot write to the socket");
         bytes_sent += ret;
+        printf("Sent %s, Bytes sent %d\n",username,ret);
     }
+
+    #if DEBUG
+        printf("Username sent\n");
+    #endif
 
     char ack[15];
     size_t ack_len = sizeof(ack);
@@ -239,7 +224,7 @@ void* client(void* arg){
     //if (fgets(buf, sizeof(buf), stdin) != (char*)buf) {
     msgrcv(input_msg, input_str, sizeof(input_m), 1, 0);
     #if DEBUG
-    printf("thread client input msg : %s",input_str->mesg_text);
+    printf("thread client input msg : %s\n",input_str->mesg_text);
     #endif
     /*fprintf(stderr, "Error while reading from stdin, exiting...\n");
     exit(EXIT_FAILURE);*/
