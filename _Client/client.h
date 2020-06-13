@@ -25,10 +25,6 @@ typedef struct handler_args_m
 {
     int socket_desc;
 } handler_args_m;
-struct mesg_buffer { 
-    long mesg_type; 
-    char mesg_text[100]; 
-} message;
 typedef struct input_m { 
     long mesg_type; 
     char mesg_text[100]; 
@@ -39,7 +35,7 @@ typedef struct handler_args_u{
 struct user_par{
     GtkWidget* username;
     GtkWidget* password;
-    GtkWidget* dialog;
+    //GtkWidget* dialog;
     GtkWidget* window;
     GtkApplication* app;
 } user_par;
