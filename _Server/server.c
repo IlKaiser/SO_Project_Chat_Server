@@ -317,7 +317,7 @@ void connection_handler(int socket_desc, struct sockaddr_in* client_addr) {
     // reciver loop 
     while (1) {
 
-        //5. loop
+        //5. main loop
 
         // read message from client
         #if DEBUG
@@ -336,13 +336,16 @@ void connection_handler(int socket_desc, struct sockaddr_in* client_addr) {
             recv_bytes=0;
         }
 		} while ( buf[recv_bytes++] != '\n' );
-        // check whether I have just been told to quit...
-        if (recv_bytes == 0) break;
-        if (recv_bytes == quit_command_len && !memcmp(buf, quit_command, quit_command_len)){ disconnection_handler(socket_desc)}
-
         #if DEBUG
             printf("Message %s from %s",buf,user_name);
         #endif // DEBUG
+
+        // check whether I have just been told to quit...
+        if (recv_bytes == 0) break;
+        if (recv_bytes == quit_command_len && !memcmp(buf, quit_command, quit_command_len)){ 
+            printf("Quitting...\n");
+            disconnection_handler(socket_desc);
+        }
 
         // ... or if I have to send the message back
         // 5.1 insert msg into db
@@ -358,14 +361,13 @@ void connection_handler(int socket_desc, struct sockaddr_in* client_addr) {
         if (PQresultStatus(res) != PGRES_COMMAND_OK)
         {
             fprintf(stderr, "INSERT failed: %s", PQerrorMessage(conn));
-            exit_nicely(conn,res);
+            exit_nicely(conn,res,socket_desc);
         }
         PQclear(res);
 
 
 
-        /// send to requested target
-        //Disabled for now,but ready
+        //5.2 Send to requested target
         char to_send[1024];
         memset(to_send,0,sizeof(to_send));
         bytes_sent = 0;
@@ -382,29 +384,10 @@ void connection_handler(int socket_desc, struct sockaddr_in* client_addr) {
         #if DEBUG
             printf("sto mandando: %s",to_send);
         #endif
-    }
-    
-    // close socket
-    
-
-    //Critical section shared mem writing
-    //remove shared array
-    ret=sem_wait(sem);
-    if(ret){
-        handle_error("Err sem wait");
-    }
-    previous_size=current_size;
-    current_size--;
-    ret=sem_post(sem);
-    if(ret){
-        handle_error("Err sem post");
-    }
-    ret = close(socket_desc);
-    if (ret) handle_error("Cannot close socket for incoming connection");
+    } 
+    //If a break occurs
+    disconnection_handler(socket_desc);
 }
-
-
-
 
 // Wrapper function that take as input handler_args_t struct and then call 
 // connection_handler.
@@ -419,12 +402,6 @@ void *thread_connection_handler(void *arg) {
     free(args);
     pthread_exit(NULL);
 }
-// function that takes handler_args_m and 
-void *thread_message_handler(void *arg){
-    return NULL;
-}
-
-void message_handler(){}
 
 void mthreadServer(int server_desc) {
     int ret = 0;
@@ -459,6 +436,7 @@ void mthreadServer(int server_desc) {
         if (ret) handle_error_en(ret, "Could not detach the thread");
     }
 }
+
 void list_formatter(char buf[]){
     memset(buf, 0,strlen(buf));
     int i;
@@ -469,12 +447,13 @@ void list_formatter(char buf[]){
         strcat(buf,user_names[i]);
     }
 }
-static void exit_nicely(PGconn *conn, PGresult   *res)
-{
+
+static void exit_nicely(PGconn *conn, PGresult   *res,int socket_desc){
     PQclear(res);
     PQfinish(conn);
-    exit(1);
+    disconnection_handler(socket_desc);
 }
+
 void disconnection_handler(int index){
     int ret;
     #if DEBUG
@@ -489,8 +468,8 @@ void disconnection_handler(int index){
     }
     pthread_exit(NULL);
 }
-void handle_sigpipe(int sig) 
-{ 
+
+void handle_sigpipe(int sig){ 
     printf("Caught signal %d\n", sig); 
     disconnection_handler(-1);
 } 

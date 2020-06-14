@@ -38,7 +38,7 @@ void list_formatter(char buf[]);
 void send_mess(int index,char buff[]);
 
 //close db connection
-static void exit_nicely(PGconn *conn, PGresult   *res);
+static void exit_nicely(PGconn *conn, PGresult   *res,int socket_desc);
 
 //disconneciotn handler
 void disconnection_handler(int index);
