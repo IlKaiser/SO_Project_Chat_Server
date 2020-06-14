@@ -6,6 +6,7 @@
 #include <unistd.h>
 #include <pthread.h>
 #include <semaphore.h>
+#include <signal.h>
 #include <arpa/inet.h>  // htons()
 #include <netinet/in.h> // struct sockaddr_in
 #include <sys/socket.h>
@@ -28,6 +29,7 @@
 char* user_names[MAX_SIZE];
 int sockets[MAX_SIZE];
 
+
 //Previous size of connection arrays
 int previous_size=0;
 //Current size of connection arrays
@@ -37,6 +39,8 @@ sem_t* sem;
 
 
 int main(int argc, char* argv[]) {
+
+    signal(SIGPIPE,handle_sigpipe);
     int ret;
 
     int socket_desc;
@@ -86,6 +90,11 @@ int main(int argc, char* argv[]) {
     exit(EXIT_SUCCESS); // this will never be executed
 }
 void connection_handler(int socket_desc, struct sockaddr_in* client_addr) {
+
+
+    int error = 0;
+    socklen_t len = sizeof (error);
+    
     int ret, recv_bytes,bytes_sent;
 
     char buf[1024];
@@ -116,7 +125,7 @@ void connection_handler(int socket_desc, struct sockaddr_in* client_addr) {
             ret = recv(socket_desc, user_name + recv_bytes, 1, 0);
             if (ret == -1 && errno == EINTR) continue;
             if (ret == -1) handle_error("Cannot read from the socket");
-            if (ret == 0) break;
+            if (ret == 0) disconnection_handler(-1);
 	} while ( user_name[recv_bytes++] != '\n' );
 
     #if DEBUG
@@ -182,14 +191,18 @@ void connection_handler(int socket_desc, struct sockaddr_in* client_addr) {
         exit(1);
     }
 
-
-
-
-
-
-
     // 2. check if there is only one client
     while(current_size<2){
+
+        //test if the client is still up
+        int retval = getsockopt (socket_desc, SOL_SOCKET, SO_ERROR, &error, &len);
+        #if DEBUG
+            printf("Retval %d\n",retval);
+        #endif
+        if(retval){
+
+            disconnection_handler(-1);
+        }
         memset(buf, 0, buf_len);
         strcpy(buf,ALONE_MSG);
         #if DEBUG
@@ -203,7 +216,9 @@ void connection_handler(int socket_desc, struct sockaddr_in* client_addr) {
 	    while ( bytes_sent < msg_len) {
             ret = send(socket_desc, buf + bytes_sent, msg_len - bytes_sent, 0);
             if (ret == -1 && errno == EINTR) continue;
-            if (ret == -1) handle_error("Cannot write to the socket");
+            if (ret == -1) disconnection_handler(-1);
+            if(ret==0)disconnection_handler(-1);
+            printf("Bytes sent %d\n",ret);
             bytes_sent += ret;
         }
         ret=sleep(5);
@@ -231,7 +246,7 @@ void connection_handler(int socket_desc, struct sockaddr_in* client_addr) {
         ret = recv(socket_desc, user_buf + recv_bytes, 1, 0);
         if (ret == -1 && errno == EINTR) continue;
         if (ret == -1) handle_error("Cannot read from the socket");
-        if (ret == 0) break;
+        if (ret == 0) disconnection_handler(-1);
 	}while ( user_buf[recv_bytes++]!= '\n' );
     printf("Buffer %s \n",user_buf);
     int user_id=atoi(user_buf);
@@ -311,7 +326,7 @@ void connection_handler(int socket_desc, struct sockaddr_in* client_addr) {
             ret = recv(socket_desc, buf + recv_bytes, 1, 0);
             if (ret == -1 && errno == EINTR) continue;
             if (ret == -1) handle_error("Cannot read from the socket");
-            if (ret == 0) break;
+            if (ret == 0) disconnection_handler(user_id);
 		} while ( buf[recv_bytes++] != '\n' );
         // check whether I have just been told to quit...
         if (recv_bytes == 0) break;
@@ -452,3 +467,21 @@ static void exit_nicely(PGconn *conn, PGresult   *res)
     PQfinish(conn);
     exit(1);
 }
+void disconnection_handler(int index){
+    int ret;
+    #if DEBUG
+        printf("Index got in handler %d\n",index);
+    #endif
+    //if(index!=-1){
+        ret=sem_wait(sem);
+        current_size--;
+        ret|=sem_post(sem);
+        if(ret){handle_error("Semaphore error");}
+    //}
+    pthread_exit(NULL);
+}
+void handle_sigpipe(int sig) 
+{ 
+    printf("Caught signal %d\n", sig); 
+    disconnection_handler(-1);
+} 

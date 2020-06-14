@@ -16,6 +16,7 @@
 
 #define SEM_NAME        "/server"
 #define AWS             0
+
 //Struct define
 typedef struct handler_args_s
 {
@@ -38,3 +39,9 @@ void send_mess(int index,char buff[]);
 
 //close db connection
 static void exit_nicely(PGconn *conn, PGresult   *res);
+
+//disconneciotn handler
+void disconnection_handler(int index);
+
+//sigpipe handler
+void handle_sigpipe(int signal);
