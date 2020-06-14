@@ -212,7 +212,6 @@ void connection_handler(int socket_desc, struct sockaddr_in* client_addr) {
             if (ret == -1 && errno == EINTR) continue;
             if (ret == -1) disconnection_handler(socket_desc);
             if(ret==0)disconnection_handler(socket_desc);
-            printf("Bytes sent %d\n",ret);
             bytes_sent += ret;
         }
         ret=sleep(5);
