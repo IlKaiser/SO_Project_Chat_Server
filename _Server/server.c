@@ -123,7 +123,7 @@ void connection_handler(int socket_desc, struct sockaddr_in* client_addr) {
             ret = recv(socket_desc, user_name + recv_bytes, 1, 0);
             if (ret == -1 && errno == EINTR) continue;
             if (ret == -1) handle_error("Cannot read from the socket");
-            if (ret == 0) disconnection_handler(-1);
+            if (ret == 0) disconnection_handler(socket_desc);
 	} while ( user_name[recv_bytes++] != '\n' );
 
     #if DEBUG
@@ -142,9 +142,7 @@ void connection_handler(int socket_desc, struct sockaddr_in* client_addr) {
             if (ret == -1) handle_error("Cannot write to the socket");
             bytes_sent += ret;
         }
-        ret = close(socket_desc);
-        if (ret) handle_error("Cannot close socket for incoming connection");
-        return;
+        disconnection_handler(socket_desc);
     }else{
         //Critical section shared mem writing
         //updates shared array
@@ -175,7 +173,7 @@ void connection_handler(int socket_desc, struct sockaddr_in* client_addr) {
 
 
 
-    ///TODO: apre la connessione con il DB
+    // open db connection
     const char *conninfo = "hostaddr=15.236.174.17 port=5432 dbname=SO_chat user=postgres password=Quindicimaggio_20 sslmode=disable";
     PGconn *conn;
     PGresult *res;
@@ -194,12 +192,9 @@ void connection_handler(int socket_desc, struct sockaddr_in* client_addr) {
 
         //test if the client is still up
         int retval = getsockopt (socket_desc, SOL_SOCKET, SO_ERROR, &error, &len);
-        #if DEBUG
-            printf("Retval %d\n",retval);
-        #endif
         if(retval){
 
-            disconnection_handler(-1);
+            disconnection_handler(socket_desc);
         }
         memset(buf, 0, buf_len);
         strcpy(buf,ALONE_MSG);
@@ -214,8 +209,8 @@ void connection_handler(int socket_desc, struct sockaddr_in* client_addr) {
 	    while ( bytes_sent < msg_len) {
             ret = send(socket_desc, buf + bytes_sent, msg_len - bytes_sent, 0);
             if (ret == -1 && errno == EINTR) continue;
-            if (ret == -1) disconnection_handler(-1);
-            if(ret==0)disconnection_handler(-1);
+            if (ret == -1) disconnection_handler(socket_desc);
+            if(ret==0)disconnection_handler(socket_desc);
             printf("Bytes sent %d\n",ret);
             bytes_sent += ret;
         }
@@ -244,7 +239,13 @@ void connection_handler(int socket_desc, struct sockaddr_in* client_addr) {
         ret = recv(socket_desc, user_buf + recv_bytes, 1, 0);
         if (ret == -1 && errno == EINTR) continue;
         if (ret == -1) handle_error("Cannot read from the socket");
-        if (ret == 0) disconnection_handler(-1);
+        if (ret == 0) disconnection_handler(socket_desc);
+        //check if we are about to overflow the buffer
+        if(recv_bytes>3){
+            printf("Recived almost 4 bytes, resetting buffer...\n");
+            memset(user_buf,0,4);
+            recv_bytes=0;
+        }
 	}while ( user_buf[recv_bytes++]!= '\n' );
     printf("Buffer %s \n",user_buf);
     int user_id=atoi(user_buf);
@@ -270,6 +271,7 @@ void connection_handler(int socket_desc, struct sockaddr_in* client_addr) {
             if (ret == -1) handle_error("Cannot write to the socket");
             bytes_sent += ret;
         }
+        disconnection_handler(socket_desc);
     }
 
     if(socket_target){
@@ -304,6 +306,7 @@ void connection_handler(int socket_desc, struct sockaddr_in* client_addr) {
             if (ret == -1) handle_error("Cannot write to the socket");
             bytes_sent += ret;
         }
+        disconnection_handler(socket_desc);
     }
 
     #if DEBUG
@@ -324,7 +327,12 @@ void connection_handler(int socket_desc, struct sockaddr_in* client_addr) {
             ret = recv(socket_desc, buf + recv_bytes, 1, 0);
             if (ret == -1 && errno == EINTR) continue;
             if (ret == -1) handle_error("Cannot read from the socket");
-            if (ret == 0) disconnection_handler(user_id);
+            if (ret == 0) disconnection_handler(socket_desc);
+            if(recv_bytes>1022){
+            printf("Recived almost 1024 bytes, resetting buffer...\n");
+            memset(buf,0,buf_len);
+            recv_bytes=0;
+        }
 		} while ( buf[recv_bytes++] != '\n' );
         // check whether I have just been told to quit...
         if (recv_bytes == 0) break;
@@ -470,12 +478,13 @@ void disconnection_handler(int index){
     #if DEBUG
         printf("Index got in handler %d\n",index);
     #endif
-    //if(index!=-1){
-        ret=sem_wait(sem);
+    if(index!=-1){
+        ret=close(index);
+        ret|=sem_wait(sem);
         current_size--;
         ret|=sem_post(sem);
-        if(ret){handle_error("Semaphore error");}
-    //}
+        if(ret){handle_error("Disconnection error");}
+    }
     pthread_exit(NULL);
 }
 void handle_sigpipe(int sig) 
