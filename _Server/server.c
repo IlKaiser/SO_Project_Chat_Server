@@ -461,7 +461,7 @@ void disconnection_handler(int index){
     #endif
     if(index!=-1){
         ret=close(index);
-        if(ret){handle_error("Disconnection error")};
+        if(ret){handle_error("Disconnection error");}
     }
     ret=sem_wait(sem);
     current_size--;
