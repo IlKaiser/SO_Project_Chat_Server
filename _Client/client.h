@@ -56,3 +56,6 @@ void* update (void* arg);
 
 //close db connection
 static void exit_nicely(PGconn *conn, PGresult   *res);
+
+//forces quit to server
+void force_quit();

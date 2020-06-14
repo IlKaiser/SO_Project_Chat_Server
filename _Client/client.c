@@ -22,13 +22,19 @@ char* myname="Ghenadie\n";
 char * myname="Marco\n";
 #endif
 
-///TODO:LOGIN NEL CLIENT
+// message queues
 int update_msg;
 int input_msg;
 int upin_msg;
 input_m* input_str;
 input_m* upin_str;
 input_m* message;
+
+//global variable for window manipulation
+int main_window_id;
+int socket_desc_copy;
+GtkApplication *app;
+
 
 
 
@@ -60,12 +66,8 @@ int main(int argc, char* argv[]) {
 
     //GTK init
     int status;
-    /*char* input_n;
-    char *name = (char *) malloc(1 + strlen("test.")+ strlen(argv[1]) );
-    input_n = argv[1];
-    strcpy(name, "test.");
-    strcat(name,input_n);*/
-    GtkApplication *app;
+    
+    //GtkApplication *app;
     app = gtk_application_new (argv[1]/*name*/, G_APPLICATION_FLAGS_NONE);
     g_signal_connect (app, "activate", G_CALLBACK (activate),&argv[1]);
     status = g_application_run (G_APPLICATION (app),argc, argv);
@@ -140,6 +142,12 @@ void* client(void* arg){
     if(ret) handle_error("Could not create connection");
 
     if (DEBUG) fprintf(stderr, "Connection established!\n");
+
+    GtkWindow* main_window=gtk_application_get_window_by_id(app,main_window_id);
+
+    socket_desc_copy=socket_desc;
+
+    g_signal_connect(G_OBJECT(main_window), "destroy", G_CALLBACK(force_quit),NULL);
 
     //SENDS HIS USERNAME TO THE SERVER
     int usr_len = strlen(username);
@@ -346,6 +354,10 @@ void* client(void* arg){
     msgctl(update_msg, IPC_RMID, NULL);
     msgctl(input_msg, IPC_RMID, NULL);
     msgctl(upin_msg, IPC_RMID, NULL);
+    free(input_str);
+    free(upin_str);
+    free(message);
+    
     exit(EXIT_SUCCESS);
 }
 void* update (void* arg){
@@ -417,8 +429,9 @@ void main_page(GtkApplication *app,char* user){
     //AFTER LOGIN CODE
     int ret;
     pthread_t thread;
-    //char* i_user = (char*)gtk_entry_get_text(GTK_ENTRY(user));
-    printf("il tuo nome è: %s\n",user);
+    #if DEBUG
+        printf("il tuo nome è: %s\n",user);
+    #endif
     // prepare arguments for the new thread
     ret = pthread_create(&thread, NULL,client,user);
     if (ret) handle_error_en(ret, "Could not create a new thread");
@@ -443,6 +456,7 @@ void main_page(GtkApplication *app,char* user){
     gtk_window_set_title (GTK_WINDOW (window), "Window");
     gtk_container_set_border_width (GTK_CONTAINER (window), 10);
     gtk_window_set_default_size(GTK_WINDOW(window),400,400);
+    main_window_id=gtk_application_window_get_id(GTK_APPLICATION_WINDOW(window));
 
 
     im=gtk_entry_new ();
@@ -616,4 +630,31 @@ static void activate (GtkApplication *app){
     gtk_container_add (GTK_CONTAINER (window),grid);
     gtk_widget_show_all (window);
 }
+void force_quit(){
 
+    int ret,bytes_sent,msg_len;
+
+    char buf[strlen(SERVER_COMMAND)+1];
+    strcpy(buf,SERVER_COMMAND);
+    msg_len = strlen(buf);
+
+
+    int socket_desc=socket_desc_copy;
+    
+    // send message to server
+    bytes_sent=0;
+    while ( bytes_sent < msg_len) {
+        ret = send(socket_desc, buf + bytes_sent, msg_len - bytes_sent, 0);
+        if (ret == -1 && errno == EINTR) continue;
+        if (ret == -1) handle_error("Cannot write to the socket");
+        bytes_sent += ret;
+    }
+
+    msgctl(update_msg, IPC_RMID, NULL);
+    msgctl(input_msg, IPC_RMID, NULL);
+    msgctl(upin_msg, IPC_RMID, NULL);
+    free(input_str);
+    free(upin_str);
+    free(message);
+
+}
