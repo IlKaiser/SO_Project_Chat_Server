@@ -12,7 +12,6 @@
 #include <sys/socket.h>
 #include <fcntl.h>           /* For O_* constants */
 #include <sys/stat.h>        /* For mode constants */
-
  
 #include <postgresql/libpq-fe.h> // for our server
 
@@ -37,8 +36,9 @@ sem_t* sem;
 
 
 int main(int argc, char* argv[]) {
-
+    // set handler for sigpipe (client disconnected)
     signal(SIGPIPE,handle_sigpipe);
+
     int ret;
 
     int socket_desc;
@@ -87,6 +87,7 @@ int main(int argc, char* argv[]) {
 
     exit(EXIT_SUCCESS); // this will never be executed
 }
+
 void connection_handler(int socket_desc, struct sockaddr_in* client_addr) {
 
 
@@ -173,7 +174,7 @@ void connection_handler(int socket_desc, struct sockaddr_in* client_addr) {
 
 
 
-    // open db connection
+    // 1.2 Open db connection
     const char *conninfo = "hostaddr=15.236.174.17 port=5432 dbname=SO_chat user=postgres password=Quindicimaggio_20 sslmode=disable";
     PGconn *conn;
     PGresult *res;
@@ -343,7 +344,7 @@ void connection_handler(int socket_desc, struct sockaddr_in* client_addr) {
         #endif // DEBUG
 
         // ... or if I have to send the message back
-        ///TODO: mette nel db il messaggio
+        // 5.1 insert msg into db
         const char* paramValue[3] = {user_name,target_user_name,buf};
         res = PQexecParams(conn,
                        "INSERT INTO messaggi (_from,_to,mes) VALUES ($1,$2,$3)",
