@@ -337,7 +337,7 @@ void connection_handler(int socket_desc, struct sockaddr_in* client_addr) {
 		} while ( buf[recv_bytes++] != '\n' );
         // check whether I have just been told to quit...
         if (recv_bytes == 0) break;
-        if (recv_bytes == quit_command_len && !memcmp(buf, quit_command, quit_command_len)) break;
+        if (recv_bytes == quit_command_len && !memcmp(buf, quit_command, quit_command_len)){ disconnection_handler(socket_desc)}
 
         #if DEBUG
             printf("Message %s from %s",buf,user_name);
@@ -493,4 +493,3 @@ void handle_sigpipe(int sig)
     printf("Caught signal %d\n", sig); 
     disconnection_handler(-1);
 } 
-
