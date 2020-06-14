@@ -4,6 +4,7 @@
 #include <string.h>
 #include <unistd.h>
 #include <pthread.h>
+#include <signal.h>
 #include <arpa/inet.h>  // htons() and inet_addr()
 #include <netinet/in.h> // struct sockaddr_in
 #include <sys/socket.h>
@@ -16,11 +17,6 @@
 
 #include "client.h"
 
-#if __APPLE__
-char* myname="Ghenadie\n";
-#else
-char * myname="Marco\n";
-#endif
 
 // message queues
 int update_msg;
@@ -41,6 +37,7 @@ GtkApplication *app;
 struct msqid_ds buf;
 
 int main(int argc, char* argv[]) {
+    signal(SIGINT, handle_sigint); 
     input_str = (input_m*)malloc(sizeof(input_m));
     upin_str = (input_m*)malloc(sizeof(input_m));
     message = (input_m*)malloc(sizeof(input_m));
@@ -656,5 +653,11 @@ void force_quit(){
     free(input_str);
     free(upin_str);
     free(message);
+    exit(EXIT_SUCCESS);
 
 }
+void handle_sigint(int sig) 
+{ 
+    printf("Caught signal %d\n", sig); 
+    force_quit();
+} 

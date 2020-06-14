@@ -59,3 +59,4 @@ static void exit_nicely(PGconn *conn, PGresult   *res);
 
 //forces quit to server
 void force_quit();
+void handle_sigint(int sig);
