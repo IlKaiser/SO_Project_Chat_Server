@@ -461,11 +461,12 @@ void disconnection_handler(int index){
     #endif
     if(index!=-1){
         ret=close(index);
-        ret|=sem_wait(sem);
-        current_size--;
-        ret|=sem_post(sem);
-        if(ret){handle_error("Disconnection error");}
+        if(ret){handle_error("Disconnection error");
     }
+    ret=sem_wait(sem);
+    current_size--;
+    ret|=sem_post(sem);
+    if(ret){handle_error("Disconnection semaphore error");}
     pthread_exit(NULL);
 }
 
