@@ -120,6 +120,7 @@ void connection_handler(int socket_desc, struct sockaddr_in* client_addr) {
     #if DEBUG
         printf("Client ip %s, client port %hu\n",client_ip,client_port);
     #endif // DEBUG
+
     // 1. get client username
     memset(user_name, 0, sizeof(user_name));
         recv_bytes = 0;
@@ -135,7 +136,7 @@ void connection_handler(int socket_desc, struct sockaddr_in* client_addr) {
     #endif // DEBUG
 
     // 1.1 Updates global variables info
-    if(previous_size==MAX_SIZE || user_name==""){
+    if(previous_size==MAX_SIZE || (strcmp(user_name,"")==0)){
         memset(buf, 0, buf_len);
         strcpy(buf,ERROR_MSG);
         bytes_sent = 0;
