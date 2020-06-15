@@ -1,28 +1,28 @@
 package so.chat
 
-import androidx.appcompat.app.AppCompatActivity
 import android.os.Bundle
-import android.os.Handler
 import android.os.Looper
 import android.text.method.ScrollingMovementMethod
 import android.util.Log
-import android.view.View
-import android.widget.Button
 import android.widget.EditText
 import android.widget.TextView
 import android.widget.Toast
+import androidx.appcompat.app.AppCompatActivity
 import com.google.android.material.floatingactionbutton.FloatingActionButton
 import java.io.BufferedReader
 import java.io.InputStreamReader
 import java.io.PrintWriter
-import java.lang.Exception
-import java.lang.NullPointerException
 import java.net.Socket
+import java.net.SocketException
 import kotlin.system.exitProcess
 
 class MainActivity : AppCompatActivity() {
+    var socket:Socket? =null
+    var reader:BufferedReader? = null
+    var printWriter: PrintWriter? =null
+
     override fun onCreate(savedInstanceState: Bundle?) {
-        var TAG="Main activty"
+        val TAG ="Main activty"
         Log.d(TAG, "onCreate: ")
         super.onCreate(savedInstanceState)
         setContentView(R.layout.activity_main)
@@ -31,14 +31,8 @@ class MainActivity : AppCompatActivity() {
         val sendButton=findViewById<FloatingActionButton>(R.id.floatingActionButton)
         val textToSend=findViewById<EditText>(R.id.sendText)
 
-        var socket:Socket?
-        var reader:BufferedReader? = null
-        var printWriter: PrintWriter? =null
-
         textView.text=""
         textView.movementMethod=ScrollingMovementMethod.getInstance()
-
-
 
         class UpdateThread: Thread(){
             override fun run() {
@@ -51,27 +45,35 @@ class MainActivity : AppCompatActivity() {
                 Log.d(TAG, "run: update td start")
                 while(true){
                     try {
-                        var line = reader!!.readLine()
-                        var text: String = textView.text.toString()
-                        if (line !=null && line != "null" && !reAlone.containsMatchIn(line)
-                                && !reOk.containsMatchIn(line)) {
-                            println("Got in {$line}")
-                            if(reList.containsMatchIn(line)){
-                                Log.d(TAG, "run: Lista")
-                                textView.text=line.plus("\n")
-                            }
-                            else if(reAffaf.containsMatchIn(line)){
-                                Log.d(TAG, "run: AFFAF, closing...")
-                                printWriter!!.println("QUIT\n");
-                                Toast.makeText(applicationContext,"Errore del server riprova pi� tardi",Toast.LENGTH_LONG).show()
-                                exitProcess(-1)
+                        if(!socket!!.isClosed) {
+                            val line = reader!!.readLine()
+                            val text: String = textView.text.toString()
+                            if (line != null && line != "null" && !reAlone.containsMatchIn(line)
+                                    && !reOk.containsMatchIn(line)) {
+                                println("Got in {$line}")
+                                when {
+                                    reList.containsMatchIn(line) -> {
+                                        Log.d(TAG, "run: Lista")
+                                        textView.text = line.plus("\n")
+                                    }
+                                    reAffaf.containsMatchIn(line) -> {
+                                        Log.d(TAG, "run: AFFAF, closing...")
+                                        printWriter!!.println("QUIT\n")
+                                        Toast.makeText(applicationContext, "Errore del server riprova pi� tardi", Toast.LENGTH_LONG).show()
+                                        finish()
+                                        exitProcess(-1)
 
-                            }
-                            else{
-                                textView.text = text.plus("\n").plus(line)
+                                    }
+                                    else -> {
+                                        textView.text = text.plus("\n").plus(line)
+                                    }
+                                }
                             }
                         }
                     }catch (e:NullPointerException){}
+                     catch (e1:SocketException){
+
+                     }
                 }
             }
         }
@@ -80,10 +82,9 @@ class MainActivity : AppCompatActivity() {
         update.start()
 
         class SendThread:Thread(){
-
             override fun run() {
                 Looper.prepare()
-                var line=textToSend.text.toString()
+                val line=textToSend.text.toString()
                 textToSend.setText("")
                 val reNumber="[0-9]".toRegex()
                 val reQuit=".*QUIT.*".toRegex()
@@ -92,8 +93,8 @@ class MainActivity : AppCompatActivity() {
                     Log.d(TAG, "sendText: Got $line")
                     line.plus("\n")
                      if(!reNumber.containsMatchIn(line)) {
-                        var view = textView.text.toString()
-                        var msg = view.plus("\n").plus("Tu:\n").plus(line)
+                        val view = textView.text.toString()
+                        val msg = view.plus("\n").plus("Tu:\n").plus(line)
                         textView.text = msg
                     }else{
                         textView.text=""
@@ -101,14 +102,14 @@ class MainActivity : AppCompatActivity() {
                     printWriter!!.println(line)
                     printWriter!!.flush()
                     if(reQuit.containsMatchIn(line)){
-                        Log.d(TAG, "run: QUIT")
-                        Toast.makeText(applicationContext,"Ciao,alla prossima",Toast.LENGTH_LONG).show()
+                        Log.d(TAG, "run:QUIT")
+                        Toast.makeText(applicationContext,"Ciao,alla prossima!",Toast.LENGTH_LONG).show()
+                        finish()
                         exitProcess(0)
                     }
                 }
             }
         }
-
         sendButton?.setOnClickListener{ val td=SendThread(); td.start()}
 
         class SocketThread: Thread(){
@@ -116,20 +117,41 @@ class MainActivity : AppCompatActivity() {
                 Looper.prepare()
                 try {
                     socket = Socket("35.180.35.239", 2015)
-                }catch (e:Exception){
+                }catch (e:Exception){super.run()
                     Toast.makeText(applicationContext,"Server su aws offline",Toast.LENGTH_LONG).show()
+                    finish()
                     exitProcess(-1)
                 }
                 textView.text="Connesso"
                 Log.d(TAG, "run: Connected")
                 reader=BufferedReader(InputStreamReader(socket!!.getInputStream()))
                 printWriter=PrintWriter(socket!!.getOutputStream())
-
                 println(reader)
                 println(printWriter)
             }
         }
         val socketTd=SocketThread()
         socketTd.start()
+    }
+
+    override fun onDestroy(){
+        class CloseThread: Thread() {
+            override fun run() {
+                super.run()
+                try {
+                    printWriter!!.println("QUIT\n")
+                    printWriter!!.flush()
+                    printWriter!!.close()
+                    reader!!.close()
+                    socket!!.close()
+                }catch (e: NullPointerException){}
+            }
+        }
+        super.onDestroy()
+        val tdClose=CloseThread()
+        tdClose.start()
+        tdClose.join()
+        finish()
+        exitProcess(0)
     }
 }

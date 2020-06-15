@@ -9,8 +9,8 @@
 
     <EditText
         android:id="@+id/sendText"
-        android:layout_width="258dp"
-        android:layout_height="55dp"
+        android:layout_width="494dp"
+        android:layout_height="53dp"
         android:ems="10"
         android:importantForAutofill="no"
         android:inputType="textPersonName"
@@ -18,15 +18,15 @@
         android:text="@string/name"
         app:layout_constraintBottom_toBottomOf="parent"
         app:layout_constraintEnd_toEndOf="parent"
-        app:layout_constraintHorizontal_bias="0.241"
+        app:layout_constraintHorizontal_bias="0.125"
         app:layout_constraintStart_toStartOf="parent"
         app:layout_constraintTop_toTopOf="parent"
-        app:layout_constraintVertical_bias="0.928" />
+        app:layout_constraintVertical_bias="0.872" />
 
     <TextView
         android:id="@+id/textView"
-        android:layout_width="325dp"
-        android:layout_height="482dp"
+        android:layout_width="627dp"
+        android:layout_height="207dp"
         android:elevation="@dimen/cardview_compat_inset_shadow"
         android:maxHeight="541dp"
         android:maxLines="25"
@@ -77,9 +77,9 @@
         android:contentDescription="@string/button"
         app:layout_constraintBottom_toBottomOf="parent"
         app:layout_constraintEnd_toEndOf="parent"
-        app:layout_constraintHorizontal_bias="0.881"
+        app:layout_constraintHorizontal_bias="0.878"
         app:layout_constraintStart_toStartOf="parent"
         app:layout_constraintTop_toTopOf="parent"
-        app:layout_constraintVertical_bias="0.926"
+        app:layout_constraintVertical_bias="0.869"
         app:srcCompat="@android:drawable/ic_menu_send" />
 </androidx.constraintlayout.widget.ConstraintLayout>
