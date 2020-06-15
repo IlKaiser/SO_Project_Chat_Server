@@ -459,12 +459,15 @@ void list_formatter(char buf[],int socket_desc){
     for (i=0;i<current_size;i++){ 
         if(sockets[i]!=DISCONNECTED){ 
             char number[15];
-            if(sockets[i]==socket_desc){
-                strcat(buf,"[YOU]");
-            }
             sprintf(number, "%d: ",i+1);
             strcat(buf,number);
-            strcat(buf,user_names[i]);
+            if(sockets[i]==socket_desc){
+                char new_name[32];
+                strncpy(new_name,user_names[i],strlen(user_names[i])-1);
+                strcat(buf,"[YOU]\n");
+            }else{
+                strcat(buf,user_names[i]);
+            }
             
         }
     }
