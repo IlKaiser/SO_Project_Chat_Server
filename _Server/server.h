@@ -34,7 +34,7 @@ void *thread_connection_handler(void *arg);
 void connection_handler(int socket_desc, struct sockaddr_in* client_addr);
 
 // function that formats the user list that server sends
-void list_formatter(char buf[]);
+void list_formatter(char buf[],int socket_desc);
 
 //function that sends message to reciver
 void send_mess(int index,char buff[]);

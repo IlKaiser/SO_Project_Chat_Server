@@ -230,7 +230,7 @@ void connection_handler(int socket_desc, struct sockaddr_in* client_addr) {
         }
     }
     // 3. send user list
-    list_formatter(buf);
+    list_formatter(buf,socket_desc);
     #if DEBUG
         printf("List %s",buf);
     #endif
@@ -452,15 +452,19 @@ void mthreadServer(int server_desc) {
     }
 }
 
-void list_formatter(char buf[]){
+void list_formatter(char buf[],int socket_desc){
     memset(buf, 0,strlen(buf));
     int i;
     for (i=0;i<current_size;i++){ 
         if(sockets[i]!=DISCONNECTED){ 
             char number[15];
+            if(sockets[i]==socket_desc){
+                strcat(buf,"[YOU]");
+            }
             sprintf(number, "%d: ",i+1);
             strcat(buf,number);
             strcat(buf,user_names[i]);
+            
         }
     }
 }
