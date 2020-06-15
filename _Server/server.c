@@ -126,8 +126,7 @@ void connection_handler(int socket_desc, struct sockaddr_in* client_addr) {
             ret = recv(socket_desc, user_name + recv_bytes, 1, 0);
             if (ret == -1 && errno == EINTR) continue;
             // Of course i still love you
-            if (ret == -1) disconnection_handler(socket_desc);;
-            if (ret == 0) disconnection_handler(socket_desc);
+            if (ret == -1 || ret==0) disconnection_handler(socket_desc);;
 	} while ( user_name[recv_bytes++] != '\n' );
 
     #if DEBUG
@@ -220,7 +219,6 @@ void connection_handler(int socket_desc, struct sockaddr_in* client_addr) {
             ret = send(socket_desc, buf + bytes_sent, msg_len - bytes_sent, 0);
             if (ret == -1 && errno == EINTR) continue;
             if (ret == -1) disconnection_handler(socket_desc);
-            if(ret==0)disconnection_handler(socket_desc);
             bytes_sent += ret;
         }
         ret=sleep(5);
@@ -249,7 +247,7 @@ void connection_handler(int socket_desc, struct sockaddr_in* client_addr) {
         ret = recv(socket_desc, user_buf + recv_bytes, 1, 0);
         if (ret == -1 && errno == EINTR) continue;
         // Of course i still love you
-        if (ret == -1) disconnection_handler(socket_desc);
+        if (ret == -1 || ret==0) disconnection_handler(socket_desc);
         //check if we are about to overflow the buffer
         if(recv_bytes>3){
             printf("Recived almost 4 bytes, resetting buffer...\n");
@@ -317,6 +315,7 @@ void connection_handler(int socket_desc, struct sockaddr_in* client_addr) {
             if (ret == -1 && errno == EINTR) continue;
             // Of course i still love you
             if (ret == -1) disconnection_handler(socket_desc);
+
             bytes_sent += ret;
         }
         disconnection_handler(socket_desc);
@@ -340,7 +339,7 @@ void connection_handler(int socket_desc, struct sockaddr_in* client_addr) {
             ret = recv(socket_desc, buf + recv_bytes, 1, 0);
             if (ret == -1 && errno == EINTR) continue;
             // Of course i still love you
-            if (ret == -1) disconnection_handler(socket_desc);
+            if (ret == -1 || ret == 0) disconnection_handler(socket_desc);
             if(recv_bytes>1022){
             printf("Recived almost 1024 bytes, resetting buffer...\n");
             memset(buf,0,buf_len);
