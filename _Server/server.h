@@ -11,6 +11,7 @@
 #define MAX_SIZE        128
 #define SERVER_PORT     2015
 #define ERROR_MSG       "0xAFFAF\n"
+#define DISCONNECTED    0xAFFAF
 #define ALONE_MSG       "Alone\n"
 #define OK_MSG          "OK\n"
 
@@ -44,6 +45,8 @@ static void exit_nicely(PGconn *conn, PGresult   *res,int socket_desc);
 //disconneciotn handler
 void disconnection_handler(int index);
 
-//sigpipe handler
-void handle_sigpipe(int signal);
+// next postion setter
+void set_next_position();
 
+// set disconnect into socket array
+void set_disconnected(int socket_desc);
