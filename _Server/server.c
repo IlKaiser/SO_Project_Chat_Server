@@ -32,13 +32,15 @@ int sockets[MAX_SIZE];
 int previous_size=0;
 //Current size of connection arrays
 int current_size=0;
+// Next position in arrays
+int next_position=0;
 //Semaphore for mutual exclusion
 sem_t* sem;
 
 
 int main(int argc, char* argv[]) {
-    // set handler for sigpipe (client disconnected)
-    signal(SIGPIPE,handle_sigpipe);
+    // ignore sigpipe so we can handle disconnection errrors manually
+    signal(SIGPIPE,SIG_IGN);
 
     int ret;
 
@@ -124,6 +126,7 @@ void connection_handler(int socket_desc, struct sockaddr_in* client_addr) {
         do {
             ret = recv(socket_desc, user_name + recv_bytes, 1, 0);
             if (ret == -1 && errno == EINTR) continue;
+            if (ret == -1 && errno == EPIPE) disconnection_handler(socket_desc);
             if (ret == -1) handle_error("Cannot read from the socket");
             if (ret == 0) disconnection_handler(socket_desc);
 	} while ( user_name[recv_bytes++] != '\n' );
@@ -141,6 +144,7 @@ void connection_handler(int socket_desc, struct sockaddr_in* client_addr) {
 	    while ( bytes_sent < msg_len){
             ret = send(socket_desc, buf + bytes_sent, msg_len - bytes_sent, 0);
             if (ret == -1 && errno == EINTR) continue;
+            if (ret == -1 && errno == EPIPE) disconnection_handler(socket_desc);
             if (ret == -1) handle_error("Cannot write to the socket");
             bytes_sent += ret;
         }
@@ -153,9 +157,13 @@ void connection_handler(int socket_desc, struct sockaddr_in* client_addr) {
             handle_error("Err sem wait");
         }
         previous_size=current_size;
-        user_names[current_size]=user_name;
-        sockets[current_size]=socket_desc;
+        user_names[next_position]=user_name;
+        sockets[next_position]=socket_desc;
         current_size++;
+        // determinate next free position
+        set_next_position();
+
+
         ret=sem_post(sem);
         if(ret){
             handle_error("Err sem post");
@@ -168,6 +176,7 @@ void connection_handler(int socket_desc, struct sockaddr_in* client_addr) {
 	    while ( bytes_sent < msg_len){
             ret = send(socket_desc, buf + bytes_sent, msg_len - bytes_sent, 0);
             if (ret == -1 && errno == EINTR) continue;
+            if (ret == -1 && errno == EPIPE) disconnection_handler(socket_desc);
             if (ret == -1) handle_error("Cannot write to the socket");
             bytes_sent += ret;
         }
@@ -211,6 +220,7 @@ void connection_handler(int socket_desc, struct sockaddr_in* client_addr) {
 	    while ( bytes_sent < msg_len) {
             ret = send(socket_desc, buf + bytes_sent, msg_len - bytes_sent, 0);
             if (ret == -1 && errno == EINTR) continue;
+            if (ret == -1 && errno == EPIPE) disconnection_handler(socket_desc);
             if (ret == -1) disconnection_handler(socket_desc);
             if(ret==0)disconnection_handler(socket_desc);
             bytes_sent += ret;
@@ -230,6 +240,7 @@ void connection_handler(int socket_desc, struct sockaddr_in* client_addr) {
 	while ( bytes_sent < msg_len) {
         ret = send(socket_desc, buf + bytes_sent, msg_len - bytes_sent, 0);
         if (ret == -1 && errno == EINTR) continue;
+        if (ret == -1 && errno == EPIPE) disconnection_handler(socket_desc);
         if (ret == -1) handle_error("Cannot write to the socket");
         bytes_sent += ret;
     }
@@ -239,6 +250,7 @@ void connection_handler(int socket_desc, struct sockaddr_in* client_addr) {
     do {
         ret = recv(socket_desc, user_buf + recv_bytes, 1, 0);
         if (ret == -1 && errno == EINTR) continue;
+        if (ret == -1 && errno == EPIPE) disconnection_handler(socket_desc);
         if (ret == -1) handle_error("Cannot read from the socket");
         if (ret == 0) disconnection_handler(socket_desc);
         //check if we are about to overflow the buffer
@@ -269,6 +281,7 @@ void connection_handler(int socket_desc, struct sockaddr_in* client_addr) {
         while ( bytes_sent < msg_len){
             ret = send(socket_desc, buf + bytes_sent, msg_len - bytes_sent, 0);
             if (ret == -1 && errno == EINTR) continue;
+            if (ret == -1 && errno == EPIPE) disconnection_handler(socket_desc);
             if (ret == -1) handle_error("Cannot write to the socket");
             bytes_sent += ret;
         }
@@ -291,6 +304,7 @@ void connection_handler(int socket_desc, struct sockaddr_in* client_addr) {
         while ( bytes_sent < msg_len){
             ret = send(socket_desc, buf + bytes_sent, msg_len - bytes_sent, 0);
             if (ret == -1 && errno == EINTR) continue;
+            if (ret == -1 && errno == EPIPE) disconnection_handler(socket_desc);
             if (ret == -1) handle_error("Cannot write to the socket");
             bytes_sent += ret;
             printf("bytes sent %d\n",bytes_sent);
@@ -304,6 +318,7 @@ void connection_handler(int socket_desc, struct sockaddr_in* client_addr) {
         while ( bytes_sent < msg_len){
             ret = send(socket_desc, buf + bytes_sent, msg_len - bytes_sent, 0);
             if (ret == -1 && errno == EINTR) continue;
+            if (ret == -1 && errno == EPIPE) disconnection_handler(socket_desc);
             if (ret == -1) handle_error("Cannot write to the socket");
             bytes_sent += ret;
         }
@@ -327,6 +342,7 @@ void connection_handler(int socket_desc, struct sockaddr_in* client_addr) {
         do {
             ret = recv(socket_desc, buf + recv_bytes, 1, 0);
             if (ret == -1 && errno == EINTR) continue;
+            if (ret == -1 && errno == EPIPE) disconnection_handler(socket_desc);
             if (ret == -1) handle_error("Cannot read from the socket");
             if (ret == 0) disconnection_handler(socket_desc);
             if(recv_bytes>1022){
@@ -377,6 +393,7 @@ void connection_handler(int socket_desc, struct sockaddr_in* client_addr) {
         while ( bytes_sent < msg_len){
             ret = send(socket_target, to_send + bytes_sent, msg_len - bytes_sent, 0);
             if (ret == -1 && errno == EINTR) continue;
+            if (ret == -1 && errno == EPIPE) disconnection_handler(socket_desc);
             if (ret == -1) handle_error("Cannot write to the socket");
             bytes_sent += ret;
         }
@@ -439,11 +456,13 @@ void mthreadServer(int server_desc) {
 void list_formatter(char buf[]){
     memset(buf, 0,strlen(buf));
     int i;
-    for (i=0;i<current_size;i++){  
-        char number[15];
-        sprintf(number, "%d: ",i+1);
-        strcat(buf,number);
-        strcat(buf,user_names[i]);
+    for (i=0;i<current_size;i++){ 
+        if(sockets[i]!=DISCONNECTED){ 
+            char number[15];
+            sprintf(number, "%d: ",i+1);
+            strcat(buf,number);
+            strcat(buf,user_names[i]);
+        }
     }
 }
 
@@ -461,6 +480,8 @@ void disconnection_handler(int index){
     if(index!=-1){
         ret=close(index);
         if(ret){handle_error("Disconnection error");}
+        set_disconnected(index);
+        set_next_position();
     }
     ret=sem_wait(sem);
     current_size--;
@@ -469,7 +490,24 @@ void disconnection_handler(int index){
     pthread_exit(NULL);
 }
 
-void handle_sigpipe(int sig){ 
-    printf("Caught signal %d\n", sig); 
-    disconnection_handler(-1);
-} 
+void set_next_position(){
+    int i;
+    for(i=0;i<current_size;i++){
+        if(sockets[i]==DISCONNECTED){
+            next_position=i;
+            return;
+        }
+    }
+    next_position=current_size;
+    return;
+}
+
+void set_disconnected(int socket_desc){
+    int i;
+    for(i=0;i<current_size;i++){
+        if(sockets[i]==socket_desc){
+            sockets[i]=DISCONNECTED;
+            return;
+        }
+    }
+}
