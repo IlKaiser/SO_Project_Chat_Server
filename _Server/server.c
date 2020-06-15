@@ -126,8 +126,7 @@ void connection_handler(int socket_desc, struct sockaddr_in* client_addr) {
         do {
             ret = recv(socket_desc, user_name + recv_bytes, 1, 0);
             if (ret == -1 && errno == EINTR) continue;
-            if (ret == -1 && errno == EPIPE) disconnection_handler(socket_desc);
-           //Never let you go & never let you die
+            // Of course i still love you
             if (ret == -1) disconnection_handler(socket_desc);;
             if (ret == 0) disconnection_handler(socket_desc);
 	} while ( user_name[recv_bytes++] != '\n' );
@@ -145,8 +144,7 @@ void connection_handler(int socket_desc, struct sockaddr_in* client_addr) {
 	    while ( bytes_sent < msg_len){
             ret = send(socket_desc, buf + bytes_sent, msg_len - bytes_sent, 0);
             if (ret == -1 && errno == EINTR) continue;
-            if (ret == -1 && errno == EPIPE) disconnection_handler(socket_desc);
-            //Never let you go & never let you die
+            // Of course i still love you
             if (ret == -1) disconnection_handler(socket_desc);
             bytes_sent += ret;
         }
@@ -178,8 +176,7 @@ void connection_handler(int socket_desc, struct sockaddr_in* client_addr) {
 	    while ( bytes_sent < msg_len){
             ret = send(socket_desc, buf + bytes_sent, msg_len - bytes_sent, 0);
             if (ret == -1 && errno == EINTR) continue;
-            if (ret == -1 && errno == EPIPE) disconnection_handler(socket_desc);
-            //Never let you go & never let you die
+            // Of course i still love you
             if (ret == -1) disconnection_handler(socket_desc);
             bytes_sent += ret;
         }
@@ -223,7 +220,6 @@ void connection_handler(int socket_desc, struct sockaddr_in* client_addr) {
 	    while ( bytes_sent < msg_len) {
             ret = send(socket_desc, buf + bytes_sent, msg_len - bytes_sent, 0);
             if (ret == -1 && errno == EINTR) continue;
-            if (ret == -1 && errno == EPIPE) disconnection_handler(socket_desc);
             if (ret == -1) disconnection_handler(socket_desc);
             if(ret==0)disconnection_handler(socket_desc);
             bytes_sent += ret;
@@ -243,8 +239,7 @@ void connection_handler(int socket_desc, struct sockaddr_in* client_addr) {
 	while ( bytes_sent < msg_len) {
         ret = send(socket_desc, buf + bytes_sent, msg_len - bytes_sent, 0);
         if (ret == -1 && errno == EINTR) continue;
-        if (ret == -1 && errno == EPIPE) disconnection_handler(socket_desc);
-        //Never let you go & never let you die
+        // Of course i still love you
         if (ret == -1) disconnection_handler(socket_desc);
         bytes_sent += ret;
     }
@@ -254,10 +249,8 @@ void connection_handler(int socket_desc, struct sockaddr_in* client_addr) {
     do {
         ret = recv(socket_desc, user_buf + recv_bytes, 1, 0);
         if (ret == -1 && errno == EINTR) continue;
-        if (ret == -1 && errno == EPIPE) disconnection_handler(socket_desc);
-       //Never let you go & never let you die
+        // Of course i still love you
         if (ret == -1) disconnection_handler(socket_desc);
-        if (ret == 0) disconnection_handler(socket_desc);
         //check if we are about to overflow the buffer
         if(recv_bytes>3){
             printf("Recived almost 4 bytes, resetting buffer...\n");
@@ -286,10 +279,7 @@ void connection_handler(int socket_desc, struct sockaddr_in* client_addr) {
         while ( bytes_sent < msg_len){
             ret = send(socket_desc, buf + bytes_sent, msg_len - bytes_sent, 0);
             if (ret == -1 && errno == EINTR) continue;
-            if (ret == -1 && errno == EPIPE) disconnection_handler(socket_desc);
-            //Never let you go & never let you die
-            if (ret == -1) disconnection_handler(socket_desc);
-            //Never let you go & never let you die
+            // Of course i still love you
             if (ret == -1) disconnection_handler(socket_desc);
             bytes_sent += ret;
         }
@@ -312,10 +302,7 @@ void connection_handler(int socket_desc, struct sockaddr_in* client_addr) {
         while ( bytes_sent < msg_len){
             ret = send(socket_desc, buf + bytes_sent, msg_len - bytes_sent, 0);
             if (ret == -1 && errno == EINTR) continue;
-            if (ret == -1 && errno == EPIPE) disconnection_handler(socket_desc);
-            //Never let you go & never let you die
-            if (ret == -1) disconnection_handler(socket_desc);
-            //Never let you go & never let you die
+            // Of course i still love you
             if (ret == -1) disconnection_handler(socket_desc);
             bytes_sent += ret;
             printf("bytes sent %d\n",bytes_sent);
@@ -329,10 +316,7 @@ void connection_handler(int socket_desc, struct sockaddr_in* client_addr) {
         while ( bytes_sent < msg_len){
             ret = send(socket_desc, buf + bytes_sent, msg_len - bytes_sent, 0);
             if (ret == -1 && errno == EINTR) continue;
-            if (ret == -1 && errno == EPIPE) disconnection_handler(socket_desc);
-            //Never let you go & never let you die
-            if (ret == -1) disconnection_handler(socket_desc);
-            //Never let you go & never let you die
+            // Of course i still love you
             if (ret == -1) disconnection_handler(socket_desc);
             bytes_sent += ret;
         }
@@ -356,10 +340,8 @@ void connection_handler(int socket_desc, struct sockaddr_in* client_addr) {
         do {
             ret = recv(socket_desc, buf + recv_bytes, 1, 0);
             if (ret == -1 && errno == EINTR) continue;
-            if (ret == -1 && errno == EPIPE) disconnection_handler(socket_desc);
-            //Never let you go & never let you die
+            // Of course i still love you
             if (ret == -1) disconnection_handler(socket_desc);
-            if (ret == 0) disconnection_handler(socket_desc);
             if(recv_bytes>1022){
             printf("Recived almost 1024 bytes, resetting buffer...\n");
             memset(buf,0,buf_len);
@@ -371,7 +353,7 @@ void connection_handler(int socket_desc, struct sockaddr_in* client_addr) {
         #endif // DEBUG
 
         // check whether I have just been told to quit...
-        if (recv_bytes == 0) break;
+        if (recv_bytes == 0) disconnection_handler(socket_desc);
         if (recv_bytes == quit_command_len && !memcmp(buf, quit_command, quit_command_len)){ 
             printf("Quitting...\n");
             disconnection_handler(socket_desc);
@@ -408,7 +390,7 @@ void connection_handler(int socket_desc, struct sockaddr_in* client_addr) {
         while ( bytes_sent < msg_len){
             ret = send(socket_target, to_send + bytes_sent, msg_len - bytes_sent, 0);
             if (ret == -1 && errno == EINTR) continue;
-            //Never let you go & never let you die
+            // Of course i still love you
             if (ret == -1) disconnection_handler(socket_desc);
             bytes_sent += ret;
         }
