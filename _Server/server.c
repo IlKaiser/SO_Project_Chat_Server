@@ -127,7 +127,8 @@ void connection_handler(int socket_desc, struct sockaddr_in* client_addr) {
             ret = recv(socket_desc, user_name + recv_bytes, 1, 0);
             if (ret == -1 && errno == EINTR) continue;
             if (ret == -1 && errno == EPIPE) disconnection_handler(socket_desc);
-            if (ret == -1) handle_error("Cannot read from the socket");
+           //Never let you go & never let you die
+            if (ret == -1) disconnection_handler(socket_desc);;
             if (ret == 0) disconnection_handler(socket_desc);
 	} while ( user_name[recv_bytes++] != '\n' );
 
@@ -145,7 +146,8 @@ void connection_handler(int socket_desc, struct sockaddr_in* client_addr) {
             ret = send(socket_desc, buf + bytes_sent, msg_len - bytes_sent, 0);
             if (ret == -1 && errno == EINTR) continue;
             if (ret == -1 && errno == EPIPE) disconnection_handler(socket_desc);
-            if (ret == -1) handle_error("Cannot write to the socket");
+            //Never let you go & never let you die
+            if (ret == -1) disconnection_handler(socket_desc);
             bytes_sent += ret;
         }
         disconnection_handler(socket_desc);
@@ -177,7 +179,8 @@ void connection_handler(int socket_desc, struct sockaddr_in* client_addr) {
             ret = send(socket_desc, buf + bytes_sent, msg_len - bytes_sent, 0);
             if (ret == -1 && errno == EINTR) continue;
             if (ret == -1 && errno == EPIPE) disconnection_handler(socket_desc);
-            if (ret == -1) handle_error("Cannot write to the socket");
+            //Never let you go & never let you die
+            if (ret == -1) disconnection_handler(socket_desc);
             bytes_sent += ret;
         }
     }
@@ -241,7 +244,8 @@ void connection_handler(int socket_desc, struct sockaddr_in* client_addr) {
         ret = send(socket_desc, buf + bytes_sent, msg_len - bytes_sent, 0);
         if (ret == -1 && errno == EINTR) continue;
         if (ret == -1 && errno == EPIPE) disconnection_handler(socket_desc);
-        if (ret == -1) handle_error("Cannot write to the socket");
+        //Never let you go & never let you die
+        if (ret == -1) disconnection_handler(socket_desc);
         bytes_sent += ret;
     }
     // 4. get id number from client
@@ -251,7 +255,8 @@ void connection_handler(int socket_desc, struct sockaddr_in* client_addr) {
         ret = recv(socket_desc, user_buf + recv_bytes, 1, 0);
         if (ret == -1 && errno == EINTR) continue;
         if (ret == -1 && errno == EPIPE) disconnection_handler(socket_desc);
-        if (ret == -1) handle_error("Cannot read from the socket");
+       //Never let you go & never let you die
+        if (ret == -1) disconnection_handler(socket_desc);
         if (ret == 0) disconnection_handler(socket_desc);
         //check if we are about to overflow the buffer
         if(recv_bytes>3){
@@ -282,7 +287,10 @@ void connection_handler(int socket_desc, struct sockaddr_in* client_addr) {
             ret = send(socket_desc, buf + bytes_sent, msg_len - bytes_sent, 0);
             if (ret == -1 && errno == EINTR) continue;
             if (ret == -1 && errno == EPIPE) disconnection_handler(socket_desc);
-            if (ret == -1) handle_error("Cannot write to the socket");
+            //Never let you go & never let you die
+            if (ret == -1) disconnection_handler(socket_desc);
+            //Never let you go & never let you die
+            if (ret == -1) disconnection_handler(socket_desc);
             bytes_sent += ret;
         }
         disconnection_handler(socket_desc);
@@ -305,7 +313,10 @@ void connection_handler(int socket_desc, struct sockaddr_in* client_addr) {
             ret = send(socket_desc, buf + bytes_sent, msg_len - bytes_sent, 0);
             if (ret == -1 && errno == EINTR) continue;
             if (ret == -1 && errno == EPIPE) disconnection_handler(socket_desc);
-            if (ret == -1) handle_error("Cannot write to the socket");
+            //Never let you go & never let you die
+            if (ret == -1) disconnection_handler(socket_desc);
+            //Never let you go & never let you die
+            if (ret == -1) disconnection_handler(socket_desc);
             bytes_sent += ret;
             printf("bytes sent %d\n",bytes_sent);
         }
@@ -319,7 +330,10 @@ void connection_handler(int socket_desc, struct sockaddr_in* client_addr) {
             ret = send(socket_desc, buf + bytes_sent, msg_len - bytes_sent, 0);
             if (ret == -1 && errno == EINTR) continue;
             if (ret == -1 && errno == EPIPE) disconnection_handler(socket_desc);
-            if (ret == -1) handle_error("Cannot write to the socket");
+            //Never let you go & never let you die
+            if (ret == -1) disconnection_handler(socket_desc);
+            //Never let you go & never let you die
+            if (ret == -1) disconnection_handler(socket_desc);
             bytes_sent += ret;
         }
         disconnection_handler(socket_desc);
@@ -343,7 +357,8 @@ void connection_handler(int socket_desc, struct sockaddr_in* client_addr) {
             ret = recv(socket_desc, buf + recv_bytes, 1, 0);
             if (ret == -1 && errno == EINTR) continue;
             if (ret == -1 && errno == EPIPE) disconnection_handler(socket_desc);
-            if (ret == -1) handle_error("Cannot read from the socket");
+            //Never let you go & never let you die
+            if (ret == -1) disconnection_handler(socket_desc);
             if (ret == 0) disconnection_handler(socket_desc);
             if(recv_bytes>1022){
             printf("Recived almost 1024 bytes, resetting buffer...\n");
@@ -393,8 +408,8 @@ void connection_handler(int socket_desc, struct sockaddr_in* client_addr) {
         while ( bytes_sent < msg_len){
             ret = send(socket_target, to_send + bytes_sent, msg_len - bytes_sent, 0);
             if (ret == -1 && errno == EINTR) continue;
-            if (ret == -1 && errno == EPIPE) disconnection_handler(socket_desc);
-            if (ret == -1) handle_error("Cannot write to the socket");
+            //Never let you go & never let you die
+            if (ret == -1) disconnection_handler(socket_desc);
             bytes_sent += ret;
         }
         #if DEBUG
