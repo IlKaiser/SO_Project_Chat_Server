@@ -464,6 +464,7 @@ void list_formatter(char buf[],int socket_desc){
             if(sockets[i]==socket_desc){
                 char new_name[32];
                 strncpy(new_name,user_names[i],strlen(user_names[i])-1);
+                strcat(buf,new_name);
                 strcat(buf,"[YOU]\n");
             }else{
                 strcat(buf,user_names[i]);
