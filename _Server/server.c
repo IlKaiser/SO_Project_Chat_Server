@@ -135,7 +135,7 @@ void connection_handler(int socket_desc, struct sockaddr_in* client_addr) {
     #endif // DEBUG
 
     // 1.1 Updates global variables info
-    if(previous_size==MAX_SIZE){
+    if(previous_size==MAX_SIZE || user_name==""){
         memset(buf, 0, buf_len);
         strcpy(buf,ERROR_MSG);
         bytes_sent = 0;
@@ -262,12 +262,16 @@ void connection_handler(int socket_desc, struct sockaddr_in* client_addr) {
         printf("User id chosen: %d\n",user_id);
     #endif // DEBUG
 
+    int socket_target=DISCONNECTED;
+    char* target_user_name=NULL;
     // 4.1 get target socket desc
-    int socket_target=sockets[user_id-1];
+    if(user_id<=current_size){
+         socket_target=sockets[user_id-1];
 
-    //Look for target user name
-    char* target_user_name=user_names[user_id-1];
-
+        //Look for target user name
+        target_user_name=user_names[user_id-1];
+    }
+    
     //check if user his number
     if (socket_target==socket_desc){
         memset(buf, 0, buf_len);
@@ -284,7 +288,7 @@ void connection_handler(int socket_desc, struct sockaddr_in* client_addr) {
         disconnection_handler(socket_desc);
     }
 
-    if(socket_target){
+    if(socket_target != DISCONNECTED){
         #if DEBUG
             printf("socket target number : %d\n",socket_target);
         #endif // DEBUG
