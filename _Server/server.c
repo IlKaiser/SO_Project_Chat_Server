@@ -104,7 +104,7 @@ void connection_handler(int socket_desc, struct sockaddr_in* client_addr) {
     int msg_len;
 
     char* quit_command = SERVER_COMMAND;
-    char  user_name[32];
+    char* credentials;
     size_t quit_command_len = strlen(quit_command);
 
     #if DEBUG
@@ -121,15 +121,37 @@ void connection_handler(int socket_desc, struct sockaddr_in* client_addr) {
         printf("Client ip %s, client port %hu\n",client_ip,client_port);
     #endif // DEBUG
 
-    // 1. get client username
-    memset(user_name, 0, sizeof(user_name));
-        recv_bytes = 0;
-        do {
-            ret = recv(socket_desc, user_name + recv_bytes, 1, 0);
-            if (ret == -1 && errno == EINTR) continue;
-            // Of course i still love you
-            if (ret == -1 || ret==0) disconnection_handler(socket_desc);;
-	} while ( user_name[recv_bytes++] != '\n' );
+
+    char* user_name;
+
+    // 1. get client username and password finchè non arrivano quelle corrette
+    while(strlen(user_name)<0){
+        memset(credentials, 0, sizeof(credentials));
+            recv_bytes = 0;
+            do {
+                ret = recv(socket_desc, credentials + recv_bytes, 1, 0);
+                if (ret == -1 && errno == EINTR) continue;
+                // Of course i still love you
+                if (ret == -1 || ret==0) disconnection_handler(socket_desc);
+        } while ( credentials[recv_bytes++] != '\n' );
+
+        char* user_name=login(credentials,socket_desc);
+        if(strlen(user_name)<0){
+            printf("INVALID CREDENTIALS\n");
+            memset(buf, 0, buf_len);
+            strcpy(buf,ERROR_MSG);
+            bytes_sent = 0;
+            msg_len = strlen(buf);
+            while ( bytes_sent < msg_len){
+                ret = send(socket_desc, buf + bytes_sent, msg_len - bytes_sent, 0);
+                if (ret == -1 && errno == EINTR) continue;
+                // Of course i still love you
+                if (ret == -1) disconnection_handler(socket_desc);
+                bytes_sent += ret;
+            }
+        }
+
+    }
 
     #if DEBUG
         printf("Username get: %s\n",user_name);
@@ -516,4 +538,53 @@ void set_disconnected(int socket_desc){
             return;
         }
     }
+}
+
+char* login(char* credentials,int socket_desc){
+    int read_bytes = 0;
+    char* username;
+    char* password;
+    do {
+        username[read_bytes]=credentials[read_bytes];
+        read_bytes++;
+    } while ( credentials[read_bytes++] != ';' );
+    do{
+        password[read_bytes]=credentials[read_bytes];
+        read_bytes++;
+    } while ( credentials[read_bytes++] != '\n' );
+
+    //connetto al db
+    const char *conninfo = "hostaddr=15.236.174.17 port=5432 dbname=SO_chat user=postgres password=Quindicimaggio_20 sslmode=disable";
+    PGconn *conn;
+    PGresult *res;
+    
+
+    conn = PQconnectdb(conninfo);
+    if (PQstatus(conn) != CONNECTION_OK)
+    {
+        fprintf(stderr, "Connection to database failed: %s", PQerrorMessage(conn));
+        PQfinish(conn);
+        exit(1);
+    }
+    printf("hai inserito: %s ,%s \n",username,password);
+    const char* paramValue[2] = {username,password};
+    res = PQexecParams(conn,
+                    "select username from users where username=$1 and password=$2",
+                    2,       /* two param*/
+                    NULL,    /* let the backend deduce param type*/
+                    paramValue,
+                    NULL,
+                    NULL,
+                    1);      /* ask for binary results*/
+    if (PQresultStatus(res) != PGRES_TUPLES_OK)
+    {
+        fprintf(stderr, "SELECT failed: %s", PQerrorMessage(conn));
+        PQclear(res);
+        exit_nicely(conn,res,socket_desc);
+    }
+    int ris=PQntuples(res);
+    if (ris == 1 ){
+        return username;
+    }
+    return NULL;    
 }

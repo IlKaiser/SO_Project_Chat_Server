@@ -49,3 +49,6 @@ void set_next_position();
 
 // set disconnect into socket array
 void set_disconnected(int socket_desc);
+
+//check credentials in db
+char* login(char* credentials,int socket_desc){
