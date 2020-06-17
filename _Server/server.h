@@ -51,4 +51,4 @@ void set_next_position();
 void set_disconnected(int socket_desc);
 
 //check credentials in db
-char* login(char* credentials,int socket_desc){
+int login(char* credentials,int socket_desc);

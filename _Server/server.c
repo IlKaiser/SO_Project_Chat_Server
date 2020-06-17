@@ -104,7 +104,7 @@ void connection_handler(int socket_desc, struct sockaddr_in* client_addr) {
     int msg_len;
 
     char* quit_command = SERVER_COMMAND;
-    char* credentials;
+    char credentials[66];
     size_t quit_command_len = strlen(quit_command);
 
     #if DEBUG
@@ -122,22 +122,40 @@ void connection_handler(int socket_desc, struct sockaddr_in* client_addr) {
     #endif // DEBUG
 
 
-    char* user_name;
-
+    char* user_name=ERROR_MSG;
+    char* tok;
     // 1. get client username and password finchè non arrivano quelle corrette
-    while(strlen(user_name)<0){
-        memset(credentials, 0, sizeof(credentials));
-            recv_bytes = 0;
-            do {
-                ret = recv(socket_desc, credentials + recv_bytes, 1, 0);
-                if (ret == -1 && errno == EINTR) continue;
-                // Of course i still love you
-                if (ret == -1 || ret==0) disconnection_handler(socket_desc);
+    while(!strcmp(user_name,ERROR_MSG)){
+        memset(credentials, 0, strlen(credentials));
+        recv_bytes = 0;
+        do {
+            ret = recv(socket_desc, credentials + recv_bytes, 1, 0);
+            if (ret == -1 && errno == EINTR) continue;
+            // Of course i still love you
+            if (ret == -1 || ret==0) disconnection_handler(socket_desc);
         } while ( credentials[recv_bytes++] != '\n' );
 
-        char* user_name=login(credentials,socket_desc);
-        if(strlen(user_name)<0){
+        printf("sono qui\n");
+        fflush(stdout);
+        printf("le credenziali sono %s \n",credentials );
+        if (login(credentials,socket_desc)){
+            printf("copio username \n");
+            tok = strtok(credentials, ";");
+            printf("%s\n",tok);
+
+        }
+        else{
+            printf("copio errore \n");
+            memset(tok,0,strlen(tok));
+            strcpy(tok,ERROR_MSG);
+
+        }
+        printf("il risultato è %s\n",tok);
+        fflush(stdout);
+
+        if(!strcmp(tok,ERROR_MSG)){
             printf("INVALID CREDENTIALS\n");
+            fflush(stdout);
             memset(buf, 0, buf_len);
             strcpy(buf,ERROR_MSG);
             bytes_sent = 0;
@@ -150,7 +168,8 @@ void connection_handler(int socket_desc, struct sockaddr_in* client_addr) {
                 bytes_sent += ret;
             }
         }
-
+        memset(user_name,0,strlen(user_name));
+        strcpy(user_name,tok);
     }
 
     #if DEBUG
@@ -540,19 +559,15 @@ void set_disconnected(int socket_desc){
     }
 }
 
-char* login(char* credentials,int socket_desc){
-    int read_bytes = 0;
-    char* username;
-    char* password;
-    do {
-        username[read_bytes]=credentials[read_bytes];
-        read_bytes++;
-    } while ( credentials[read_bytes++] != ';' );
-    do{
-        password[read_bytes]=credentials[read_bytes];
-        read_bytes++;
-    } while ( credentials[read_bytes++] != '\n' );
-
+int login(char* credentials,int socket_desc){
+    //int read_bytes = 0;
+    char username[32];
+    char password[32];
+    char * token = strtok(credentials, ";");
+    strcpy(username,token ); //salvo username
+    token = strtok(NULL, ";");
+    strcpy(password,token);//salvo password
+    password[strlen(password)-1]='\0';
     //connetto al db
     const char *conninfo = "hostaddr=15.236.174.17 port=5432 dbname=SO_chat user=postgres password=Quindicimaggio_20 sslmode=disable";
     PGconn *conn;
@@ -566,7 +581,7 @@ char* login(char* credentials,int socket_desc){
         PQfinish(conn);
         exit(1);
     }
-    printf("hai inserito: %s ,%s \n",username,password);
+    printf("hai inserito: %s,%s \n",username,password);
     const char* paramValue[2] = {username,password};
     res = PQexecParams(conn,
                     "select username from users where username=$1 and password=$2",
@@ -583,8 +598,5 @@ char* login(char* credentials,int socket_desc){
         exit_nicely(conn,res,socket_desc);
     }
     int ris=PQntuples(res);
-    if (ris == 1 ){
-        return username;
-    }
-    return NULL;    
+    return ris;
 }

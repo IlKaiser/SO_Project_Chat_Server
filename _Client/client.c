@@ -11,7 +11,7 @@
 #include <gtk/gtk.h>
 #include <sys/ipc.h>
 #include <sys/msg.h>
-
+ 
 #include <libpq-fe.h>
 
 
@@ -416,12 +416,12 @@ static void callback( GtkWidget *widget,gpointer data )
 }
 
 
-static void exit_nicely(PGconn *conn, PGresult   *res)
+/*static void exit_nicely(PGconn *conn, PGresult   *res)
 {
     PQclear(res);
     PQfinish(conn);
     exit(1);
-}
+}*/
 void main_page(GtkApplication *app,char* user){
     //AFTER LOGIN CODE
     int ret;
@@ -532,42 +532,48 @@ void login( GtkWidget *widget,gpointer data ){
     GtkWidget* user = arg->username;
     GtkWidget* pas = arg->password;
     GtkApplication* app = arg->app;
+    int socket_desc = arg->socket_desc;
     
     char* i_user = (char*)gtk_entry_get_text(GTK_ENTRY(user));
     char* i_pas = (char*)gtk_entry_get_text(GTK_ENTRY(pas));
-
-    //connetto al db
-    const char *conninfo = "hostaddr=15.236.174.17 port=5432 dbname=SO_chat user=postgres password=Quindicimaggio_20 sslmode=disable";
-    PGconn *conn;
-    PGresult *res;
     
+    //sends his credential to server
+    int ret;
+    char snd[66];
+    strcpy(snd,i_user);
+    strcat(snd,";");
+    strcat(snd,i_pas);
+    strcat(snd,"\n");
+    int usr_len = strlen(snd);
+    printf("Usr len:%d, %s\n ",usr_len,snd);
+    // send message to server
+    int bytes_sent=0;
+    while ( bytes_sent < usr_len) {
+        ret = send(socket_desc, snd + bytes_sent, usr_len - bytes_sent, 0);
+        if (ret == -1 && errno == EINTR) continue;
+        if (ret == -1) handle_error("Cannot write to the socket");
+        bytes_sent += ret;
+        printf("Sent %s, Bytes sent %d\n",snd,ret);
+    }
 
-    conn = PQconnectdb(conninfo);
-    if (PQstatus(conn) != CONNECTION_OK)
-    {
-        fprintf(stderr, "Connection to database failed: %s", PQerrorMessage(conn));
-        PQfinish(conn);
-        exit(1);
-    }
-    printf("hai inserito: %s ,%s \n",i_user,i_pas);
-    const char* paramValue[2] = {i_user,i_pas};
-    res = PQexecParams(conn,
-                    "select username from users where username=$1 and password=$2",
-                    2,       /* two param */
-                    NULL,    /* let the backend deduce param type */
-                    paramValue,
-                    NULL,
-                    NULL,
-                    1);      /* ask for binary results */
-    if (PQresultStatus(res) != PGRES_TUPLES_OK)
-    {
-        fprintf(stderr, "SELECT failed: %s", PQerrorMessage(conn));
-        PQclear(res);
-        exit_nicely(conn,res);
-    }
-    int ris=PQntuples(res);
-    printf("risposta del db: %d\n",ris);
-    if (ris==1){
+    #if DEBUG
+        printf("Credential sent\n");
+    #endif
+    //wait for the response
+    char ack[15];
+    size_t ack_len = sizeof(ack);
+    strcpy(ack,ERROR_MSG);
+    memset(ack, 0, ack_len);
+    int recv_bytes = 0;
+    do {
+        ret = recv(socket_desc, ack + recv_bytes, 1, 0);
+        if (ret == -1 && errno == EINTR) continue;
+        if (ret == -1) handle_error("Cannot read from the socket");
+        if (ret == 0) handle_error_en(0xDEAD,"server is offline");
+    } while ( ack[recv_bytes++] != '\n' );
+    printf("l'ack è: %s\n, recv_bytes %d\n", ack,recv_bytes);
+
+    if (strcmp(ack,ERROR_MSG)){
         gtk_window_close(GTK_WINDOW(window));
         main_page(app,i_user);
     }
@@ -576,6 +582,7 @@ void login( GtkWidget *widget,gpointer data ){
         gtk_dialog_run(GTK_DIALOG(dialog));
 
     }
+    
 
 }
 static void activate (GtkApplication *app){
@@ -589,6 +596,25 @@ static void activate (GtkApplication *app){
     GtkWidget * usr_label;
     GtkWidget * pas_label;
 
+    // connetto al server
+    int ret;
+    int socket_desc;
+    struct sockaddr_in server_addr = {0}; // some fields are required to be filled with 0
+
+    // create a socket
+    socket_desc = socket(AF_INET, SOCK_STREAM, 0);
+    if(socket_desc < 0) handle_error("Could not create socket");
+
+    // set up parameters for the connection
+    server_addr.sin_addr.s_addr = inet_addr(SERVER_ADDRESS);
+    server_addr.sin_family      = AF_INET;
+    server_addr.sin_port        = htons(SERVER_PORT); // don't forget about network byte order!
+
+    // initiate a connection on the socket
+    ret = connect(socket_desc, (struct sockaddr*) &server_addr, sizeof(struct sockaddr_in));
+    if(ret) handle_error("Could not create connection");
+
+    if (DEBUG) fprintf(stderr, "Connection established!\n");
 
     window = gtk_application_window_new (app);
     gtk_window_set_title (GTK_WINDOW (window), "Window");
@@ -612,6 +638,7 @@ static void activate (GtkApplication *app){
     //user_par.dialog=dialog;
     user_par.window=window;
     user_par.app=app;
+    user_par.socket_desc=socket_desc;
     g_signal_connect (button, "clicked",G_CALLBACK (login),&user_par);
 
     

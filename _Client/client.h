@@ -6,7 +6,7 @@
 /* Configuration parameters */
 #define DEBUG           1   // display debug messages
 #define MAX_CONN_QUEUE  3   // max number of connections the server can queue
-#define AWS             1
+#define AWS             0
 #if AWS
     #define SERVER_ADDRESS  "35.180.35.239" //AWS
 #else
@@ -38,6 +38,7 @@ struct user_par{
     //GtkWidget* dialog;
     GtkWidget* window;
     GtkApplication* app;
+    int socket_desc;
 } user_par;
 
 
@@ -55,7 +56,7 @@ void login( GtkWidget *widget,gpointer data );
 void* update (void* arg);
 
 //close db connection
-static void exit_nicely(PGconn *conn, PGresult   *res);
+//static void exit_nicely(PGconn *conn, PGresult   *res);
 
 //forces quit to server
 void force_quit();
