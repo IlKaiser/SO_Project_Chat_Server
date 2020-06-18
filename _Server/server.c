@@ -171,6 +171,7 @@ void connection_handler(int socket_desc, struct sockaddr_in* client_addr) {
         }
         user_name=(char*)malloc(33*sizeof(char));
         strcpy(user_name,tok);
+        strcat(user_name,"\n");
     }
 
     #if DEBUG

@@ -147,30 +147,6 @@ void* client(void* arg){
     char ack[15];
     size_t ack_len = sizeof(ack);
     memset(ack, 0, ack_len);
-    /*recv_bytes = 0;
-    do {
-        ret = recv(socket_desc, ack + recv_bytes, 1, 0);
-        if (ret == -1 && errno == EINTR) continue;
-        if (ret == -1) handle_error("Cannot read from the socket");
-        if (ret == 0) handle_error_en(0xDEAD,"server is offline");
-    } while ( ack[recv_bytes++] != '\n' );
-    
-    printf("l'ack è: %s\n, recv_bytes %d\n", ack,recv_bytes);
-    fflush(stdout);
-    // msgsnd to send message
-    memset(message->mesg_text,0,sizeof(message->mesg_text));
-    strcpy(message->mesg_text,ack);
-    msgsnd(update_msg, message, sizeof(message), 0);
-    #if DEBUG
-    printf("thread client primo ack msg\n: %s",message->mesg_text);
-    #endif
-
-    if(strcmp(ack,ERROR_MSG)==0){
-        handle_error_en(-1,"recived ERROR_MSG");
-        //close connection with the server
-        ret = close(socket_desc);
-        if(ret) handle_error("Cannot close socket");
-    }*/
 
     char buf[1024];
     size_t buf_len = sizeof(buf);
