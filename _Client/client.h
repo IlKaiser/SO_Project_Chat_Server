@@ -49,7 +49,7 @@ void* thread_reciver(void *arg);
 //gtk thread
 static void activate (GtkApplication *app,gpointer data);
 //GtkWidget* activate_login(GtkApplication *app);
-void main_page(GtkApplication *app,char* user);
+void main_page(GtkApplication *app,gpointer user);
 //login checker 
 void login( GtkWidget *widget,gpointer data );
 //update gtk thread

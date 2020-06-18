@@ -134,32 +134,9 @@ void* thread_reciver(void *arg){
 void* client(void* arg){
     
     int ret,bytes_sent,recv_bytes;
-    char* user__name = arg;
-    char username[32];
-    strcat(user__name,"\n");
-    strcpy(username,user__name);
+    handler_args_m* data_socket = arg;
+    int socket_desc = data_socket->socket_desc;
 
-    #if DEBUG
-        printf("Username got %s",username);
-    #endif
-    
-    int socket_desc;
-    struct sockaddr_in server_addr = {0}; // some fields are required to be filled with 0
-
-    // create a socket
-    socket_desc = socket(AF_INET, SOCK_STREAM, 0);
-    if(socket_desc < 0) handle_error("Could not create socket");
-
-    // set up parameters for the connection
-    server_addr.sin_addr.s_addr = inet_addr(SERVER_ADDRESS);
-    server_addr.sin_family      = AF_INET;
-    server_addr.sin_port        = htons(SERVER_PORT); // don't forget about network byte order!
-
-    // initiate a connection on the socket
-    ret = connect(socket_desc, (struct sockaddr*) &server_addr, sizeof(struct sockaddr_in));
-    if(ret) handle_error("Could not create connection");
-
-    if (DEBUG) fprintf(stderr, "Connection established!\n");
 
     GtkWindow* main_window=gtk_application_get_window_by_id(app,main_window_id);
 
@@ -167,27 +144,10 @@ void* client(void* arg){
 
     g_signal_connect(G_OBJECT(main_window), "destroy", G_CALLBACK(force_quit),NULL);
 
-    //SENDS HIS USERNAME TO THE SERVER
-    int usr_len = strlen(username);
-    printf("Usr len:%d, username %s\n ",usr_len,username);
-    // send message to server
-    bytes_sent=0;
-    while ( bytes_sent < usr_len) {
-        ret = send(socket_desc, username + bytes_sent, usr_len - bytes_sent, 0);
-        if (ret == -1 && errno == EINTR) continue;
-        if (ret == -1) handle_error("Cannot write to the socket");
-        bytes_sent += ret;
-        printf("Sent %s, Bytes sent %d\n",username,ret);
-    }
-
-    #if DEBUG
-        printf("Username sent\n");
-    #endif
-
     char ack[15];
     size_t ack_len = sizeof(ack);
     memset(ack, 0, ack_len);
-    recv_bytes = 0;
+    /*recv_bytes = 0;
     do {
         ret = recv(socket_desc, ack + recv_bytes, 1, 0);
         if (ret == -1 && errno == EINTR) continue;
@@ -210,7 +170,7 @@ void* client(void* arg){
         //close connection with the server
         ret = close(socket_desc);
         if(ret) handle_error("Cannot close socket");
-    }
+    }*/
 
     char buf[1024];
     size_t buf_len = sizeof(buf);
@@ -443,15 +403,12 @@ static void callback( GtkWidget *widget,gpointer data )
     PQfinish(conn);
     exit(1);
 }*/
-void main_page(GtkApplication *app,char* user){
+void main_page(GtkApplication *app,gpointer data){
     //AFTER LOGIN CODE
     int ret;
     pthread_t thread;
-    #if DEBUG
-        printf("il tuo nome è: %s\n",user);
-    #endif
     // prepare arguments for the new thread
-    ret = pthread_create(&thread, NULL,client,user);
+    ret = pthread_create(&thread, NULL,client,data);
     if (ret) handle_error_en(ret, "Could not create a new thread");
     
     if (DEBUG) fprintf(stderr, "New thread created to handle the request!\n");
@@ -596,7 +553,9 @@ void login( GtkWidget *widget,gpointer data ){
 
     if (strcmp(ack,ERROR_MSG)){
         gtk_window_close(GTK_WINDOW(window));
-        main_page(app,i_user);
+        handler_args_m data_socket = {0};
+        data_socket.socket_desc=socket_desc;
+        main_page(app,&data_socket);
     }
     else{
         dialog = gtk_message_dialog_new(GTK_WINDOW (window),GTK_DIALOG_DESTROY_WITH_PARENT , GTK_MESSAGE_INFO,GTK_BUTTONS_NONE, "NOME UTENTE O PASSWORD SBAGLIATE" );

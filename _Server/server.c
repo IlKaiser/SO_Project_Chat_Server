@@ -509,7 +509,7 @@ void list_formatter(char buf[],int socket_desc){
             }else{
                 strcat(buf,user_names[i]);
             }
-            
+            strcat(buf,"\n");
         }
     }
 }
