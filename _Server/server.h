@@ -16,7 +16,6 @@
 #define OK_MSG          "OK\n"
 
 #define SEM_NAME        "/server"
-
 #define AWS             0
 
 //Struct define
@@ -50,3 +49,6 @@ void set_next_position();
 
 // set disconnect into socket array
 void set_disconnected(int socket_desc);
+
+//check credentials in db
+int login(char* credentials,int socket_desc);

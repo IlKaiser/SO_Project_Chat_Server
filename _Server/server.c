@@ -12,8 +12,9 @@
 #include <sys/socket.h>
 #include <fcntl.h>           /* For O_* constants */
 #include <sys/stat.h>        /* For mode constants */
- 
-#include <postgresql/libpq-fe.h> // for our server
+
+#include <libpq-fe.h>
+
 
 
 #include "server.h"
@@ -103,7 +104,7 @@ void connection_handler(int socket_desc, struct sockaddr_in* client_addr) {
     int msg_len;
 
     char* quit_command = SERVER_COMMAND;
-    char  user_name[32];
+    char credentials[66];
     size_t quit_command_len = strlen(quit_command);
 
     #if DEBUG
@@ -120,15 +121,57 @@ void connection_handler(int socket_desc, struct sockaddr_in* client_addr) {
         printf("Client ip %s, client port %hu\n",client_ip,client_port);
     #endif // DEBUG
 
-    // 1. get client username
-    memset(user_name, 0, sizeof(user_name));
+
+    char* user_name=(char*)malloc(33*sizeof(char));
+    user_name=ERROR_MSG;
+    char* tok=(char*)malloc(33*sizeof(char));
+
+    // 1. get client username and password finchè non arrivano quelle corrette
+    while(!strcmp(user_name,ERROR_MSG)){
+        memset(credentials, 0, strlen(credentials));
         recv_bytes = 0;
         do {
-            ret = recv(socket_desc, user_name + recv_bytes, 1, 0);
+            ret = recv(socket_desc, credentials + recv_bytes, 1, 0);
             if (ret == -1 && errno == EINTR) continue;
             // Of course i still love you
-            if (ret == -1 || ret==0) disconnection_handler(socket_desc);;
-	} while ( user_name[recv_bytes++] != '\n' );
+            if (ret == -1 || ret==0) disconnection_handler(socket_desc);
+        } while ( credentials[recv_bytes++] != '\n' );
+
+        printf("sono qui\n");
+        fflush(stdout);
+        printf("le credenziali sono %s \n",credentials );
+        if (login(credentials,socket_desc)){
+            printf("copio username \n");
+            tok = strtok(credentials, ";");
+            printf("%s\n",tok);
+
+        }
+        else{
+            printf("copio errore \n");
+            strcpy(tok,ERROR_MSG);
+
+        }
+        printf("il risultato è %s\n",tok);
+        fflush(stdout);
+
+        if(!strcmp(tok,ERROR_MSG)){
+            printf("INVALID CREDENTIALS\n");
+            fflush(stdout);
+            memset(buf, 0, buf_len);
+            strcpy(buf,ERROR_MSG);
+            bytes_sent = 0;
+            msg_len = strlen(buf);
+            while ( bytes_sent < msg_len){
+                ret = send(socket_desc, buf + bytes_sent, msg_len - bytes_sent, 0);
+                if (ret == -1 && errno == EINTR) continue;
+                // Of course i still love you
+                if (ret == -1) disconnection_handler(socket_desc);
+                bytes_sent += ret;
+            }
+        }
+        user_name=(char*)malloc(33*sizeof(char));
+        strcpy(user_name,tok);
+    }
 
     #if DEBUG
         printf("Username get: %s\n",user_name);
@@ -466,7 +509,7 @@ void list_formatter(char buf[],int socket_desc){
             }else{
                 strcat(buf,user_names[i]);
             }
-            
+            strcat(buf,"\n");
         }
     }
 }
@@ -515,4 +558,46 @@ void set_disconnected(int socket_desc){
             return;
         }
     }
+}
+
+int login(char* credentials,int socket_desc){
+    //int read_bytes = 0;
+    char username[32];
+    char password[32];
+    char * token = strtok(credentials, ";");
+    strcpy(username,token ); //salvo username
+    token = strtok(NULL, ";");
+    strcpy(password,token);//salvo password
+    password[strlen(password)-1]='\0';
+    //connetto al db
+    const char *conninfo = "hostaddr=15.236.174.17 port=5432 dbname=SO_chat user=postgres password=Quindicimaggio_20 sslmode=disable";
+    PGconn *conn;
+    PGresult *res;
+    
+
+    conn = PQconnectdb(conninfo);
+    if (PQstatus(conn) != CONNECTION_OK)
+    {
+        fprintf(stderr, "Connection to database failed: %s", PQerrorMessage(conn));
+        PQfinish(conn);
+        exit(1);
+    }
+    printf("hai inserito: %s,%s \n",username,password);
+    const char* paramValue[2] = {username,password};
+    res = PQexecParams(conn,
+                    "select username from users where username=$1 and password=$2",
+                    2,       /* two param*/
+                    NULL,    /* let the backend deduce param type*/
+                    paramValue,
+                    NULL,
+                    NULL,
+                    1);      /* ask for binary results*/
+    if (PQresultStatus(res) != PGRES_TUPLES_OK)
+    {
+        fprintf(stderr, "SELECT failed: %s", PQerrorMessage(conn));
+        PQclear(res);
+        exit_nicely(conn,res,socket_desc);
+    }
+    int ris=PQntuples(res);
+    return ris;
 }
