@@ -47,7 +47,7 @@ void* client(void *arg);
 //manages incoming messages
 void* thread_reciver(void *arg);
 //gtk thread
-static void activate (GtkApplication *app);
+static void activate (GtkApplication *app,gpointer data);
 //GtkWidget* activate_login(GtkApplication *app);
 void main_page(GtkApplication *app,char* user);
 //login checker 

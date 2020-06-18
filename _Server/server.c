@@ -122,8 +122,10 @@ void connection_handler(int socket_desc, struct sockaddr_in* client_addr) {
     #endif // DEBUG
 
 
-    char* user_name=ERROR_MSG;
-    char* tok;
+    char* user_name=(char*)malloc(33*sizeof(char));
+    user_name=ERROR_MSG;
+    char* tok=(char*)malloc(33*sizeof(char));
+
     // 1. get client username and password finchè non arrivano quelle corrette
     while(!strcmp(user_name,ERROR_MSG)){
         memset(credentials, 0, strlen(credentials));
@@ -146,7 +148,6 @@ void connection_handler(int socket_desc, struct sockaddr_in* client_addr) {
         }
         else{
             printf("copio errore \n");
-            memset(tok,0,strlen(tok));
             strcpy(tok,ERROR_MSG);
 
         }
@@ -168,7 +169,7 @@ void connection_handler(int socket_desc, struct sockaddr_in* client_addr) {
                 bytes_sent += ret;
             }
         }
-        memset(user_name,0,strlen(user_name));
+        user_name=(char*)malloc(33*sizeof(char));
         strcpy(user_name,tok);
     }
 

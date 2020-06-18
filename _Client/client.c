@@ -61,12 +61,33 @@ int main(int argc, char* argv[]) {
     upin_str->mesg_type = 1;
     message->mesg_type = 1;
 
+    // connetto al server
+    int ret;
+    int socket_desc;
+    struct sockaddr_in server_addr = {0}; // some fields are required to be filled with 0
+
+    // create a socket
+    socket_desc = socket(AF_INET, SOCK_STREAM, 0);
+    if(socket_desc < 0) handle_error("Could not create socket");
+
+    // set up parameters for the connection
+    server_addr.sin_addr.s_addr = inet_addr(SERVER_ADDRESS);
+    server_addr.sin_family      = AF_INET;
+    server_addr.sin_port        = htons(SERVER_PORT); // don't forget about network byte order!
+
+    // initiate a connection on the socket
+    ret = connect(socket_desc, (struct sockaddr*) &server_addr, sizeof(struct sockaddr_in));
+    if(ret) handle_error("Could not create connection");
+
+    if (DEBUG) fprintf(stderr, "Connection established!\n");
+
     //GTK init
     int status;
-    
+    handler_args_m* socket = (handler_args_m*)malloc(sizeof(handler_args_m));
+    socket->socket_desc=socket_desc;
     //GtkApplication *app;
     app = gtk_application_new (argv[1]/*name*/, G_APPLICATION_FLAGS_NONE);
-    g_signal_connect (app, "activate", G_CALLBACK (activate),&argv[1]);
+    g_signal_connect (app, "activate", G_CALLBACK (activate),socket);
     status = g_application_run (G_APPLICATION (app),argc, argv);
     //g_object_unref (app);
 
@@ -585,7 +606,7 @@ void login( GtkWidget *widget,gpointer data ){
     
 
 }
-static void activate (GtkApplication *app){
+static void activate (GtkApplication *app, gpointer data){
 
     GtkWidget *window;
     GtkWidget *grid;
@@ -595,27 +616,9 @@ static void activate (GtkApplication *app){
     //GtkWidget *dialog;
     GtkWidget * usr_label;
     GtkWidget * pas_label;
+    handler_args_m * data_socket = data;
 
-    // connetto al server
-    int ret;
-    int socket_desc;
-    struct sockaddr_in server_addr = {0}; // some fields are required to be filled with 0
-
-    // create a socket
-    socket_desc = socket(AF_INET, SOCK_STREAM, 0);
-    if(socket_desc < 0) handle_error("Could not create socket");
-
-    // set up parameters for the connection
-    server_addr.sin_addr.s_addr = inet_addr(SERVER_ADDRESS);
-    server_addr.sin_family      = AF_INET;
-    server_addr.sin_port        = htons(SERVER_PORT); // don't forget about network byte order!
-
-    // initiate a connection on the socket
-    ret = connect(socket_desc, (struct sockaddr*) &server_addr, sizeof(struct sockaddr_in));
-    if(ret) handle_error("Could not create connection");
-
-    if (DEBUG) fprintf(stderr, "Connection established!\n");
-
+    
     window = gtk_application_window_new (app);
     gtk_window_set_title (GTK_WINDOW (window), "Window");
     gtk_container_set_border_width (GTK_CONTAINER (window), 10);
@@ -638,7 +641,7 @@ static void activate (GtkApplication *app){
     //user_par.dialog=dialog;
     user_par.window=window;
     user_par.app=app;
-    user_par.socket_desc=socket_desc;
+    user_par.socket_desc=data_socket->socket_desc;
     g_signal_connect (button, "clicked",G_CALLBACK (login),&user_par);
 
     
