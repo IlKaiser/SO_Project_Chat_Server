@@ -9,6 +9,7 @@ import android.widget.TextView
 import android.widget.Toast
 import androidx.appcompat.app.AppCompatActivity
 import com.google.android.material.floatingactionbutton.FloatingActionButton
+import so.chat.LoginActivity.LoginActivity
 import java.io.BufferedReader
 import java.io.InputStreamReader
 import java.io.PrintWriter
@@ -115,13 +116,7 @@ class MainActivity : AppCompatActivity() {
         class SocketThread: Thread(){
             override fun run() {
                 Looper.prepare()
-                try {
-                    socket = Socket("35.180.35.239", 2015)
-                }catch (e:Exception){super.run()
-                    Toast.makeText(applicationContext,"Server su aws offline",Toast.LENGTH_LONG).show()
-                    finish()
-                    exitProcess(-1)
-                }
+                socket=LoginActivity.socket
                 textView.text="Connesso"
                 Log.d(TAG, "run: Connected")
                 reader=BufferedReader(InputStreamReader(socket!!.getInputStream()))
