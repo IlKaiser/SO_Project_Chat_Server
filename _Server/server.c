@@ -6,14 +6,15 @@
 #include <unistd.h>
 #include <pthread.h>
 #include <semaphore.h>
+#include <signal.h>
 #include <arpa/inet.h>  // htons()
 #include <netinet/in.h> // struct sockaddr_in
 #include <sys/socket.h>
 #include <fcntl.h>           /* For O_* constants */
 #include <sys/stat.h>        /* For mode constants */
 
- 
-#include <postgresql/libpq-fe.h> // for our server
+#include <libpq-fe.h>
+
 
 
 #include "server.h"
@@ -26,15 +27,21 @@
 char* user_names[MAX_SIZE];
 int sockets[MAX_SIZE];
 
+
 //Previous size of connection arrays
 int previous_size=0;
 //Current size of connection arrays
 int current_size=0;
+// Next position in arrays
+int next_position=0;
 //Semaphore for mutual exclusion
 sem_t* sem;
 
 
 int main(int argc, char* argv[]) {
+    // ignore sigpipe so we can handle disconnection errrors manually
+    signal(SIGPIPE,SIG_IGN);
+
     int ret;
 
     int socket_desc;
@@ -83,7 +90,13 @@ int main(int argc, char* argv[]) {
 
     exit(EXIT_SUCCESS); // this will never be executed
 }
+
 void connection_handler(int socket_desc, struct sockaddr_in* client_addr) {
+
+
+    int error = 0;
+    socklen_t len = sizeof (error);
+    
     int ret, recv_bytes,bytes_sent;
 
     char buf[1024];
@@ -91,8 +104,10 @@ void connection_handler(int socket_desc, struct sockaddr_in* client_addr) {
     int msg_len;
 
     char* quit_command = SERVER_COMMAND;
-    char  user_name[32];
+    char* list_command = LIST_COMMAND;
+    char credentials[66];
     size_t quit_command_len = strlen(quit_command);
+    size_t list_command_len = strlen(list_command);
 
     #if DEBUG
         //Print socket desc number for double checking
@@ -107,22 +122,66 @@ void connection_handler(int socket_desc, struct sockaddr_in* client_addr) {
     #if DEBUG
         printf("Client ip %s, client port %hu\n",client_ip,client_port);
     #endif // DEBUG
-    // 1. get client username
-    memset(user_name, 0, sizeof(user_name));
+
+
+    char* user_name=(char*)malloc(33*sizeof(char));
+    user_name=ERROR_MSG;
+    char* tok=(char*)malloc(33*sizeof(char));
+
+    // 1. get client username and password finchè non arrivano quelle corrette
+    while(!strcmp(user_name,ERROR_MSG)){
+        memset(credentials, 0, strlen(credentials));
         recv_bytes = 0;
         do {
-            ret = recv(socket_desc, user_name + recv_bytes, 1, 0);
+            ret = recv(socket_desc, credentials + recv_bytes, 1, 0);
             if (ret == -1 && errno == EINTR) continue;
-            if (ret == -1) handle_error("Cannot read from the socket");
-            if (ret == 0) break;
-	} while ( user_name[recv_bytes++] != '\n' );
+            // Of course i still love you
+            if (ret == -1 || ret==0) disconnection_handler(socket_desc);
+        } while ( credentials[recv_bytes++] != '\n' );
+
+        printf("sono qui\n");
+        fflush(stdout);
+        printf("le credenziali sono %s \n",credentials );
+        if (login(credentials,socket_desc)){
+            printf("copio username \n");
+            tok = strtok(credentials, ";");
+            printf("%s\n",tok);
+
+        }
+        else{
+            printf("copio errore \n");
+            strcpy(tok,ERROR_MSG);
+
+        }
+        printf("il risultato è %s\n",tok);
+        fflush(stdout);
+
+        if(!strcmp(tok,ERROR_MSG)){
+            printf("INVALID CREDENTIALS\n");
+            fflush(stdout);
+            memset(buf, 0, buf_len);
+            strcpy(buf,ERROR_MSG);
+            bytes_sent = 0;
+            msg_len = strlen(buf);
+            while ( bytes_sent < msg_len){
+                ret = send(socket_desc, buf + bytes_sent, msg_len - bytes_sent, 0);
+                if (ret == -1 && errno == EINTR) continue;
+                // Of course i still love you
+                if (ret == -1) disconnection_handler(socket_desc);
+                bytes_sent += ret;
+            }
+        }
+        user_name=(char*)malloc(33*sizeof(char));
+        strcpy(user_name,tok);
+        strcat(user_name,"\n");
+    }
 
     #if DEBUG
         printf("Username get: %s\n",user_name);
     #endif // DEBUG
 
     // 1.1 Updates global variables info
-    if(previous_size==MAX_SIZE){
+    if(previous_size==MAX_SIZE || (strcmp(user_name,"")==0)){
         memset(buf, 0, buf_len);
         strcpy(buf,ERROR_MSG);
         bytes_sent = 0;
@@ -130,12 +189,11 @@ void connection_handler(int socket_desc, struct sockaddr_in* client_addr) {
 	    while ( bytes_sent < msg_len){
             ret = send(socket_desc, buf + bytes_sent, msg_len - bytes_sent, 0);
             if (ret == -1 && errno == EINTR) continue;
-            if (ret == -1) handle_error("Cannot write to the socket");
+            // Of course i still love you
+            if (ret == -1) disconnection_handler(socket_desc);
             bytes_sent += ret;
         }
-        ret = close(socket_desc);
-        if (ret) handle_error("Cannot close socket for incoming connection");
-        return;
+        disconnection_handler(socket_desc);
     }else{
         //Critical section shared mem writing
         //updates shared array
@@ -144,9 +202,13 @@ void connection_handler(int socket_desc, struct sockaddr_in* client_addr) {
             handle_error("Err sem wait");
         }
         previous_size=current_size;
-        user_names[current_size]=user_name;
-        sockets[current_size]=socket_desc;
+        user_names[next_position]=user_name;
+        sockets[next_position]=socket_desc;
         current_size++;
+        // determinate next free position
+        set_next_position();
+
+
         ret=sem_post(sem);
         if(ret){
             handle_error("Err sem post");
@@ -159,14 +221,15 @@ void connection_handler(int socket_desc, struct sockaddr_in* client_addr) {
 	    while ( bytes_sent < msg_len){
             ret = send(socket_desc, buf + bytes_sent, msg_len - bytes_sent, 0);
             if (ret == -1 && errno == EINTR) continue;
-            if (ret == -1) handle_error("Cannot write to the socket");
+            // Of course i still love you
+            if (ret == -1) disconnection_handler(socket_desc);
             bytes_sent += ret;
         }
     }
 
 
 
-    ///TODO: apre la connessione con il DB
+    // 1.2 Open db connection
     const char *conninfo = "hostaddr=15.236.174.17 port=5432 dbname=SO_chat user=postgres password=Quindicimaggio_20 sslmode=disable";
     PGconn *conn;
     PGresult *res;
@@ -180,14 +243,15 @@ void connection_handler(int socket_desc, struct sockaddr_in* client_addr) {
         exit(1);
     }
 
-
-
-
-
-
-
     // 2. check if there is only one client
-    while(current_size<2){
+    LOOP:while(current_size<2){
+
+        //test if the client is still up
+        int retval = getsockopt (socket_desc, SOL_SOCKET, SO_ERROR, &error, &len);
+        if(retval){
+
+            disconnection_handler(socket_desc);
+        }
         memset(buf, 0, buf_len);
         strcpy(buf,ALONE_MSG);
         #if DEBUG
@@ -201,7 +265,7 @@ void connection_handler(int socket_desc, struct sockaddr_in* client_addr) {
 	    while ( bytes_sent < msg_len) {
             ret = send(socket_desc, buf + bytes_sent, msg_len - bytes_sent, 0);
             if (ret == -1 && errno == EINTR) continue;
-            if (ret == -1) handle_error("Cannot write to the socket");
+            if (ret == -1) disconnection_handler(socket_desc);
             bytes_sent += ret;
         }
         ret=sleep(5);
@@ -210,7 +274,7 @@ void connection_handler(int socket_desc, struct sockaddr_in* client_addr) {
         }
     }
     // 3. send user list
-    list_formatter(buf);
+    list_formatter(buf,socket_desc);
     #if DEBUG
         printf("List %s",buf);
     #endif
@@ -219,7 +283,8 @@ void connection_handler(int socket_desc, struct sockaddr_in* client_addr) {
 	while ( bytes_sent < msg_len) {
         ret = send(socket_desc, buf + bytes_sent, msg_len - bytes_sent, 0);
         if (ret == -1 && errno == EINTR) continue;
-        if (ret == -1) handle_error("Cannot write to the socket");
+        // Of course i still love you
+        if (ret == -1) disconnection_handler(socket_desc);
         bytes_sent += ret;
     }
     // 4. get id number from client
@@ -228,8 +293,14 @@ void connection_handler(int socket_desc, struct sockaddr_in* client_addr) {
     do {
         ret = recv(socket_desc, user_buf + recv_bytes, 1, 0);
         if (ret == -1 && errno == EINTR) continue;
-        if (ret == -1) handle_error("Cannot read from the socket");
-        if (ret == 0) break;
+        // Of course i still love you
+        if (ret == -1 || ret==0) disconnection_handler(socket_desc);
+        //check if we are about to overflow the buffer
+        if(recv_bytes>3){
+            printf("Recived almost 4 bytes, resetting buffer...\n");
+            memset(user_buf,0,4);
+            recv_bytes=0;
+        }
 	}while ( user_buf[recv_bytes++]!= '\n' );
     printf("Buffer %s \n",user_buf);
     int user_id=atoi(user_buf);
@@ -237,12 +308,16 @@ void connection_handler(int socket_desc, struct sockaddr_in* client_addr) {
         printf("User id chosen: %d\n",user_id);
     #endif // DEBUG
 
+    int socket_target=DISCONNECTED;
+    char* target_user_name=NULL;
     // 4.1 get target socket desc
-    int socket_target=sockets[user_id-1];
+    if(user_id<=current_size){
+         socket_target=sockets[user_id-1];
 
-    //Look for target user name
-    char* target_user_name=user_names[user_id-1];
-
+        //Look for target user name
+        target_user_name=user_names[user_id-1];
+    }
+    
     //check if user his number
     if (socket_target==socket_desc){
         memset(buf, 0, buf_len);
@@ -252,12 +327,14 @@ void connection_handler(int socket_desc, struct sockaddr_in* client_addr) {
         while ( bytes_sent < msg_len){
             ret = send(socket_desc, buf + bytes_sent, msg_len - bytes_sent, 0);
             if (ret == -1 && errno == EINTR) continue;
-            if (ret == -1) handle_error("Cannot write to the socket");
+            // Of course i still love you
+            if (ret == -1) disconnection_handler(socket_desc);
             bytes_sent += ret;
         }
+        disconnection_handler(socket_desc);
     }
 
-    if(socket_target){
+    if(socket_target != DISCONNECTED){
         #if DEBUG
             printf("socket target number : %d\n",socket_target);
         #endif // DEBUG
@@ -273,7 +350,8 @@ void connection_handler(int socket_desc, struct sockaddr_in* client_addr) {
         while ( bytes_sent < msg_len){
             ret = send(socket_desc, buf + bytes_sent, msg_len - bytes_sent, 0);
             if (ret == -1 && errno == EINTR) continue;
-            if (ret == -1) handle_error("Cannot write to the socket");
+            // Of course i still love you
+            if (ret == -1) disconnection_handler(socket_desc);
             bytes_sent += ret;
             printf("bytes sent %d\n",bytes_sent);
         }
@@ -286,9 +364,12 @@ void connection_handler(int socket_desc, struct sockaddr_in* client_addr) {
         while ( bytes_sent < msg_len){
             ret = send(socket_desc, buf + bytes_sent, msg_len - bytes_sent, 0);
             if (ret == -1 && errno == EINTR) continue;
-            if (ret == -1) handle_error("Cannot write to the socket");
+            // Of course i still love you
+            if (ret == -1) disconnection_handler(socket_desc);
+
             bytes_sent += ret;
         }
+        disconnection_handler(socket_desc);
     }
 
     #if DEBUG
@@ -297,7 +378,7 @@ void connection_handler(int socket_desc, struct sockaddr_in* client_addr) {
     // reciver loop 
     while (1) {
 
-        //5. loop
+        //5. main loop
 
         // read message from client
         #if DEBUG
@@ -308,19 +389,30 @@ void connection_handler(int socket_desc, struct sockaddr_in* client_addr) {
         do {
             ret = recv(socket_desc, buf + recv_bytes, 1, 0);
             if (ret == -1 && errno == EINTR) continue;
-            if (ret == -1) handle_error("Cannot read from the socket");
-            if (ret == 0) break;
+            // Of course i still love you
+            if (ret == -1 || ret == 0) disconnection_handler(socket_desc);
+            if(recv_bytes>1022){
+            printf("Recived almost 1024 bytes, resetting buffer...\n");
+            memset(buf,0,buf_len);
+            recv_bytes=0;
+        }
 		} while ( buf[recv_bytes++] != '\n' );
-        // check whether I have just been told to quit...
-        if (recv_bytes == 0) break;
-        if (recv_bytes == quit_command_len && !memcmp(buf, quit_command, quit_command_len)) break;
-
         #if DEBUG
             printf("Message %s from %s",buf,user_name);
         #endif // DEBUG
 
+        // check whether I have just been told to quit...
+        if (recv_bytes == 0) disconnection_handler(socket_desc);
+        if (recv_bytes == quit_command_len && !memcmp(buf, quit_command, quit_command_len)){ 
+            printf("Quitting...\n");
+            disconnection_handler(socket_desc);
+        }
+        if (recv_bytes == list_command_len && !memcmp(buf,list_command,list_command_len)){
+            printf("Send new list\n");
+            goto LOOP;
+        }
         // ... or if I have to send the message back
-        ///TODO: mette nel db il messaggio
+        // 5.1 insert msg into db
         const char* paramValue[3] = {user_name,target_user_name,buf};
         res = PQexecParams(conn,
                        "INSERT INTO messaggi (_from,_to,mes) VALUES ($1,$2,$3)",
@@ -333,14 +425,13 @@ void connection_handler(int socket_desc, struct sockaddr_in* client_addr) {
         if (PQresultStatus(res) != PGRES_COMMAND_OK)
         {
             fprintf(stderr, "INSERT failed: %s", PQerrorMessage(conn));
-            exit_nicely(conn,res);
+            exit_nicely(conn,res,socket_desc);
         }
         PQclear(res);
 
 
 
-        /// send to requested target
-        //Disabled for now,but ready
+        //5.2 Send to requested target
         char to_send[1024];
         memset(to_send,0,sizeof(to_send));
         bytes_sent = 0;
@@ -351,35 +442,17 @@ void connection_handler(int socket_desc, struct sockaddr_in* client_addr) {
         while ( bytes_sent < msg_len){
             ret = send(socket_target, to_send + bytes_sent, msg_len - bytes_sent, 0);
             if (ret == -1 && errno == EINTR) continue;
-            if (ret == -1) handle_error("Cannot write to the socket");
+            // Of course i still love you
+            if (ret == -1) disconnection_handler(socket_desc);
             bytes_sent += ret;
         }
         #if DEBUG
             printf("sto mandando: %s",to_send);
         #endif
-    }
-    
-    // close socket
-    
-
-    //Critical section shared mem writing
-    //remove shared array
-    ret=sem_wait(sem);
-    if(ret){
-        handle_error("Err sem wait");
-    }
-    previous_size=current_size;
-    current_size--;
-    ret=sem_post(sem);
-    if(ret){
-        handle_error("Err sem post");
-    }
-    ret = close(socket_desc);
-    if (ret) handle_error("Cannot close socket for incoming connection");
+    } 
+    //If a break occurs
+    disconnection_handler(socket_desc);
 }
-
-
-
 
 // Wrapper function that take as input handler_args_t struct and then call 
 // connection_handler.
@@ -394,12 +467,6 @@ void *thread_connection_handler(void *arg) {
     free(args);
     pthread_exit(NULL);
 }
-// function that takes handler_args_m and 
-void *thread_message_handler(void *arg){
-    return NULL;
-}
-
-void message_handler(){}
 
 void mthreadServer(int server_desc) {
     int ret = 0;
@@ -434,19 +501,109 @@ void mthreadServer(int server_desc) {
         if (ret) handle_error_en(ret, "Could not detach the thread");
     }
 }
-void list_formatter(char buf[]){
+
+void list_formatter(char buf[],int socket_desc){
     memset(buf, 0,strlen(buf));
     int i;
-    for (i=0;i<current_size;i++){  
-        char number[15];
-        sprintf(number, "%d: ",i+1);
-        strcat(buf,number);
-        strcat(buf,user_names[i]);
+    for (i=0;i<current_size;i++){ 
+        if(sockets[i]!=DISCONNECTED){ 
+            char number[15];
+            sprintf(number, "%d: ",i+1);
+            strcat(buf,number);
+            if(sockets[i]==socket_desc){
+                strcat(buf,"[YOU]\n");
+            }else{
+                strcat(buf,user_names[i]);
+            }
+            strcat(buf,"\n");
+        }
     }
 }
-static void exit_nicely(PGconn *conn, PGresult   *res)
-{
+
+static void exit_nicely(PGconn *conn, PGresult   *res,int socket_desc){
     PQclear(res);
     PQfinish(conn);
-    exit(1);
+    disconnection_handler(socket_desc);
+}
+
+void disconnection_handler(int index){
+    int ret;
+    #if DEBUG
+        printf("Index got in handler %d\n",index);
+    #endif
+    if(index!=-1){
+        ret=close(index);
+        if(ret){handle_error("Disconnection error");}
+        set_disconnected(index);
+        set_next_position();
+    }
+    ret=sem_wait(sem);
+    current_size--;
+    ret|=sem_post(sem);
+    if(ret){handle_error("Disconnection semaphore error");}
+    pthread_exit(NULL);
+}
+
+void set_next_position(){
+    int i;
+    for(i=0;i<current_size;i++){
+        if(sockets[i]==DISCONNECTED){
+            next_position=i;
+            return;
+        }
+    }
+    next_position=current_size;
+    return;
+}
+
+void set_disconnected(int socket_desc){
+    int i;
+    for(i=0;i<current_size;i++){
+        if(sockets[i]==socket_desc){
+            sockets[i]=DISCONNECTED;
+            return;
+        }
+    }
+}
+
+int login(char* credentials,int socket_desc){
+    //int read_bytes = 0;
+    char username[32];
+    char password[32];
+    char * token = strtok(credentials, ";");
+    strcpy(username,token ); //salvo username
+    token = strtok(NULL, ";");
+    strcpy(password,token);//salvo password
+    password[strlen(password)-1]='\0';
+    //connetto al db
+    const char *conninfo = "hostaddr=15.236.174.17 port=5432 dbname=SO_chat user=postgres password=Quindicimaggio_20 sslmode=disable";
+    PGconn *conn;
+    PGresult *res;
+    
+
+    conn = PQconnectdb(conninfo);
+    if (PQstatus(conn) != CONNECTION_OK)
+    {
+        fprintf(stderr, "Connection to database failed: %s", PQerrorMessage(conn));
+        PQfinish(conn);
+        exit(1);
+    }
+    printf("hai inserito: %s,%s \n",username,password);
+    const char* paramValue[2] = {username,password};
+    res = PQexecParams(conn,
+                    "select username from users where username=$1 and password=$2",
+                    2,       /* two param*/
+                    NULL,    /* let the backend deduce param type*/
+                    paramValue,
+                    NULL,
+                    NULL,
+                    1);      /* ask for binary results*/
+    if (PQresultStatus(res) != PGRES_TUPLES_OK)
+    {
+        fprintf(stderr, "SELECT failed: %s", PQerrorMessage(conn));
+        PQclear(res);
+        exit_nicely(conn,res,socket_desc);
+    }
+    int ris=PQntuples(res);
+    return ris;
 }
