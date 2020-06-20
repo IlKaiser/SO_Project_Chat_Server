@@ -182,7 +182,7 @@ void* client(void* arg){
 
     ///TODO:input numero di return
     //printf("select a username with his number: ");
-    memset(buf,0,buf_len);
+    LOOP:memset(buf,0,buf_len);
     //if (fgets(buf, sizeof(buf), stdin) != (char*)buf) {
     msgrcv(input_msg, input_str, sizeof(input_m), 1, 0);
     #if DEBUG
@@ -260,6 +260,8 @@ void* client(void* arg){
     int msg_len;
     while (1) {
         char* quit_command = SERVER_COMMAND;
+        char* list_command = LIST_COMMAND;
+        size_t list_command_len = strlen(list_command);
         size_t quit_command_len = strlen(quit_command);
 
         printf("Insert your message: ");
@@ -294,6 +296,7 @@ void* client(void* arg){
 
         /* After a quit command we won't receive any more data from
          * the server, thus we must exit the main loop. */
+        if (msg_len == list_command_len && !memcmp(buf, list_command, list_command_len)) goto LOOP;
         if (msg_len == quit_command_len && !memcmp(buf, quit_command, quit_command_len)) break;
 
         
