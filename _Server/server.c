@@ -104,8 +104,10 @@ void connection_handler(int socket_desc, struct sockaddr_in* client_addr) {
     int msg_len;
 
     char* quit_command = SERVER_COMMAND;
+    char* list_command = LIST_COMMAND;
     char credentials[66];
     size_t quit_command_len = strlen(quit_command);
+    size_t list_command_len = strlen(list_command);
 
     #if DEBUG
         //Print socket desc number for double checking
@@ -171,6 +173,7 @@ void connection_handler(int socket_desc, struct sockaddr_in* client_addr) {
         }
         user_name=(char*)malloc(33*sizeof(char));
         strcpy(user_name,tok);
+        strcat(user_name,"\n");
     }
 
     #if DEBUG
@@ -227,7 +230,7 @@ void connection_handler(int socket_desc, struct sockaddr_in* client_addr) {
 
 
     // 1.2 Open db connection
-    const char *conninfo = "hostaddr=15.236.174.17 port=5432 dbname=SO_chat user=postgres password=Quindicimaggio_20 sslmode=disable";
+    const char *conninfo = "hostaddr=15.236.174.17 port=5432 dbname=postgres user=postgres password=Quindicimaggio_20 sslmode=disable";
     PGconn *conn;
     PGresult *res;
     
@@ -241,7 +244,7 @@ void connection_handler(int socket_desc, struct sockaddr_in* client_addr) {
     }
 
     // 2. check if there is only one client
-    while(current_size<2){
+    LOOP:while(current_size<2){
 
         //test if the client is still up
         int retval = getsockopt (socket_desc, SOL_SOCKET, SO_ERROR, &error, &len);
@@ -404,7 +407,10 @@ void connection_handler(int socket_desc, struct sockaddr_in* client_addr) {
             printf("Quitting...\n");
             disconnection_handler(socket_desc);
         }
-
+        if (recv_bytes == list_command_len && !memcmp(buf,list_command,list_command_len)){
+            printf("Send new list\n");
+            goto LOOP;
+        }
         // ... or if I have to send the message back
         // 5.1 insert msg into db
         const char* paramValue[3] = {user_name,target_user_name,buf};
@@ -570,7 +576,7 @@ int login(char* credentials,int socket_desc){
     strcpy(password,token);//salvo password
     password[strlen(password)-1]='\0';
     //connetto al db
-    const char *conninfo = "hostaddr=15.236.174.17 port=5432 dbname=SO_chat user=postgres password=Quindicimaggio_20 sslmode=disable";
+    const char *conninfo = "hostaddr=15.236.174.17 port=5432 dbname=postgres user=postgres password=Quindicimaggio_20 sslmode=disable";
     PGconn *conn;
     PGresult *res;
     
