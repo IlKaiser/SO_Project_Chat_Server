@@ -13,18 +13,18 @@ import so.chat.LoginActivity.LoginActivity
 import java.io.BufferedReader
 import java.io.InputStreamReader
 import java.io.PrintWriter
-import java.net.Socket
 import java.net.SocketException
 import kotlin.system.exitProcess
 
 class MainActivity : AppCompatActivity() {
-    var socket:Socket? =null
-    var reader:BufferedReader? = null
-    var printWriter: PrintWriter? =null
+
 
     override fun onCreate(savedInstanceState: Bundle?) {
-        val TAG ="Main activty"
-        Log.d(TAG, "onCreate: ")
+
+        LoginActivity.printWriter=PrintWriter(LoginActivity.socket!!.getOutputStream())
+        LoginActivity.reader= BufferedReader(InputStreamReader(LoginActivity.socket!!.getInputStream()))
+        val tag ="Main activty"
+        Log.d(tag, "onCreate: ")
         super.onCreate(savedInstanceState)
         setContentView(R.layout.activity_main)
 
@@ -32,7 +32,7 @@ class MainActivity : AppCompatActivity() {
         val sendButton=findViewById<FloatingActionButton>(R.id.floatingActionButton)
         val textToSend=findViewById<EditText>(R.id.sendText)
 
-        textView.text=""
+        textView.text="Connected"
         textView.movementMethod=ScrollingMovementMethod.getInstance()
 
         class UpdateThread: Thread(){
@@ -43,23 +43,23 @@ class MainActivity : AppCompatActivity() {
                 val reList=".*List.*".toRegex()
                 val reOk=".*OK.*".toRegex()
                 val reAffaf=".*AFFAF.*".toRegex()
-                Log.d(TAG, "run: update td start")
+                Log.d(tag, "run: update td start")
                 while(true){
                     try {
-                        if(!socket!!.isClosed) {
-                            val line = reader!!.readLine()
+                        if(!LoginActivity.socket!!.isClosed) {
+                            val line = LoginActivity.reader!!.readLine()
                             val text: String = textView.text.toString()
-                            if (line != null && line != "null" && !reAlone.containsMatchIn(line)
+                            if (line != null && line != "null" && line!="" && !reAlone.containsMatchIn(line)
                                     && !reOk.containsMatchIn(line)) {
                                 println("Got in {$line}")
                                 when {
                                     reList.containsMatchIn(line) -> {
-                                        Log.d(TAG, "run: Lista")
+                                        Log.d(tag, "run: Lista")
                                         textView.text = line.plus("\n")
                                     }
                                     reAffaf.containsMatchIn(line) -> {
-                                        Log.d(TAG, "run: AFFAF, closing...")
-                                        printWriter!!.println("QUIT\n")
+                                        Log.d(tag, "run: AFFAF, closing...")
+                                        LoginActivity.printWriter!!.println("QUIT\n")
                                         Toast.makeText(applicationContext, "Errore del server riprova pi� tardi", Toast.LENGTH_LONG).show()
                                         finish()
                                         exitProcess(-1)
@@ -91,7 +91,7 @@ class MainActivity : AppCompatActivity() {
                 val reQuit=".*QUIT.*".toRegex()
                 if(line != "") {
                     println(line)
-                    Log.d(TAG, "sendText: Got $line")
+                    Log.d(tag, "sendText: Got $line")
                     line.plus("\n")
                      if(!reNumber.containsMatchIn(line)) {
                         val view = textView.text.toString()
@@ -100,10 +100,10 @@ class MainActivity : AppCompatActivity() {
                     }else{
                         textView.text=""
                     }
-                    printWriter!!.println(line)
-                    printWriter!!.flush()
+                    LoginActivity.printWriter!!.println(line)
+                    LoginActivity.printWriter!!.flush()
                     if(reQuit.containsMatchIn(line)){
-                        Log.d(TAG, "run:QUIT")
+                        Log.d(tag, "run:QUIT")
                         Toast.makeText(applicationContext,"Ciao,alla prossima!",Toast.LENGTH_LONG).show()
                         finish()
                         exitProcess(0)
@@ -112,21 +112,6 @@ class MainActivity : AppCompatActivity() {
             }
         }
         sendButton?.setOnClickListener{ val td=SendThread(); td.start()}
-
-        class SocketThread: Thread(){
-            override fun run() {
-                Looper.prepare()
-                socket=LoginActivity.socket
-                textView.text="Connesso"
-                Log.d(TAG, "run: Connected")
-                reader=BufferedReader(InputStreamReader(socket!!.getInputStream()))
-                printWriter=PrintWriter(socket!!.getOutputStream())
-                println(reader)
-                println(printWriter)
-            }
-        }
-        val socketTd=SocketThread()
-        socketTd.start()
     }
 
     override fun onDestroy(){
@@ -134,11 +119,11 @@ class MainActivity : AppCompatActivity() {
             override fun run() {
                 super.run()
                 try {
-                    printWriter!!.println("QUIT\n")
-                    printWriter!!.flush()
-                    printWriter!!.close()
-                    reader!!.close()
-                    socket!!.close()
+                    LoginActivity.printWriter!!.println("QUIT\n")
+                    LoginActivity.printWriter!!.flush()
+                    LoginActivity.printWriter!!.close()
+                    LoginActivity.reader!!.close()
+                    LoginActivity.socket!!.close()
                 }catch (e: NullPointerException){}
             }
         }
