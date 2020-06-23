@@ -378,7 +378,9 @@ void connection_handler(int socket_desc, struct sockaddr_in* client_addr) {
             for (co=0;co<4;co++){
                 strcat(buf,PQgetvalue(res,ro,co));
             }
+            strcat(buf,";");
         }
+        strcat(buf,"\n");
         bytes_sent = 0;
         msg_len = strlen(buf);
         #if DEBUG
