@@ -341,7 +341,16 @@ void connection_handler(int socket_desc, struct sockaddr_in* client_addr) {
 
         //4.2 send second ack
         memset(buf, 0, buf_len);
-        strcpy(buf,OK_MSG);
+        int ro;
+        int co;
+
+        for (ro=0;ro<rows;ro++){
+            for (co=0;co<4;co++){
+                strcat(buf,PQgetvalue(res,ro,co));
+            }
+            strcat(buf,";");
+        }
+        strcat(buf,"\n");
         bytes_sent = 0;
         msg_len = strlen(buf);
         #if DEBUG
