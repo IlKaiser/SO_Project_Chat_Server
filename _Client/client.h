@@ -8,7 +8,7 @@
 #define MAX_CONN_QUEUE  3   // max number of connections the server can queue
 #define AWS             1
 #if AWS
-    #define SERVER_ADDRESS  "35.180.54.15" //AWS
+    #define SERVER_ADDRESS  "93.65.151.235" //AWS
 #else
     #define SERVER_ADDRESS  "127.0.0.1" //AWS
 #endif
