@@ -42,7 +42,7 @@ class LoginActivity : AppCompatActivity() {
             override fun run() {
                 Looper.prepare()
                 try {
-                    LoginActivity.socket = Socket("35.180.54.15", 2015)
+                    LoginActivity.socket = Socket("msocal.ddns.net", 2015)
                 }catch (e:Exception) {
                     super.run()
                     Toast.makeText(applicationContext, "Server su aws offline", Toast.LENGTH_LONG).show()
