@@ -13,7 +13,7 @@
 #include <fcntl.h>           /* For O_* constants */
 #include <sys/stat.h>        /* For mode constants */
 
-#include <postgresql/libpq-fe.h>
+#include <libpq-fe.h>
 
 
 
