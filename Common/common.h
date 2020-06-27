@@ -17,5 +17,5 @@
 #define LIST_COMMAND    "_LIST_\n"
 //Utility functions
 void trim (char *dest, char *src);
-void send_msg (int socket_desc,char* buf);
-void recive_msg (int socket_desc,char* buf)
+void Send_msg (int socket_desc,char* buf);
+void Recive_msg (int socket_desc,char* buf);

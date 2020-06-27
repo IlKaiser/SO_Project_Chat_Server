@@ -1,8 +1,9 @@
 #include <string.h>
 #include <errno.h>
+#include <stdio.h>
 #include <ctype.h>
 #include <stdlib.h>
-
+#include <sys/socket.h>
 #include "common.h"
 
 void trim (char *dest, char *src){
@@ -30,7 +31,7 @@ void trim (char *dest, char *src){
         *dest++ = *q++;
     *dest = '\0';
 }
-void send_msg (int socket_desc,char* buf){
+void Send_msg (int socket_desc,char* buf){
     int bytes_sent=0;
     int ret;
     int msg_len = strlen(buf);
@@ -41,10 +42,10 @@ void send_msg (int socket_desc,char* buf){
         bytes_sent += ret;
     }
 }
-void recive_msg(int socket_desc,char* buf){
+void Recive_msg(int socket_desc,char* buf){
     int recv_bytes=0;
     int ret;
-    memset(buf,0,sizeof(buf));
+    //memset(buf,0,sizeof(buf));
     do {                                
         ret = recv(socket_desc, buf + recv_bytes,1, 0);
         if (ret == -1 && errno == EINTR) continue;

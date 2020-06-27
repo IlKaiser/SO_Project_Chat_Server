@@ -23,7 +23,7 @@ server.o: $(SERVERFOLDER)/server.c $(SERVERFOLDER)/server.h common.o
 	$(CC) -c -o $@ $< $(CFLAGS)
 server: server.o
 		  $(CC) -o server server.o common.o -lpthread -lpq  
-client.o: $(CLIENTFOLDER)/client.c $(CLIENTFOLDER)/client.h
+client.o: $(CLIENTFOLDER)/client.c $(CLIENTFOLDER)/client.h common.o
 	$(CC) $(GTK1) -c -o $@ $<  $(CFLAGS)
 client: client.o
 	$(CC) -c -o $@ $< $(CFLAGS)
