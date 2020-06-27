@@ -15,7 +15,7 @@ GTK2= `pkg-config --libs gtk+-3.0`
 
 all: server client 
 
-common.o: Common/common.c Common/common.h
+common.o: Common/common.c Common/common.h 
 	$(CC) -c -o $@ $< $(CFLAGS)
 
 server.o: $(SERVERFOLDER)/server.c $(SERVERFOLDER)/server.h common.o
