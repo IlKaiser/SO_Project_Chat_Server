@@ -14,6 +14,7 @@
 #define DISCONNECTED    0xAFFAF
 #define ALONE_MSG       "Alone\n"
 #define OK_MSG          "OK\n"
+#define MSG_MSG         "H_MSG\n"
 #define LIST_COMMAND    "_LIST_\n"
 
 #define SEM_NAME        "/server"

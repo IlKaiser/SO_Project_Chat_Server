@@ -240,7 +240,30 @@ void* client(void* arg){
         ret = close(socket_desc);
         if(ret) handle_error("Cannot close socket");
     }
+    
+    if (strcmp(ack,MSG_MSG)==0){
+        char messages[8192];
+        recv_bytes = 0;
 
+        printf("aspetto messaggi\n");
+        fflush(stdout);
+        do {
+            ret = recv(socket_desc, messages + recv_bytes,1, 0);
+            if (ret == -1 && errno == EINTR) continue;
+            if (ret == -1) handle_error("Cannot read from the socket");
+            if (ret == 0) handle_error_en(0xDEAD,"server is offline");
+        //recv_bytes += ret;
+        } while (messages[recv_bytes++]!='\n');
+        printf("messaggi sono\n: %s, recv_bytes %d\n", messages,recv_bytes);
+        fflush(stdout);
+        /*int k;
+        for (k=0;k<recv_bytes;k++){
+            char * token = strtok(credentials, ";");
+            memset(message->mesg_text,0,sizeof(message->mesg_text));
+            strcpy(message->mesg_text,messages);
+            msgsnd(update_msg, message, sizeof(message), 0);
+        }*/
+    }
     ///TODO: creare il thread di recive(per ricevere messaggi solo dal numero che hai selezionato async)
     pthread_t thread;
 

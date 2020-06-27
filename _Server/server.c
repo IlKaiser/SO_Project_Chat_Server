@@ -370,29 +370,61 @@ void connection_handler(int socket_desc, struct sockaddr_in* client_addr) {
             exit_nicely(conn,res,socket_desc);
         }
         int rows=PQntuples(res);
-        memset(buf, 0, buf_len);
-        int ro;
-        int co;
-
-        for (ro=0;ro<rows;ro++){
-            for (co=0;co<4;co++){
-                strcat(buf,PQgetvalue(res,ro,co));
+        if (rows==0){
+            bytes_sent = 0;
+            strcpy(buf,OK_MSG);
+            msg_len = strlen(buf);
+            #if DEBUG
+                printf("Sending 2nd ack %s with len %d \n",buf,msg_len);
+            #endif
+            while ( bytes_sent < msg_len){
+                ret = send(socket_desc, buf + bytes_sent, msg_len - bytes_sent, 0);
+                if (ret == -1 && errno == EINTR) continue;
+                // Of course i still love you
+                if (ret == -1) disconnection_handler(socket_desc);
+                bytes_sent += ret;
+                printf("bytes sent %d\n",bytes_sent);
             }
-            strcat(buf,";");
         }
-        strcat(buf,"\n");
-        bytes_sent = 0;
-        msg_len = strlen(buf);
-        #if DEBUG
-            printf("Sending 2nd ack %s with len %d \n",buf,msg_len);
-        #endif
-        while ( bytes_sent < msg_len){
-            ret = send(socket_desc, buf + bytes_sent, msg_len - bytes_sent, 0);
-            if (ret == -1 && errno == EINTR) continue;
-            // Of course i still love you
-            if (ret == -1) disconnection_handler(socket_desc);
-            bytes_sent += ret;
-            printf("bytes sent %d\n",bytes_sent);
+        else{
+            bytes_sent = 0;
+            strcpy(buf,MSG_MSG);
+            msg_len = strlen(buf);
+            #if DEBUG
+                printf("Sending 2nd ack %s with len %d \n",buf,msg_len);
+            #endif
+            while ( bytes_sent < msg_len){
+                ret = send(socket_desc, buf + bytes_sent, msg_len - bytes_sent, 0);
+                if (ret == -1 && errno == EINTR) continue;
+                // Of course i still love you
+                if (ret == -1) disconnection_handler(socket_desc);
+                bytes_sent += ret;
+                printf("bytes sent %d\n",bytes_sent);
+            }
+            memset(buf, 0, buf_len);
+            int ro;
+            int co;
+
+            for (ro=0;ro<rows;ro++){
+                for (co=0;co<4;co++){
+                    strcat(buf,PQgetvalue(res,ro,co));
+                }
+                strcat(buf,";");
+            }
+            strcat(buf,"\n");
+            bytes_sent = 0;
+            msg_len = strlen(buf);
+            #if DEBUG
+                printf("Sending old messages %s with len %d \n",buf,msg_len);
+            #endif
+            while ( bytes_sent < msg_len){
+                ret = send(socket_desc, buf + bytes_sent, msg_len - bytes_sent, 0);
+                if (ret == -1 && errno == EINTR) continue;
+                // Of course i still love you
+                if (ret == -1) disconnection_handler(socket_desc);
+                bytes_sent += ret;
+                printf("bytes sent %d\n",bytes_sent);
+            }
         }
 
     }else{
