@@ -358,7 +358,7 @@ void connection_handler(int socket_desc, struct sockaddr_in* client_addr) {
         char trim_to[32];
         trim(trim_username,user_name);
         trim(trim_to,target_user_name);
-        printf ("searching messages between %s %s",user_name,target_user_name);
+        printf ("searching messages between %s %s",trim_username,trim_to);
         const char* paramValue[2] = {user_name,target_user_name};
         res = PQexecParams(conn,"select mess._fro,mess.co,mess.data from( select m._from as _fro, m.mes as co, m.data as data from messaggi as m where m._from=$1 and m._to=$2 union all select m1._from as _fro, m1.mes as co, m1.data as data from messaggi as m1 where m1._from=$2 and m1._to=$1) as mess order by mess.data desc limit 5",
                         2,       /* two param*/
@@ -465,7 +465,7 @@ void connection_handler(int socket_desc, struct sockaddr_in* client_addr) {
         time_t t = time(NULL);
         char * cur_time = asctime(localtime(&t));
         printf("local:     %s", cur_time);
-        const char* paramValue[4] = {user_name,target_user_name,buf,cur_time};
+        const char* paramValue[4] = {trim_username,trim_to,buf,cur_time};
         res = PQexecParams(conn,
                        "INSERT INTO messaggi (_from,_to,mes,data) VALUES ($1,$2,$3,$4)",
                        4,       /* one param */
