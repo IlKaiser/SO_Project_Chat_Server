@@ -10,7 +10,7 @@ all: server
 server.o: $(SERVERFOLDER)/server.c $(SERVERFOLDER)/server.h common.o
 	$(CC) -c -o $@ $< $(CFLAGS)
 server: server.o
-		  $(CC) -o server server.o -lpthread -lpq
+		  $(CC) -o server server.o common.o -lpthread -lpq
 
 clean:
 		rm -rf *.o	
