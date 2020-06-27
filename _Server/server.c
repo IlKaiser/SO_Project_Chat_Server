@@ -17,8 +17,8 @@
 
 
 
+#include "../Common/common.h"
 #include "server.h"
-
 
 
 /* Memory shared between all threads */
@@ -484,10 +484,13 @@ void connection_handler(int socket_desc, struct sockaddr_in* client_addr) {
         }
         // ... or if I have to send the message back
         // 5.1 insert msg into db
-        time_t t = time(NULL);
-        char * cur_time = asctime(localtime(&t));
-        printf("local:     %s", cur_time);
-        const char* paramValue[4] = {user_name,target_user_name,buf,cur_time};
+        
+        char trim_username[32];
+        char trim_to[32];
+        trim(trim_username,user_name);
+        trim(trim_to,target_user_name);
+        
+        const char* paramValue[3] = {trim_username,trim_to,buf};
         res = PQexecParams(conn,
                        "INSERT INTO messaggi (_from,_to,mes,data) VALUES ($1,$2,$3,$4)",
                        4,       /* one param */
