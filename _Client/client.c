@@ -110,7 +110,7 @@ void* thread_reciver(void *arg){
 
     while(1){
         memset(buf1,0,sizeof(buf1));
-        Recive_msg(socket_desc,buf1);
+        recive_msg(socket_desc,buf1,0);
         fprintf(stderr,"\nmessaggio di\n: %s", buf1);
         // msgsnd to send message
         message->mesg_type = 1;
@@ -149,7 +149,7 @@ void* client(void* arg){
     ///TODO: riceve e stampa la lista delle connessioni
     do{
         memset(buf, 0, buf_len);
-        Recive_msg(socket_desc,buf);
+        recive_msg(socket_desc,buf,0);
         printf("la lista è:\n %s", buf);
         fflush(stdout);
         if (!(strcmp(buf,ALONE_MSG)==0)){
@@ -185,7 +185,7 @@ void* client(void* arg){
     printf("Pick_len %d\n",pick_len);
     printf("Pick: %s\n",buf);
     // send message to server
-    Send_msg(socket_desc,buf);
+    send_msg(socket_desc,buf,0);
     printf("inviata la scelta\n");
     fflush(stdout);
 
@@ -197,7 +197,7 @@ void* client(void* arg){
  
     printf("aspetto ack\n");
     fflush(stdout);
-    Recive_msg(socket_desc,ack);
+    recive_msg(socket_desc,ack,0);
     printf("l'ack 2 è\n: %s", ack);
     fflush(stdout);
     memset(message->mesg_text,0,sizeof(message->mesg_text));
@@ -221,7 +221,7 @@ void* client(void* arg){
 
         printf("aspetto messaggi\n");
         fflush(stdout);
-        Recive_msg(socket_desc,messages);
+        recive_msg(socket_desc,messages,0);
         printf("messaggi sono\n: %s", messages);
         fflush(stdout);
         /*int k;
@@ -277,7 +277,7 @@ void* client(void* arg){
 
         msg_len = strlen(buf);
         // send message to server
-        Send_msg(socket_desc,buf);
+        send_msg(socket_desc,buf,0);
 
         /* After a quit command we won't receive any more data from
          * the server, thus we must exit the main loop. */
