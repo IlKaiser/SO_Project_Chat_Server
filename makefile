@@ -24,15 +24,7 @@ all: server
 server.o: $(SERVERFOLDER)/server.c $(SERVERFOLDER)/server.h
 	$(CC) -c -o $@ $< $(CFLAGS)
 server: server.o
-<<<<<<< HEAD
 		  $(CC) -o server server.o -lpthread -lpq
-=======
-		  $(CC) -o server server.o -lpthread -lpq  
-client.o: $(CLIENTFOLDER)/client.c $(CLIENTFOLDER)/client.h
-	$(CC) $(GTK1) -c -o $@ $<  $(CFLAGS)
-client: client.o
-		  $(CC) $(GTK2) -o client client.o  -lpthread -lpq
->>>>>>> gtk
 
 clean:
 		rm -rf *.o	
