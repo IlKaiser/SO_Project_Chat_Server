@@ -5,7 +5,7 @@ ifeq ($(OS),Darwin)
 else 
 	CC=gcc
 endif
-CFLAGS= -m64 -Wall -g -O2 
+CFLAGS= -Wall -g -O2 
 SERVERFOLDER=_Server
 CLIENTFOLDER=_Client
 
