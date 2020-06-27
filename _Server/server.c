@@ -356,7 +356,7 @@ void connection_handler(int socket_desc, struct sockaddr_in* client_addr) {
         }
         printf ("searching messages between %s %s",user_name,target_user_name);
         const char* paramValue[2] = {user_name,target_user_name};
-        res = PQexecParams(conn,"select mess._fro,mess.co,to_char(mess.data, 'DD-MM-YYYY HH24:MI') ( select m._from as _fro, m.mes as co, m.data as data from messaggi as m where m._from=$1 and m._to=$2 union all select m1._from as _fro, m1.mes as co, m1.data as data from messaggi as m1 where m1._from=$2 and m1._to=$1) as mess order by mess.data desc limit 5",
+        res = PQexecParams(conn,"select mess._fro,mess.co,to_char(mess.data, 'DD-MM-YYYY HH24:MI') from( select m._from as _fro, m.mes as co, m.data as data from messaggi as m where m._from=$1 and m._to=$2 union all select m1._from as _fro, m1.mes as co, m1.data as data from messaggi as m1 where m1._from=$2 and m1._to=$1) as mess order by mess.data desc limit 5",
                         2,       /* two param*/
                         NULL,    /* let the backend deduce param type*/
                         paramValue,
@@ -460,8 +460,8 @@ void connection_handler(int socket_desc, struct sockaddr_in* client_addr) {
         
         const char* paramValue[3] = {trim_username,trim_to,buf};
         res = PQexecParams(conn,
-                       "INSERT INTO messaggi (_from,_to,mes,data) VALUES ($1,$2,$3,CURRENT_TIMESTAMP(0))",
-                       3,       /* one param */
+                       "INSERT INTO messaggi (_from,_to,mes,data) VALUES ($1,$2,$3,$4)",
+                       4,       /* one param */
                        NULL,    /* let the backend deduce param type */
                        paramValue,
                        NULL,
