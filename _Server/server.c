@@ -97,17 +97,13 @@ void connection_handler(int socket_desc, struct sockaddr_in* client_addr) {
     int error = 0;
     socklen_t len = sizeof (error);
     
-    int ret, recv_bytes,bytes_sent;
+    int ret;
 
     char buf[1024];
     size_t buf_len = sizeof(buf);
     int msg_len;
 
-    char* quit_command = SERVER_COMMAND;
-    char* list_command = LIST_COMMAND;
     char credentials[66];
-    size_t quit_command_len = strlen(quit_command);
-    size_t list_command_len = strlen(list_command);
 
     #if DEBUG
         //Print socket desc number for double checking
@@ -128,48 +124,33 @@ void connection_handler(int socket_desc, struct sockaddr_in* client_addr) {
     user_name=ERROR_MSG;
     char* tok=(char*)malloc(33*sizeof(char));
 
-    // 1. get client username and password finchè non arrivano quelle corrette
+    /// 1. get client username and password until not correct
     while(!strcmp(user_name,ERROR_MSG)){
         memset(credentials, 0, strlen(credentials));
-        recv_bytes = 0;
-        do {
-            ret = recv(socket_desc, credentials + recv_bytes, 1, 0);
-            if (ret == -1 && errno == EINTR) continue;
-            // Of course i still love you
-            if (ret == -1 || ret==0) disconnection_handler(socket_desc);
-        } while ( credentials[recv_bytes++] != '\n' );
-
-        printf("sono qui\n");
-        fflush(stdout);
-        printf("le credenziali sono %s \n",credentials );
+        ret=recive_msg(socket_desc,credentials,1);
+        if(ret)
+            disconnection_handler(socket_desc);
+        #if DEBUG
+            printf("Credntials are  %s \n",credentials );
+        #endif
         if (login(credentials,socket_desc)){
-            printf("copio username \n");
             tok = strtok(credentials, ";");
             printf("%s\n",tok);
 
         }
         else{
-            printf("copio errore \n");
             strcpy(tok,ERROR_MSG);
 
         }
-        printf("il risultato è %s\n",tok);
-        fflush(stdout);
-
         if(!strcmp(tok,ERROR_MSG)){
-            printf("INVALID CREDENTIALS\n");
-            fflush(stdout);
+            #if DEBUG
+                printf("INVALID CREDENTIALS\n");
+            #endif
             memset(buf, 0, buf_len);
             strcpy(buf,ERROR_MSG);
-            bytes_sent = 0;
-            msg_len = strlen(buf);
-            while ( bytes_sent < msg_len){
-                ret = send(socket_desc, buf + bytes_sent, msg_len - bytes_sent, 0);
-                if (ret == -1 && errno == EINTR) continue;
-                // Of course i still love you
-                if (ret == -1) disconnection_handler(socket_desc);
-                bytes_sent += ret;
-            }
+            ret=send_msg(socket_desc,buf,1);
+            if(ret)
+                disconnection_handler(socket_desc);
         }
         user_name=(char*)malloc(33*sizeof(char));
         strcpy(user_name,tok);
@@ -180,23 +161,18 @@ void connection_handler(int socket_desc, struct sockaddr_in* client_addr) {
         printf("Username get: %s\n",user_name);
     #endif // DEBUG
 
-    // 1.1 Updates global variables info
+    /// 1.1 Updates global variables info
+    /// Check if is ok to proceed with upddating and if we are able to handle other connections
     if(previous_size==MAX_SIZE || (strcmp(user_name,"")==0)){
         memset(buf, 0, buf_len);
         strcpy(buf,ERROR_MSG);
-        bytes_sent = 0;
-        msg_len = strlen(buf);
-	    while ( bytes_sent < msg_len){
-            ret = send(socket_desc, buf + bytes_sent, msg_len - bytes_sent, 0);
-            if (ret == -1 && errno == EINTR) continue;
-            // Of course i still love you
-            if (ret == -1) disconnection_handler(socket_desc);
-            bytes_sent += ret;
-        }
+        ret=send_msg(socket_desc,buf,1);
+
+        /// Error closing connection
         disconnection_handler(socket_desc);
     }else{
-        //Critical section shared mem writing
-        //updates shared array
+        /// Critical section shared mem writing
+        /// updates shared array
         ret=sem_wait(sem);
         if(ret){
             handle_error("Err sem wait");
@@ -205,7 +181,7 @@ void connection_handler(int socket_desc, struct sockaddr_in* client_addr) {
         user_names[next_position]=user_name;
         sockets[next_position]=socket_desc;
         current_size++;
-        // determinate next free position
+        /// determinate next free position
         set_next_position();
 
 
@@ -213,23 +189,17 @@ void connection_handler(int socket_desc, struct sockaddr_in* client_addr) {
         if(ret){
             handle_error("Err sem post");
         }
-        // 1.2 send first ack to client
+        /// 1.2 send first ack to client
         memset(buf, 0, buf_len);
         strcpy(buf,OK_MSG);
-        bytes_sent = 0;
-        msg_len = strlen(buf);
-	    while ( bytes_sent < msg_len){
-            ret = send(socket_desc, buf + bytes_sent, msg_len - bytes_sent, 0);
-            if (ret == -1 && errno == EINTR) continue;
-            // Of course i still love you
-            if (ret == -1) disconnection_handler(socket_desc);
-            bytes_sent += ret;
-        }
+        ret=send_msg(socket_desc,buf,1);
+        if(ret)
+            disconnection_handler(ret);
     }
 
 
 
-    // 1.2 Open db connection
+    /// 1.2 Open db connection
     const char *conninfo = "hostaddr=15.236.174.17 port=5432 dbname=postgres user=postgres password=Quindicimaggio_20 sslmode=disable";
     PGconn *conn;
     PGresult *res;
@@ -243,7 +213,7 @@ void connection_handler(int socket_desc, struct sockaddr_in* client_addr) {
         exit(1);
     }
 
-    // 2. check if there is only one client
+    /// 2. check if there is only one client
     LOOP:while(current_size<2){
 
         //test if the client is still up
@@ -257,51 +227,27 @@ void connection_handler(int socket_desc, struct sockaddr_in* client_addr) {
         #if DEBUG
             printf("Alone\n");
         #endif // DEBUG
-        msg_len = strlen(buf)+1;//we include \0
-         #if DEBUG
-            printf("Buf: %s\n",buf);
-        #endif // DEBUG
-        bytes_sent = 0;
-	    while ( bytes_sent < msg_len) {
-            ret = send(socket_desc, buf + bytes_sent, msg_len - bytes_sent, 0);
-            if (ret == -1 && errno == EINTR) continue;
-            if (ret == -1) disconnection_handler(socket_desc);
-            bytes_sent += ret;
-        }
+        ret=send_msg(socket_desc,buf,1);
+        if(ret)
+            disconnection_handler(socket_desc);
         ret=sleep(5);
         if(ret){
             handle_error("Err sleep");
         }
     }
-    // 3. send user list
+    /// 3. send user list
     list_formatter(buf,socket_desc);
     #if DEBUG
         printf("List %s",buf);
     #endif
-    msg_len = strlen(buf)+1; //we include \0
-    bytes_sent = 0;
-	while ( bytes_sent < msg_len) {
-        ret = send(socket_desc, buf + bytes_sent, msg_len - bytes_sent, 0);
-        if (ret == -1 && errno == EINTR) continue;
-        // Of course i still love you
-        if (ret == -1) disconnection_handler(socket_desc);
-        bytes_sent += ret;
-    }
-    // 4. get id number from client
+    ret=send_msg(socket_desc,buf,1);
+    if(ret)
+        disconnection_handler(socket_desc);
+    /// 4. get id number from client
     char user_buf[4];
-    recv_bytes=0;
-    do {
-        ret = recv(socket_desc, user_buf + recv_bytes, 1, 0);
-        if (ret == -1 && errno == EINTR) continue;
-        // Of course i still love you
-        if (ret == -1 || ret==0) disconnection_handler(socket_desc);
-        //check if we are about to overflow the buffer
-        if(recv_bytes>3){
-            printf("Recived almost 4 bytes, resetting buffer...\n");
-            memset(user_buf,0,4);
-            recv_bytes=0;
-        }
-	}while ( user_buf[recv_bytes++]!= '\n' );
+    ret=recive_msg(socket_desc,user_buf,1);
+    if(ret)
+        disconnection_handler(socket_desc);
     printf("Buffer %s \n",user_buf);
     int user_id=atoi(user_buf);
     #if DEBUG
@@ -310,27 +256,19 @@ void connection_handler(int socket_desc, struct sockaddr_in* client_addr) {
 
     int socket_target=DISCONNECTED;
     char* target_user_name=NULL;
-    // 4.1 get target socket desc
+    /// 4.1 get target socket desc
     if(user_id<=current_size){
          socket_target=sockets[user_id-1];
 
-        //Look for target user name
+        /// Look for target user name
         target_user_name=user_names[user_id-1];
     }
     
-    //check if user his number
+    /// check whether you are trying to contact yourself
     if (socket_target==socket_desc){
         memset(buf, 0, buf_len);
         strcpy(buf,ERROR_MSG);
-        bytes_sent = 0;
-        msg_len = strlen(buf);
-        while ( bytes_sent < msg_len){
-            ret = send(socket_desc, buf + bytes_sent, msg_len - bytes_sent, 0);
-            if (ret == -1 && errno == EINTR) continue;
-            // Of course i still love you
-            if (ret == -1) disconnection_handler(socket_desc);
-            bytes_sent += ret;
-        }
+        send_msg(socket_desc,buf,1);
         disconnection_handler(socket_desc);
     }
 
@@ -339,10 +277,10 @@ void connection_handler(int socket_desc, struct sockaddr_in* client_addr) {
             printf("socket target number : %d\n",socket_target);
         #endif // DEBUG
 
-        //4.2 send second ack //replacing the second ack with old messages
-        // query for old messages
-        //connetto al db
-        const char *conninfo = "hostaddr=15.236.174.17 port=5432 dbname=postgres user=postgres password=Quindicimaggio_20 sslmode=disable";
+        ///4.2 send second ack //replacing the second ack with old messages
+        /// query for old messages
+        
+        /*const char *conninfo = "hostaddr=15.236.174.17 port=5432 dbname=postgres user=postgres password=Quindicimaggio_20 sslmode=disable";
         PGconn *conn;
         PGresult *res;
         
@@ -353,7 +291,8 @@ void connection_handler(int socket_desc, struct sockaddr_in* client_addr) {
             fprintf(stderr, "Connection to database failed: %s", PQerrorMessage(conn));
             PQfinish(conn);
             exit(1);
-        }
+        //We were already connected!
+        }*/
         char trim_username[32];
         char trim_to[32];
         trim(trim_username,user_name);
@@ -374,37 +313,28 @@ void connection_handler(int socket_desc, struct sockaddr_in* client_addr) {
             exit_nicely(conn,res,socket_desc);
         }
         int rows=PQntuples(res);
+
+        /// 4.3 Sending second ack 
+
         if (rows==0){
-            bytes_sent = 0;
             strcpy(buf,OK_MSG);
             msg_len = strlen(buf);
             #if DEBUG
                 printf("Sending 2nd ack %s with len %d \n",buf,msg_len);
             #endif
-            while ( bytes_sent < msg_len){
-                ret = send(socket_desc, buf + bytes_sent, msg_len - bytes_sent, 0);
-                if (ret == -1 && errno == EINTR) continue;
-                // Of course i still love you
-                if (ret == -1) disconnection_handler(socket_desc);
-                bytes_sent += ret;
-                printf("bytes sent %d\n",bytes_sent);
-            }
+            ret=send_msg(socket_desc,buf,1);
+            if(ret)
+                disconnection_handler(socket_desc);
         }
         else{
-            bytes_sent = 0;
             strcpy(buf,MSG_MSG);
             msg_len = strlen(buf);
             #if DEBUG
                 printf("Sending 2nd ack %s with len %d \n",buf,msg_len);
             #endif
-            while ( bytes_sent < msg_len){
-                ret = send(socket_desc, buf + bytes_sent, msg_len - bytes_sent, 0);
-                if (ret == -1 && errno == EINTR) continue;
-                // Of course i still love you
-                if (ret == -1) disconnection_handler(socket_desc);
-                bytes_sent += ret;
-                printf("bytes sent %d\n",bytes_sent);
-            }
+            ret=send_msg(socket_desc,buf,1);
+            if(ret)
+                disconnection_handler(socket_desc);
             memset(buf, 0, buf_len);
             int ro;
             int co;
@@ -416,84 +346,61 @@ void connection_handler(int socket_desc, struct sockaddr_in* client_addr) {
                 strcat(buf,";");
             }
             strcat(buf,"\n");
-            bytes_sent = 0;
             msg_len = strlen(buf);
             #if DEBUG
                 printf("Sending old messages %s with len %d \n",buf,msg_len);
             #endif
-            while ( bytes_sent < msg_len){
-                ret = send(socket_desc, buf + bytes_sent, msg_len - bytes_sent, 0);
-                if (ret == -1 && errno == EINTR) continue;
-                // Of course i still love you
-                if (ret == -1) disconnection_handler(socket_desc);
-                bytes_sent += ret;
-                printf("bytes sent %d\n",bytes_sent);
-            }
+           ret=send_msg(socket_desc,buf,1);
+           if(ret)
+                disconnection_handler(socket_desc);
         }
 
     }else{
         memset(buf, 0, buf_len);
         strcpy(buf,ERROR_MSG);
-        bytes_sent = 0;
-        msg_len = strlen(buf);
-        while ( bytes_sent < msg_len){
-            ret = send(socket_desc, buf + bytes_sent, msg_len - bytes_sent, 0);
-            if (ret == -1 && errno == EINTR) continue;
-            // Of course i still love you
-            if (ret == -1) disconnection_handler(socket_desc);
-
-            bytes_sent += ret;
-        }
+        ret=send_msg(socket_desc,buf,1);
         disconnection_handler(socket_desc);
     }
 
     #if DEBUG
         printf("Send second ack %s\n",buf);
     #endif // DEBUG
-    // reciver loop 
+    /// reciver loop 
     while (1) {
 
-        //5. main loop
+        /// 5. main loop
 
-        // read message from client
+        /// read message from client
         #if DEBUG
             printf("Enter main loop \n");
         #endif // DEBUG
         memset(buf,0,buf_len);
-        recv_bytes = 0;
-        do {
-            ret = recv(socket_desc, buf + recv_bytes, 1, 0);
-            if (ret == -1 && errno == EINTR) continue;
-            // Of course i still love you
-            if (ret == -1 || ret == 0) disconnection_handler(socket_desc);
-            if(recv_bytes>1022){
-            printf("Recived almost 1024 bytes, resetting buffer...\n");
-            memset(buf,0,buf_len);
-            recv_bytes=0;
-        }
-		} while ( buf[recv_bytes++] != '\n' );
+        ret=recive_msg(socket_desc,buf,1);
+        if(ret)
+            disconnection_handler(socket_desc);
         #if DEBUG
             printf("Message %s from %s",buf,user_name);
         #endif // DEBUG
 
         // check whether I have just been told to quit...
-        if (recv_bytes == 0) disconnection_handler(socket_desc);
-        if (recv_bytes == quit_command_len && !memcmp(buf, quit_command, quit_command_len)){ 
+        if (strcmp(buf,SERVER_COMMAND)==0){ 
             printf("Quitting...\n");
             disconnection_handler(socket_desc);
         }
-        if (recv_bytes == list_command_len && !memcmp(buf,list_command,list_command_len)){
+        if (strcmp(buf,LIST_COMMAND)==0){
             printf("Send new list\n");
+            /// TODO: fix this "thing"
             goto LOOP;
         }
-        // ... or if I have to send the message back
-        // 5.1 insert msg into db
+
+        /// 5.1 insert msg into db
         
         char trim_username[32];
         char trim_to[32];
         trim(trim_username,user_name);
         trim(trim_to,target_user_name);
         const char* paramValue[3] = {trim_username,trim_to,buf};
+
         res = PQexecParams(conn,
                        "INSERT INTO messaggi (_from,_to,mes,data) VALUES ($1,$2,$3,$4)",
                        4,       /* one param */
@@ -511,31 +418,25 @@ void connection_handler(int socket_desc, struct sockaddr_in* client_addr) {
 
 
 
-        //5.2 Send to requested target
+        /// 5.2 Send to requested target
         char to_send[1024];
         memset(to_send,0,sizeof(to_send));
-        bytes_sent = 0;
         strcat(buf,"\n");
         strcat(to_send,user_name);
         strcat(to_send,buf);
-        msg_len = strlen(to_send)+1;
-        while ( bytes_sent < msg_len){
-            ret = send(socket_target, to_send + bytes_sent, msg_len - bytes_sent, 0);
-            if (ret == -1 && errno == EINTR) continue;
-            // Of course i still love you
-            if (ret == -1) disconnection_handler(socket_desc);
-            bytes_sent += ret;
-        }
+        ret=send_msg(socket_target,to_send,1);
+        if(ret)
+            disconnection_handler(socket_desc);
         #if DEBUG
             printf("sto mandando: %s",to_send);
         #endif
     } 
-    //If a break occurs
+    /// If a break occurs
     disconnection_handler(socket_desc);
 }
 
-// Wrapper function that take as input handler_args_t struct and then call 
-// connection_handler.
+/// Wrapper function that take as input handler_args_t struct and then call 
+/// connection_handler.
 void *thread_connection_handler(void *arg) {
     handler_args_t *args = (handler_args_t *)arg;
     int socket_desc = args->socket_desc;
