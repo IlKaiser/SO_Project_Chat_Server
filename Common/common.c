@@ -1,5 +1,12 @@
 #include <string.h>
 #include <ctype.h>
+#include <stdlib.h>
+#include <stdio.h>
+#include <errno.h>
+#include <sys/socket.h>
+
+#include "common.h"
+
 
 void trim (char *dest, char *src){
     if (!src || !dest)
@@ -31,4 +38,45 @@ void trim (char *dest, char *src){
         *dest++ = *q++;
 
     *dest = '\0';
+}
+int send_msg (int socket_desc,char* buf,char is_server){
+    int bytes_sent=0;
+    int ret;
+    int msg_len = strlen(buf)+1; //we always send the f***** \0
+    while ( bytes_sent < msg_len) {
+        ret = send(socket_desc, buf + bytes_sent, msg_len - bytes_sent, 0);
+        if (ret == -1 && errno == EINTR) continue;
+        if((ret==-1 || ret==0) && is_server) return -1;
+        else{
+            /// Called from client
+            if (ret == -1) handle_error("Cannot read from the socket");
+            if (ret == 0) handle_error_en(0xDEAD,"server is offline");
+        }
+        bytes_sent += ret;
+    }
+    return 0;
+}
+int recive_msg(int socket_desc,char* buf,char is_server){
+    int recv_bytes=0;
+    int ret;
+    int buf_size=sizeof(buf);
+    buf="";
+    do {                                
+        ret = recv(socket_desc, buf + recv_bytes,1, 0);
+        if (ret == -1 && errno == EINTR) continue;
+        /// Of course we still love you (if called from server)
+        if((ret==-1 || ret==0) && is_server) return -1;
+        else{
+            /// Called from client
+            if (ret == -1) handle_error("Cannot read from the socket");
+            if (ret == 0) handle_error_en(0xDEAD,"server is offline");
+        }
+        /// Overflow check
+        if(recv_bytes>buf_size-2){
+            printf("Recived almost %d bytes, resetting buffer...\n",buf_size);
+            memset(buf,0,buf_size);
+            recv_bytes=0;
+        }
+    } while (buf[recv_bytes++]!='\0');
+    return 0;
 }
