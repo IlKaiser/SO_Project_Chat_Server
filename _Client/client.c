@@ -16,6 +16,7 @@
 
 
 #include "client.h"
+#include "../Common/common.h"
 
 
 // message queues
@@ -99,7 +100,7 @@ void* thread_reciver(void *arg){
     handler_args_m *args = (handler_args_m *)arg;
     int socket_desc = args->socket_desc;
     char buf1[1024];
-    int ret;
+    //int ret;
 
     // msgget creates a message queue 
     // and returns identifier
@@ -108,14 +109,8 @@ void* thread_reciver(void *arg){
     #endif
 
     while(1){
-        int recv_bytes=0;
         memset(buf1,0,sizeof(buf1));
-        do {                                
-            ret = recv(socket_desc, buf1 + recv_bytes,1, 0);
-            if (ret == -1 && errno == EINTR) continue;
-            if (ret == -1) handle_error("Cannot read from the socket");
-            if (ret == 0) handle_error_en(0xDEAD,"server is offline");
-        } while (buf1[recv_bytes++]!='\0');
+        Recive_msg(socket_desc,buf1);
         fprintf(stderr,"\nmessaggio di\n: %s", buf1);
         // msgsnd to send message
         message->mesg_type = 1;
@@ -133,7 +128,7 @@ void* thread_reciver(void *arg){
 
 void* client(void* arg){
     
-    int ret,bytes_sent,recv_bytes;
+    int ret/*,bytes_sent,recv_bytes*/;
     handler_args_m* data_socket = arg;
     int socket_desc = data_socket->socket_desc;
 
@@ -154,14 +149,7 @@ void* client(void* arg){
     ///TODO: riceve e stampa la lista delle connessioni
     do{
         memset(buf, 0, buf_len);
-        recv_bytes = 0;
-        do {
-            ret = recv(socket_desc, buf + recv_bytes, 1, 0);
-            if (ret == -1 && errno == EINTR) continue;
-            if (ret == -1) handle_error("Cannot read from the socket");
-            if (ret == 0) handle_error_en(0xDEAD,"server is offline");
-            //recv_bytes += ret;
-        } while ( buf[recv_bytes++] != '\0' );
+        Recive_msg(socket_desc,buf);
         printf("la lista è:\n %s", buf);
         fflush(stdout);
         if (!(strcmp(buf,ALONE_MSG)==0)){
@@ -174,15 +162,13 @@ void* client(void* arg){
         }
         else{
             printf("you are alone\n");
-        }
-        
-
+        } 
         //check if recived errore msg from server
     }while (strcmp(buf,ALONE_MSG)==0);
 
     ///TODO:input numero di return
     //printf("select a username with his number: ");
-    LOOP:memset(buf,0,buf_len);
+    memset(buf,0,buf_len);
     //if (fgets(buf, sizeof(buf), stdin) != (char*)buf) {
     msgrcv(input_msg, input_str, sizeof(input_m), 1, 0);
     #if DEBUG
@@ -199,13 +185,7 @@ void* client(void* arg){
     printf("Pick_len %d\n",pick_len);
     printf("Pick: %s\n",buf);
     // send message to server
-    bytes_sent=0;
-    while ( bytes_sent < pick_len) {
-        ret = send(socket_desc, buf + bytes_sent, pick_len - bytes_sent, 0);
-        if (ret == -1 && errno == EINTR) continue;
-        if (ret == -1) handle_error("Cannot write to the socket");
-        bytes_sent+=ret;
-    }
+    Send_msg(socket_desc,buf);
     printf("inviata la scelta\n");
     fflush(stdout);
 
@@ -213,18 +193,12 @@ void* client(void* arg){
 
     ///TODO: riceve l'ack e entra nel loop
     memset(ack, 0, ack_len);
-    recv_bytes = 0;
-
+    //recv_bytes = 0;
+ 
     printf("aspetto ack\n");
     fflush(stdout);
-    do {
-        ret = recv(socket_desc, ack + recv_bytes,1, 0);
-        if (ret == -1 && errno == EINTR) continue;
-        if (ret == -1) handle_error("Cannot read from the socket");
-        if (ret == 0) handle_error_en(0xDEAD,"server is offline");
-	   //recv_bytes += ret;
-    } while (ack[recv_bytes++]!='\n');
-    printf("l'ack 2 è\n: %s, recv_bytes %d\n", ack,recv_bytes);
+    Recive_msg(socket_desc,ack);
+    printf("l'ack 2 è\n: %s", ack);
     fflush(stdout);
     memset(message->mesg_text,0,sizeof(message->mesg_text));
     strcpy(message->mesg_text,ack);
@@ -240,7 +214,24 @@ void* client(void* arg){
         ret = close(socket_desc);
         if(ret) handle_error("Cannot close socket");
     }
+    
+    if (strcmp(ack,MSG_MSG)==0){
+        char messages[8192];
+        //recv_bytes = 0;
 
+        printf("aspetto messaggi\n");
+        fflush(stdout);
+        Recive_msg(socket_desc,messages);
+        printf("messaggi sono\n: %s", messages);
+        fflush(stdout);
+        /*int k;
+        for (k=0;k<recv_bytes;k++){
+            char * token = strtok(credentials, ";");
+            memset(message->mesg_text,0,sizeof(message->mesg_text));
+            strcpy(message->mesg_text,messages);
+            msgsnd(update_msg, message, sizeof(message), 0);
+        }*/
+    }
     ///TODO: creare il thread di recive(per ricevere messaggi solo dal numero che hai selezionato async)
     pthread_t thread;
 
@@ -260,8 +251,8 @@ void* client(void* arg){
     int msg_len;
     while (1) {
         char* quit_command = SERVER_COMMAND;
-        char* list_command = LIST_COMMAND;
-        size_t list_command_len = strlen(list_command);
+        //char* list_command = LIST_COMMAND;
+        //size_t list_command_len = strlen(list_command);
         size_t quit_command_len = strlen(quit_command);
 
         printf("Insert your message: ");
@@ -286,17 +277,11 @@ void* client(void* arg){
 
         msg_len = strlen(buf);
         // send message to server
-        bytes_sent=0;
-        while ( bytes_sent < msg_len) {
-            ret = send(socket_desc, buf + bytes_sent, msg_len - bytes_sent, 0);
-            if (ret == -1 && errno == EINTR) continue;
-            if (ret == -1) handle_error("Cannot write to the socket");
-            bytes_sent += ret;
-        }
+        Send_msg(socket_desc,buf);
 
         /* After a quit command we won't receive any more data from
          * the server, thus we must exit the main loop. */
-        if (msg_len == list_command_len && !memcmp(buf, list_command, list_command_len)) goto LOOP;
+        //if (msg_len == list_command_len && !memcmp(buf, list_command, list_command_len)) goto LOOP;
         if (msg_len == quit_command_len && !memcmp(buf, quit_command, quit_command_len)) break;
 
         
