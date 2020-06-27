@@ -458,7 +458,10 @@ void connection_handler(int socket_desc, struct sockaddr_in* client_addr) {
         trim(trim_username,user_name);
         trim(trim_to,target_user_name);
         
-        const char* paramValue[3] = {trim_username,trim_to,buf};
+        time_t t = time(NULL);
+        char * cur_time = asctime(localtime(&t));
+        printf("local:     %s", cur_time);
+        const char* paramValue[4] = {user_name,target_user_name,buf,cur_time};
         res = PQexecParams(conn,
                        "INSERT INTO messaggi (_from,_to,mes,data) VALUES ($1,$2,$3,$4)",
                        4,       /* one param */
@@ -466,7 +469,7 @@ void connection_handler(int socket_desc, struct sockaddr_in* client_addr) {
                        paramValue,
                        NULL,
                        NULL,
-                       1);      /* ask for binary results */
+                       1);      /* ask for binary results */      /* ask for binary results */
         if (PQresultStatus(res) != PGRES_COMMAND_OK)
         {
             fprintf(stderr, "INSERT failed: %s", PQerrorMessage(conn));
