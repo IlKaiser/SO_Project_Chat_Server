@@ -29,4 +29,4 @@ client: client.o
 	$(CC) $(GTK2) -o client  client.o common.o  -lpthread -lpq
 		  
 clean:
-	rm -rf *.o	
+	rm -rf *.o client server
