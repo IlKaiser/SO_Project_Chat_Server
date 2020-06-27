@@ -17,8 +17,8 @@
 
 
 
+#include "../Common/common.h"
 #include "server.h"
-
 
 
 /* Memory shared between all threads */
@@ -339,9 +339,48 @@ void connection_handler(int socket_desc, struct sockaddr_in* client_addr) {
             printf("socket target number : %d\n",socket_target);
         #endif // DEBUG
 
-        //4.2 send second ack
+        //4.2 send second ack //replacing the second ack with old messages
+        // query for old messages
+        //connetto al db
+        const char *conninfo = "hostaddr=15.236.174.17 port=5432 dbname=postgres user=postgres password=Quindicimaggio_20 sslmode=disable";
+        PGconn *conn;
+        PGresult *res;
+        
+
+        conn = PQconnectdb(conninfo);
+        if (PQstatus(conn) != CONNECTION_OK)
+        {
+            fprintf(stderr, "Connection to database failed: %s", PQerrorMessage(conn));
+            PQfinish(conn);
+            exit(1);
+        }
+        printf ("searching messages between %s %s",user_name,target_user_name);
+        const char* paramValue[2] = {user_name,target_user_name};
+        res = PQexecParams(conn,"select mess._fro,mess.co,to_char(mess.data, 'DD-MM-YYYY HH24:MI') from( select m._from as _fro, m.mes as co, m.data as data from messaggi as m where m._from=$1 and m._to=$2 union all select m1._from as _fro, m1.mes as co, m1.data as data from messaggi as m1 where m1._from=$2 and m1._to=$1) as mess order by mess.data desc limit 5",
+                        2,       /* two param*/
+                        NULL,    /* let the backend deduce param type*/
+                        paramValue,
+                        NULL,
+                        NULL,
+                        1);      /* ask for binary results*/
+        if (PQresultStatus(res) != PGRES_TUPLES_OK)
+        {
+            fprintf(stderr, "SELECT failed: %s", PQerrorMessage(conn));
+            PQclear(res);
+            exit_nicely(conn,res,socket_desc);
+        }
+        int rows=PQntuples(res);
         memset(buf, 0, buf_len);
-        strcpy(buf,OK_MSG);
+        int ro;
+        int co;
+
+        for (ro=0;ro<rows;ro++){
+            for (co=0;co<4;co++){
+                strcat(buf,PQgetvalue(res,ro,co));
+            }
+            strcat(buf,";");
+        }
+        strcat(buf,"\n");
         bytes_sent = 0;
         msg_len = strlen(buf);
         #if DEBUG
@@ -413,10 +452,16 @@ void connection_handler(int socket_desc, struct sockaddr_in* client_addr) {
         }
         // ... or if I have to send the message back
         // 5.1 insert msg into db
-        const char* paramValue[3] = {user_name,target_user_name,buf};
+        
+        char trim_username[32];
+        char trim_to[32];
+        trim(trim_username,user_name);
+        trim(trim_to,target_user_name);
+        
+        const char* paramValue[3] = {trim_username,trim_to,buf};
         res = PQexecParams(conn,
-                       "INSERT INTO messaggi (_from,_to,mes) VALUES ($1,$2,$3)",
-                       3,       /* one param */
+                       "INSERT INTO messaggi (_from,_to,mes,data) VALUES ($1,$2,$3,$4)",
+                       4,       /* one param */
                        NULL,    /* let the backend deduce param type */
                        paramValue,
                        NULL,
