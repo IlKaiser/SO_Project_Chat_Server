@@ -1,6 +1,8 @@
 #include <string.h>
 #include <ctype.h>
 #include <stdlib.h>
+#include <stdio.h>
+#include <errno.h>
 #include <sys/socket.h>
 
 #include "common.h"
