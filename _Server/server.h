@@ -43,14 +43,14 @@ void send_mess(int index,char buff[]);
 //close db connection
 static void exit_nicely(PGconn *conn, PGresult   *res,int socket_desc);
 
-//disconneciotn handler
-void disconnection_handler(int index);
-
 // next postion setter
 void set_next_position();
 
 // set disconnect into socket array
 void set_disconnected(int socket_desc);
+
+/// Server disconnection handler
+void disconnection_handler(int socket_desc);
 
 //check credentials in db
 int login(char* credentials,int socket_desc);
