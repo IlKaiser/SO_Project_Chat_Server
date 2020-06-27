@@ -6,7 +6,11 @@ ifeq ($(OS),Darwin)
 else 
 	CC=gcc
 endif
+<<<<<<< HEAD
 
+=======
+CFLAGS= -Wall -g -O2 
+>>>>>>> 98071c1652d6286cc9e3e3282949c0d05a821ca9
 SERVERFOLDER=_Server
 CLIENTFOLDER=_Client
 

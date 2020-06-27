@@ -230,7 +230,7 @@ void connection_handler(int socket_desc, struct sockaddr_in* client_addr) {
 
 
     // 1.2 Open db connection
-    const char *conninfo = "hostaddr=15.236.174.17 port=5432 dbname=postgres user=postgres password=Quindicimaggio_20 sslmode=disable";
+    const char *conninfo = "hostaddr=127.0.0.1 port=5432 dbname=SO_CHAT user=postgres password=password sslmode=disable";
     PGconn *conn;
     PGresult *res;
     
@@ -342,7 +342,7 @@ void connection_handler(int socket_desc, struct sockaddr_in* client_addr) {
         //4.2 send second ack //replacing the second ack with old messages
         // query for old messages
         //connetto al db
-        const char *conninfo = "hostaddr=15.236.174.17 port=5432 dbname=postgres user=postgres password=Quindicimaggio_20 sslmode=disable";
+        const char *conninfo = "hostaddr=127.0.0.1 port=5432 dbname=SO_CHAT user=postgres password=password sslmode=disable";
         PGconn *conn;
         PGresult *res;
         
@@ -356,7 +356,7 @@ void connection_handler(int socket_desc, struct sockaddr_in* client_addr) {
         }
         printf ("searching messages between %s %s",user_name,target_user_name);
         const char* paramValue[2] = {user_name,target_user_name};
-        res = PQexecParams(conn,"select mess._fro,mess.co,to_char(mess.data, 'DD-MM-YYYY HH24:MI') from( select m._from as _fro, m.mes as co, m.data as data from messaggi as m where m._from=$1 and m._to=$2 union all select m1._from as _fro, m1.mes as co, m1.data as data from messaggi as m1 where m1._from=$2 and m1._to=$1) as mess order by mess.data desc limit 5",
+        res = PQexecParams(conn,"select mess._fro,mess.co,mess.data from( select m._from as _fro, m.mes as co, m.data as data from messaggi as m where m._from=$1 and m._to=$2 union all select m1._from as _fro, m1.mes as co, m1.data as data from messaggi as m1 where m1._from=$2 and m1._to=$1) as mess order by mess.data desc limit 5",
                         2,       /* two param*/
                         NULL,    /* let the backend deduce param type*/
                         paramValue,
@@ -621,7 +621,7 @@ int login(char* credentials,int socket_desc){
     strcpy(password,token);//salvo password
     password[strlen(password)-1]='\0';
     //connetto al db
-    const char *conninfo = "hostaddr=15.236.174.17 port=5432 dbname=postgres user=postgres password=Quindicimaggio_20 sslmode=disable";
+    const char *conninfo = "hostaddr=127.0.0.1 port=5432 dbname=SO_CHAT user=postgres password=password sslmode=disable";
     PGconn *conn;
     PGresult *res;
     
