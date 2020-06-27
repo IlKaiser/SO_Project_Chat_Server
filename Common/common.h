@@ -15,7 +15,9 @@
 #define ALONE_MSG       "Alone\n" 
 #define NAME            1
 #define LIST_COMMAND    "_LIST_\n"
+
 //Utility functions
 void trim (char *dest, char *src);
-void Send_msg (int socket_desc,char* buf);
-void Recive_msg (int socket_desc,char* buf);
+int send_msg (int socket_desc,char* buf,char is_server);
+int recive_msg (int socket_desc,char* buf,char is_server);
+
