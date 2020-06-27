@@ -174,15 +174,13 @@ void* client(void* arg){
         }
         else{
             printf("you are alone\n");
-        }
-        
-
+        } 
         //check if recived errore msg from server
     }while (strcmp(buf,ALONE_MSG)==0);
 
     ///TODO:input numero di return
     //printf("select a username with his number: ");
-    LOOP:memset(buf,0,buf_len);
+    memset(buf,0,buf_len);
     //if (fgets(buf, sizeof(buf), stdin) != (char*)buf) {
     msgrcv(input_msg, input_str, sizeof(input_m), 1, 0);
     #if DEBUG
@@ -319,7 +317,7 @@ void* client(void* arg){
 
         /* After a quit command we won't receive any more data from
          * the server, thus we must exit the main loop. */
-        if (msg_len == list_command_len && !memcmp(buf, list_command, list_command_len)) goto LOOP;
+        //if (msg_len == list_command_len && !memcmp(buf, list_command, list_command_len)) goto LOOP;
         if (msg_len == quit_command_len && !memcmp(buf, quit_command, quit_command_len)) break;
 
         
