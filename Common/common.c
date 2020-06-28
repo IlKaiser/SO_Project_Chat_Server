@@ -50,11 +50,9 @@ int send_msg (int socket_desc,char* buf,char is_server){
     }
     return 0;
 }
-int recive_msg(int socket_desc,char* buf,char is_server){
+int recive_msg(int socket_desc,char* buf,int buf_size,char is_server){
     int recv_bytes=0;
     int ret;
-    int buf_size=sizeof(buf);
-    buf="";
     do {                                
         ret = recv(socket_desc, buf + recv_bytes,1, 0);
         if (ret == -1 && errno == EINTR) continue;
