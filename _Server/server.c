@@ -335,24 +335,37 @@ void connection_handler(int socket_desc, struct sockaddr_in* client_addr) {
             ret=send_msg(socket_desc,buf,strlen(buf),1);
             if(ret)
                 disconnection_handler(socket_desc);
-            memset(buf, 0, buf_len);
-            int ro;
-            int co;
 
-            for (ro=0;ro<rows;ro++){
-                for (co=0;co<4;co++){
-                    strcat(buf,PQgetvalue(res,ro,co));
-                }
-                strcat(buf,";");
-            }
-            strcat(buf,"\n");
-            msg_len = strlen(buf);
             #if DEBUG
-                printf("Sending old messages %s with len %d \n",buf,msg_len);
+                printf("waiting for response \n");
             #endif
-           ret=send_msg(socket_desc,buf,strlen(buf),1);
-           if(ret)
+            memset(buf,0,buf_len);
+            ret = recive_msg(socket_desc,buf,buf_len,1);
+            if(ret)
                 disconnection_handler(socket_desc);
+            if (!strcmp(buf,MSG_MSG)){   
+                memset(buf, 0, buf_len);
+                int ro;
+                int co;
+
+                for (ro=0;ro<rows;ro++){
+                    for (co=0;co<4;co++){
+                        strcat(buf,PQgetvalue(res,ro,co));
+                    }
+                    strcat(buf,";");
+                }
+                strcat(buf,"\n");
+                msg_len = strlen(buf);
+                #if DEBUG
+                    printf("Sending old messages %s with len %d \n",buf,msg_len);
+                #endif
+                ret=send_msg(socket_desc,buf,strlen(buf),1);
+                if(ret)
+                    disconnection_handler(socket_desc);
+            }
+            else{
+                disconnection_handler(socket_desc);
+            }
         }
 
     }else{
