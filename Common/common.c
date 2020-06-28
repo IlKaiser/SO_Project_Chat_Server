@@ -33,10 +33,10 @@ void trim (char *dest, char *src){
         *dest++ = *q++;
     *dest = '\0';
 }
-int send_msg (int socket_desc,char* buf,char is_server){
+int send_msg (int socket_desc,char* buf,int buf_size,char is_server){
     int bytes_sent=0;
     int ret;
-    int msg_len = strlen(buf)+1; //we always send the f***** \0
+    int msg_len = buf_size+1; //we always send the f***** \0
     while ( bytes_sent < msg_len) {
         ret = send(socket_desc, buf + bytes_sent, msg_len - bytes_sent, 0);
         if (ret == -1 && errno == EINTR) continue;

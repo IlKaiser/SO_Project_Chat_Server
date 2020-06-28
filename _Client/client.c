@@ -185,7 +185,7 @@ void* client(void* arg){
     printf("Pick_len %d\n",pick_len);
     printf("Pick: %s\n",buf);
     // send message to server
-    send_msg(socket_desc,buf,0);
+    send_msg(socket_desc,buf,strlen(buf),0);
     printf("inviata la scelta\n");
     fflush(stdout);
 
@@ -277,7 +277,7 @@ void* client(void* arg){
 
         msg_len = strlen(buf);
         // send message to server
-        send_msg(socket_desc,buf,0);
+        send_msg(socket_desc,buf,strlen(buf),0);
 
         /* After a quit command we won't receive any more data from
          * the server, thus we must exit the main loop. */
@@ -480,7 +480,7 @@ void login( GtkWidget *widget,gpointer data ){
     char* i_pas = (char*)gtk_entry_get_text(GTK_ENTRY(pas));
     
     //sends his credential to server
-    int ret;
+    //int ret;
     char snd[66];
     strcpy(snd,i_user);
     strcat(snd,";");
@@ -497,7 +497,7 @@ void login( GtkWidget *widget,gpointer data ){
         bytes_sent += ret;
         printf("Sent %s, Bytes sent %d\n",snd,ret);
     }*/
-    send_msg(socket_desc,snd,0);
+    send_msg(socket_desc,snd,strlen(snd),0);
 
     #if DEBUG
         printf("Credential sent\n");
@@ -584,11 +584,11 @@ static void activate (GtkApplication *app, gpointer data){
 }
 void force_quit(){
 
-    int ret,bytes_sent,msg_len;
+    //int ret,bytes_sent,msg_len;
 
     char buf[strlen(SERVER_COMMAND)+1];
     strcpy(buf,SERVER_COMMAND);
-    msg_len = strlen(buf);
+    //msg_len = strlen(buf);
 
 
     int socket_desc=socket_desc_copy;
@@ -601,7 +601,7 @@ void force_quit(){
         if (ret == -1) handle_error("Cannot write to the socket");
         bytes_sent += ret;
     }*/
-    send_msg(socket_desc,buf,0);
+    send_msg(socket_desc,buf,strlen(buf),0);
 
     msgctl(update_msg, IPC_RMID, NULL);
     msgctl(input_msg, IPC_RMID, NULL);
