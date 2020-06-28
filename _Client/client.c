@@ -489,14 +489,15 @@ void login( GtkWidget *widget,gpointer data ){
     int usr_len = strlen(snd);
     printf("Usr len:%d, %s\n ",usr_len,snd);
     // send message to server
-    int bytes_sent=0;
+    /*int bytes_sent=0;
     while ( bytes_sent < usr_len) {
         ret = send(socket_desc, snd + bytes_sent, usr_len - bytes_sent, 0);
         if (ret == -1 && errno == EINTR) continue;
         if (ret == -1) handle_error("Cannot write to the socket");
         bytes_sent += ret;
         printf("Sent %s, Bytes sent %d\n",snd,ret);
-    }
+    }*/
+    send_msg(socket_desc,snd,0);
 
     #if DEBUG
         printf("Credential sent\n");
@@ -506,14 +507,15 @@ void login( GtkWidget *widget,gpointer data ){
     size_t ack_len = sizeof(ack);
     strcpy(ack,ERROR_MSG);
     memset(ack, 0, ack_len);
-    int recv_bytes = 0;
+    /*int recv_bytes = 0;
     do {
         ret = recv(socket_desc, ack + recv_bytes, 1, 0);
         if (ret == -1 && errno == EINTR) continue;
         if (ret == -1) handle_error("Cannot read from the socket");
         if (ret == 0) handle_error_en(0xDEAD,"server is offline");
-    } while ( ack[recv_bytes++] != '\n' );
-    printf("l'ack è: %s\n, recv_bytes %d\n", ack,recv_bytes);
+    } while ( ack[recv_bytes++] != '\n' );*/
+    recive_msg(socket_desc,ack,ack_len,0);
+    printf("l'ack è: %s\n", ack);
 
     if (strcmp(ack,ERROR_MSG)){
         gtk_window_close(GTK_WINDOW(window));
@@ -592,13 +594,14 @@ void force_quit(){
     int socket_desc=socket_desc_copy;
     
     // send message to server
-    bytes_sent=0;
+    /*bytes_sent=0;
     while ( bytes_sent < msg_len) {
         ret = send(socket_desc, buf + bytes_sent, msg_len - bytes_sent, 0);
         if (ret == -1 && errno == EINTR) continue;
         if (ret == -1) handle_error("Cannot write to the socket");
         bytes_sent += ret;
-    }
+    }*/
+    send_msg(socket_desc,buf,0);
 
     msgctl(update_msg, IPC_RMID, NULL);
     msgctl(input_msg, IPC_RMID, NULL);
