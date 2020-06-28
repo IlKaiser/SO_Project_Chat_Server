@@ -13,4 +13,4 @@ server: server.o
 		  $(CC) -o server server.o common.o -lpthread -lpq
 
 clean:
-		rm -rf *.o	
+	rm -rf *.o server
