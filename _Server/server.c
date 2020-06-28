@@ -148,7 +148,7 @@ void connection_handler(int socket_desc, struct sockaddr_in* client_addr) {
             #endif
             memset(buf, 0, buf_len);
             strcpy(buf,ERROR_MSG);
-            ret=send_msg(socket_desc,buf,1);
+            ret=send_msg(socket_desc,buf,strlen(buf),1);
             if(ret)
                 disconnection_handler(socket_desc);
         }
@@ -166,7 +166,7 @@ void connection_handler(int socket_desc, struct sockaddr_in* client_addr) {
     if(previous_size==MAX_SIZE || (strcmp(user_name,"")==0)){
         memset(buf, 0, buf_len);
         strcpy(buf,ERROR_MSG);
-        ret=send_msg(socket_desc,buf,1);
+        ret=send_msg(socket_desc,buf,strlen(buf),1);
 
         /// Error closing connection
         disconnection_handler(socket_desc);
@@ -192,7 +192,7 @@ void connection_handler(int socket_desc, struct sockaddr_in* client_addr) {
         /// 1.2 send first ack to client
         memset(buf, 0, buf_len);
         strcpy(buf,OK_MSG);
-        ret=send_msg(socket_desc,buf,1);
+        ret=send_msg(socket_desc,buf,strlen(buf),1);
         if(ret)
             disconnection_handler(ret);
     }
@@ -227,7 +227,7 @@ void connection_handler(int socket_desc, struct sockaddr_in* client_addr) {
         #if DEBUG
             printf("Alone\n");
         #endif // DEBUG
-        ret=send_msg(socket_desc,buf,1);
+        ret=send_msg(socket_desc,buf,strlen(buf),1);
         if(ret)
             disconnection_handler(socket_desc);
         ret=sleep(5);
@@ -240,7 +240,7 @@ void connection_handler(int socket_desc, struct sockaddr_in* client_addr) {
     #if DEBUG
         printf("List %s",buf);
     #endif
-    ret=send_msg(socket_desc,buf,1);
+    ret=send_msg(socket_desc,buf,strlen(buf),1);
     if(ret)
         disconnection_handler(socket_desc);
     /// 4. get id number from client
@@ -268,7 +268,7 @@ void connection_handler(int socket_desc, struct sockaddr_in* client_addr) {
     if (socket_target==socket_desc){
         memset(buf, 0, buf_len);
         strcpy(buf,ERROR_MSG);
-        send_msg(socket_desc,buf,1);
+        send_msg(socket_desc,buf,strlen(buf),1);
         disconnection_handler(socket_desc);
     }
 
@@ -322,7 +322,7 @@ void connection_handler(int socket_desc, struct sockaddr_in* client_addr) {
             #if DEBUG
                 printf("Sending 2nd ack %s with len %d \n",buf,msg_len);
             #endif
-            ret=send_msg(socket_desc,buf,1);
+            ret=send_msg(socket_desc,buf,strlen(buf),1);
             if(ret)
                 disconnection_handler(socket_desc);
         }
@@ -332,7 +332,7 @@ void connection_handler(int socket_desc, struct sockaddr_in* client_addr) {
             #if DEBUG
                 printf("Sending 2nd ack %s with len %d \n",buf,msg_len);
             #endif
-            ret=send_msg(socket_desc,buf,1);
+            ret=send_msg(socket_desc,buf,strlen(buf),1);
             if(ret)
                 disconnection_handler(socket_desc);
             memset(buf, 0, buf_len);
@@ -350,7 +350,7 @@ void connection_handler(int socket_desc, struct sockaddr_in* client_addr) {
             #if DEBUG
                 printf("Sending old messages %s with len %d \n",buf,msg_len);
             #endif
-           ret=send_msg(socket_desc,buf,1);
+           ret=send_msg(socket_desc,buf,strlen(buf),1);
            if(ret)
                 disconnection_handler(socket_desc);
         }
@@ -358,7 +358,7 @@ void connection_handler(int socket_desc, struct sockaddr_in* client_addr) {
     }else{
         memset(buf, 0, buf_len);
         strcpy(buf,ERROR_MSG);
-        ret=send_msg(socket_desc,buf,1);
+        ret=send_msg(socket_desc,buf,strlen(buf),1);
         disconnection_handler(socket_desc);
     }
 
@@ -424,7 +424,7 @@ void connection_handler(int socket_desc, struct sockaddr_in* client_addr) {
         strcat(buf,"\n");
         strcat(to_send,user_name);
         strcat(to_send,buf);
-        ret=send_msg(socket_target,to_send,1);
+        ret=send_msg(socket_target,to_send,strlen(to_send),1);
         if(ret)
             disconnection_handler(socket_desc);
         #if DEBUG
