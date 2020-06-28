@@ -16,7 +16,6 @@
 #include <libpq-fe.h>
 
 
-
 #include "../Common/common.h"
 #include "server.h"
 
@@ -36,6 +35,11 @@ int current_size=0;
 int next_position=0;
 //Semaphore for mutual exclusion
 sem_t* sem;
+//RSA KEYS
+size_t pri_len;            // Length of private key
+size_t pub_len;            // Length of public key
+char   *pri_key;           // Private key
+char   *pub_key;           // Public key
 
 
 int main(int argc, char* argv[]) {
@@ -81,8 +85,9 @@ int main(int argc, char* argv[]) {
     // start listening
     ret = listen(socket_desc, MAX_CONN_QUEUE);
     if (ret) handle_error("Cannot listen on socket");
-
+    generatekeys(pri_len,pub_len,pri_key,pub_key);
     printf("%s","Server Online\n");
+    
     fflush(stdout);
 
     mthreadServer(socket_desc);
@@ -199,8 +204,10 @@ void connection_handler(int socket_desc, struct sockaddr_in* client_addr) {
 
 
 
+
     /// 1.2 Open db connection
-    const char *conninfo = "hostaddr=15.236.174.17 port=5432 dbname=postgres user=postgres password=Quindicimaggio_20 sslmode=disable";
+    const char *conninfo = "hostaddr=93.151.144.221 port=5432 dbname=SO_CHAT user=postgres password=password sslmode=disable";
+    //const char *conninfo = "hostaddr=127.0.0.1 port=5432 dbname=SO_CHAT user=postgres password=password sslmode=disable";
     PGconn *conn;
     PGresult *res;
     
@@ -212,7 +219,18 @@ void connection_handler(int socket_desc, struct sockaddr_in* client_addr) {
         PQfinish(conn);
         exit(1);
     }
-
+    //1.3 recives his public
+    printf("inizio\n");
+    char* client_pub_key = malloc(pub_len + 1);
+    ret = recive_msg(socket_desc,client_pub_key,strlen(client_pub_key),1);
+    if(ret)
+        disconnection_handler(socket_desc);
+    printf("fine\n");
+    pub_key[pub_len] = '\0';
+    printf("\n%s\n", client_pub_key);
+    ret = send_msg(socket_desc,pub_key,pub_len,1);
+    if(ret)
+        disconnection_handler(socket_desc);
     /// 2. check if there is only one client
     LOOP:while(current_size<2){
 
@@ -551,6 +569,15 @@ void set_next_position(){
     next_position=current_size;
     return;
 }
+int get_position(char* user_name){
+    int i;
+    for(i=0;i<current_size;i++){
+        if(!strcmp(user_names[i],user_name)){
+            return i;
+        }
+    }
+    return -1;
+}
 
 void set_disconnected(int socket_desc){
     int i;
@@ -572,7 +599,8 @@ int login(char* credentials,int socket_desc){
     strcpy(password,token);//salvo password
     //password[strlen(password)]='\0';
     //connetto al db
-    const char *conninfo = "hostaddr=15.236.174.17 port=5432 dbname=postgres user=postgres password=Quindicimaggio_20 sslmode=disable";
+    const char *conninfo = "hostaddr=93.151.144.221 port=5432 dbname=SO_CHAT user=postgres password=password sslmode=disable";
+    //const char *conninfo = "hostaddr=127.0.0.1 port=5432 dbname=SO_CHAT user=postgres password=password sslmode=disable";
     PGconn *conn;
     PGresult *res;
     
@@ -607,3 +635,4 @@ int login(char* credentials,int socket_desc){
     int ris=PQntuples(res);
     return ris;
 }
+

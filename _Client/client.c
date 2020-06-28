@@ -33,6 +33,11 @@ int socket_desc_copy;
 GtkApplication *app;
 
 
+size_t pri_len;            // Length of private key
+size_t pub_len;            // Length of public key
+char   *pri_key;           // Private key
+char   *pub_key;           // Public key
+char   *server_pub_key;
 
 
 struct msqid_ds buf;
@@ -81,6 +86,8 @@ int main(int argc, char* argv[]) {
     if(ret) handle_error("Could not create connection");
 
     if (DEBUG) fprintf(stderr, "Connection established!\n");
+
+    generatekeys(pri_len,pub_len,pri_key,pub_key);
 
     //GTK init
     int status;
@@ -145,6 +152,15 @@ void* client(void* arg){
 
     char buf[1024];
     size_t buf_len = sizeof(buf);
+
+    //sends his public key
+    printf("inizio\n");
+    send_msg(socket_desc,pub_key,pub_len+1,0);
+    printf("fine\n");
+    fflush(stdout);
+    //recives server public key
+    recive_msg(socket_desc,server_pub_key,pub_len,0);
+    printf("\n%s\n", server_pub_key);
     // DISPLAYS LIST OF LOGGED USERNAMES
     ///TODO: riceve e stampa la lista delle connessioni
     do{
