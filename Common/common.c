@@ -18,9 +18,9 @@ void trim (char *dest, char *src){
     }
     char *ptr = src + len - 1;
 
-    // remove trailing whitespace
+    // remove trailing whitespace and \n
     while (ptr > src) {
-        if (!isspace (*ptr))
+        if (!isspace (*ptr) && *ptr!='\n')
             break;
         ptr--;
     }
@@ -70,7 +70,7 @@ int recive_msg(int socket_desc,char* buf,int buf_size,char is_server){
             memset(buff,0,buf_size);
             recv_bytes=0;
         }
-    } while (buf[recv_bytes++]!='\0');
+    } while (buff[recv_bytes++]!='\0');
     strncpy(buf,buff,strlen(buff));
     return 0;
 }
