@@ -61,6 +61,7 @@ int recive_msg(int socket_desc,char* buf,char is_server){
     int ret;
     int buf_size=sizeof(buf);
     buf="";
+    printf("reciving buf size %d\n",buf_size);
     do {                                
         ret = recv(socket_desc, buf + recv_bytes,1, 0);
         if (ret == -1 && errno == EINTR) continue;
