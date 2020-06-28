@@ -29,7 +29,7 @@ typedef struct handler_args_m
 } handler_args_m;
 typedef struct input_m { 
     long mesg_type; 
-    char mesg_text[1024]; 
+    char mesg_text[512]; 
 } input_m;
 typedef struct handler_args_u{
     GtkWidget * view;

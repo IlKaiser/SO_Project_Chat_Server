@@ -226,12 +226,16 @@ void* client(void* arg){
 
         recive_msg(socket_desc,messages,sizeof(messages),0);
         printf("messaggi sono\n: %s", messages);
-        char * token = strtok(messages, ";");;
+        //char s[2]=";"
+        char * token = strtok(messages, "0x0,.");
         while(token!=NULL){
+            sleep(1);
+            printf("tocken: %s \n",token);
             memset(message->mesg_text,0,sizeof(message->mesg_text));
-            strcpy(message->mesg_text,messages);
+            strcpy(message->mesg_text,token);
+            printf("messages: %s\n",message->mesg_text);
             msgsnd(update_msg, message, sizeof(message), 0);
-            token = strtok(NULL,";");
+            token = strtok(NULL,"0x0,.");
         }
     }
     ///TODO: creare il thread di recive(per ricevere messaggi solo dal numero che hai selezionato async)
