@@ -215,22 +215,24 @@ void* client(void* arg){
         if(ret) handle_error("Cannot close socket");
     }
     
-    if (strcmp(ack,MSG_MSG)==0){
+    if (!strcmp(ack,MSG_MSG)){
         char messages[8192];
         //recv_bytes = 0;
 
         printf("aspetto messaggi\n");
-        fflush(stdout);
+        memset(buf,0,buf_len);
+        strcpy(buf,MSG_MSG);
+        send_msg(socket_desc,buf,strlen(buf),0);
+
         recive_msg(socket_desc,messages,sizeof(messages),0);
         printf("messaggi sono\n: %s", messages);
-        fflush(stdout);
-        /*int k;
-        for (k=0;k<recv_bytes;k++){
-            char * token = strtok(credentials, ";");
+        char * token = strtok(messages, ";");;
+        while(token!=NULL){
             memset(message->mesg_text,0,sizeof(message->mesg_text));
             strcpy(message->mesg_text,messages);
             msgsnd(update_msg, message, sizeof(message), 0);
-        }*/
+            token = strtok(messages,NULL);
+        }
     }
     ///TODO: creare il thread di recive(per ricevere messaggi solo dal numero che hai selezionato async)
     pthread_t thread;
