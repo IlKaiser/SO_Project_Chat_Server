@@ -127,7 +127,7 @@ void connection_handler(int socket_desc, struct sockaddr_in* client_addr) {
     /// 1. get client username and password until not correct
     while(!strcmp(user_name,ERROR_MSG)){
         memset(credentials, 0, strlen(credentials));
-        ret=recive_msg(socket_desc,credentials,1);
+        ret=recive_msg(socket_desc,credentials,sizeof(credentials),1);
         if(ret)
             disconnection_handler(socket_desc);
         #if DEBUG
@@ -245,7 +245,7 @@ void connection_handler(int socket_desc, struct sockaddr_in* client_addr) {
         disconnection_handler(socket_desc);
     /// 4. get id number from client
     char user_buf[4];
-    ret=recive_msg(socket_desc,user_buf,1);
+    ret=recive_msg(socket_desc,user_buf,sizeof(user_buf),1);
     if(ret)
         disconnection_handler(socket_desc);
     printf("Buffer %s \n",user_buf);
@@ -375,7 +375,7 @@ void connection_handler(int socket_desc, struct sockaddr_in* client_addr) {
             printf("Enter main loop \n");
         #endif // DEBUG
         memset(buf,0,buf_len);
-        ret=recive_msg(socket_desc,buf,1);
+        ret=recive_msg(socket_desc,buf,sizeof(buf),1);
         if(ret)
             disconnection_handler(socket_desc);
         #if DEBUG
