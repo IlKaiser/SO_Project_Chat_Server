@@ -20,9 +20,9 @@ void trim (char *dest, char *src){
     }
     char *ptr = src + len - 1;
 
-    // remove trailing whitespace
+    // remove trailing whitespace and \n
     while (ptr > src) {
-        if (!isspace (*ptr))
+        if (!isspace (*ptr) && *ptr!='\n')
             break;
         ptr--;
     }

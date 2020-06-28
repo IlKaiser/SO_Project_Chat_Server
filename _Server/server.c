@@ -555,7 +555,7 @@ int login(char* credentials,int socket_desc){
     strcpy(username,token ); //salvo username
     token = strtok(NULL, ";");
     strcpy(password,token);//salvo password
-    password[strlen(password)-1]='\0';
+    // password[strlen(password)]='\0';
     //connetto al db
     const char *conninfo = "hostaddr=127.0.0.1 port=5432 dbname=SO_CHAT user=postgres password=password sslmode=disable";
     PGconn *conn;
@@ -569,8 +569,12 @@ int login(char* credentials,int socket_desc){
         PQfinish(conn);
         exit(1);
     }
-    printf("hai inserito: %s,%s \n",username,password);
-    const char* paramValue[2] = {username,password};
+    char trim_username[32];
+    char trim_password[32];
+    trim(trim_username,username);
+    trim(trim_password,password);
+    printf("hai inserito: %s,%s \n",trim_username,trim_password);
+    const char* paramValue[2] = {trim_username,trim_password};
     res = PQexecParams(conn,
                     "select username from users where username=$1 and password=$2",
                     2,       /* two param*/
