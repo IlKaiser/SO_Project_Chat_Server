@@ -231,7 +231,7 @@ void* client(void* arg){
             memset(message->mesg_text,0,sizeof(message->mesg_text));
             strcpy(message->mesg_text,messages);
             msgsnd(update_msg, message, sizeof(message), 0);
-            token = strtok(messages,NULL);
+            token = strtok(NULL,";");
         }
     }
     ///TODO: creare il thread di recive(per ricevere messaggi solo dal numero che hai selezionato async)
