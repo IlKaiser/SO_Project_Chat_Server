@@ -53,8 +53,9 @@ int send_msg (int socket_desc,char* buf,char is_server){
 int recive_msg(int socket_desc,char* buf,int buf_size,char is_server){
     int recv_bytes=0;
     int ret;
+    char buff[1024];
     do {                                
-        ret = recv(socket_desc, buf + recv_bytes,1, 0);
+        ret = recv(socket_desc, buff + recv_bytes,1, 0);
         if (ret == -1 && errno == EINTR) continue;
         /// Of course we still love you (if called from server)
         if((ret==-1 || ret==0) && is_server) return -1;
@@ -66,9 +67,10 @@ int recive_msg(int socket_desc,char* buf,int buf_size,char is_server){
         /// Overflow check
         if(recv_bytes>buf_size-2){
             printf("Recived almost %d bytes, resetting buffer...\n",buf_size);
-            memset(buf,0,buf_size);
+            memset(buff,0,buf_size);
             recv_bytes=0;
         }
     } while (buf[recv_bytes++]!='\0');
+    strncpy(buf,buff,strlen(buff));
     return 0;
 }
