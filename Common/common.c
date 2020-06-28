@@ -76,7 +76,7 @@ int recive_msg(int socket_desc,char* buf,int buf_size,char is_server){
             memset(buff,0,buf_size);
             recv_bytes=0;
         }
-    } while (buf[recv_bytes++]!='\0');
+    } while (buff[recv_bytes++]!='\0');
     strncpy(buf,buff,buf_size);
     return 0;
 }
