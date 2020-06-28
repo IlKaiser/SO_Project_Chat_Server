@@ -200,7 +200,7 @@ void connection_handler(int socket_desc, struct sockaddr_in* client_addr) {
 
 
     /// 1.2 Open db connection
-    const char *conninfo = "hostaddr=15.236.174.17 port=5432 dbname=postgres user=postgres password=Quindicimaggio_20 sslmode=disable";
+    const char *conninfo = "hostaddr=127.0.0.1 port=5432 dbname=SO_CHAT user=postgres password=password sslmode=disable";
     PGconn *conn;
     PGresult *res;
     

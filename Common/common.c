@@ -42,6 +42,7 @@ void trim (char *dest, char *src){
 int send_msg (int socket_desc,char* buf,char is_server){
     int bytes_sent=0;
     int ret;
+    printf("Crasha qui\n")
     int msg_len = strlen(buf)+1; //we always send the f***** \0
     while ( bytes_sent < msg_len) {
         ret = send(socket_desc, buf + bytes_sent, msg_len - bytes_sent, 0);
