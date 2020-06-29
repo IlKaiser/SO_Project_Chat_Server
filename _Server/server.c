@@ -39,7 +39,8 @@ sem_t* sem;
 size_t pri_len;            // Length of private key
 size_t pub_len;            // Length of public key
 char   *pri_key;           // Private key
-char   *pub_key;           // Public key
+//char   *pub_key;           // Public key
+char    pub_key[427];      //Public key
 
 
 int main(int argc, char* argv[]) {
@@ -221,14 +222,16 @@ void connection_handler(int socket_desc, struct sockaddr_in* client_addr) {
     }
     //1.3 recives his public
     printf("inizio\n");
-    char* client_pub_key = malloc(pub_len + 1);
-    ret = recive_msg(socket_desc,client_pub_key,strlen(client_pub_key),1);
+    char client_pub_key[427];
+    ret = recive_msg(socket_desc,client_pub_key,sizeof(pub_key),1);
     if(ret)
         disconnection_handler(socket_desc);
     printf("fine\n");
     pub_key[pub_len] = '\0';
     printf("\n%s\n", client_pub_key);
-    ret = send_msg(socket_desc,pub_key,pub_len,1);
+
+    printf("invio: %s \n len: %ld\n",pub_key,sizeof(pub_key));
+    ret = send_msg(socket_desc,pub_key,sizeof(pub_key),1);
     if(ret)
         disconnection_handler(socket_desc);
     /// 2. check if there is only one client

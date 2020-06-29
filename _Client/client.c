@@ -36,8 +36,9 @@ GtkApplication *app;
 size_t pri_len;            // Length of private key
 size_t pub_len;            // Length of public key
 char   *pri_key;           // Private key
-char   *pub_key;           // Public key
-char   *server_pub_key;
+//char   *pub_key;           // Public key
+char   pub_key[427];           // Public key
+char   server_pub_key[427];
 
 
 struct msqid_ds buf;
@@ -89,6 +90,11 @@ int main(int argc, char* argv[]) {
 
     generatekeys(pri_len,pub_len,pri_key,pub_key);
 
+    #ifdef DEBUG
+        printf("pub 1 key len : %ld\n",strlen(pub_key));
+        printf("pri 1 key len : %ld\n",strlen(pri_key));
+        printf("\nsecond %s\n second %s\n", pri_key, pub_key);
+    #endif
     //GTK init
     int status;
     handler_args_m* socket = (handler_args_m*)malloc(sizeof(handler_args_m));
@@ -155,11 +161,12 @@ void* client(void* arg){
 
     //sends his public key
     printf("inizio\n");
-    send_msg(socket_desc,pub_key,pub_len+1,0);
+    printf("invio: %s \n len: %ld\n",pub_key,sizeof(pub_key));
+    send_msg(socket_desc,pub_key,sizeof(pub_key),0);
     printf("fine\n");
     fflush(stdout);
     //recives server public key
-    recive_msg(socket_desc,server_pub_key,pub_len,0);
+    recive_msg(socket_desc,server_pub_key,sizeof(pub_key),0);
     printf("\n%s\n", server_pub_key);
     // DISPLAYS LIST OF LOGGED USERNAMES
     ///TODO: riceve e stampa la lista delle connessioni

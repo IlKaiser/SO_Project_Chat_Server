@@ -109,6 +109,9 @@ void generatekeys(size_t pri_len,size_t pub_len,char *pri_key,char*pub_key){
     pri_key[pri_len] = '\0';
     pub_key[pub_len] = '\0';
 
+    printf("pub key len : %ld\n",strlen(pub_key));
+    printf("pri key len : %ld\n",strlen(pri_key));
+
     #ifdef DEBUG
         printf("\n%s\n%s\n", pri_key, pub_key);
     #endif
