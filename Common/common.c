@@ -100,17 +100,25 @@ void generatekeys(size_t pri_len,size_t pub_len,char *pri_key,char*pub_key){
     pri_len = BIO_pending(pri);
     pub_len = BIO_pending(pub);
 
-    pri_key = malloc(pri_len + 1);
-    pub_key = malloc(pub_len + 1);
+    //pri_key = malloc(pri_len + 1);
+    //pub_key = malloc(pub_len + 1);
 
-    BIO_read(pri, pri_key, pri_len);
-    BIO_read(pub, pub_key, pub_len);
+    size_t wrote_pri;
+    size_t wrote_pub;
+
+    BIO_read_ex(pri, pri_key, pri_len,&wrote_pri);
+    BIO_read_ex(pub, pub_key, pub_len,&wrote_pub);
+
+
 
     pri_key[pri_len] = '\0';
     pub_key[pub_len] = '\0';
 
     printf("pub key len : %ld\n",strlen(pub_key));
     printf("pri key len : %ld\n",strlen(pri_key));
+
+    printf("pub key wrote : %ld\n",wrote_pub);
+    printf("pri key wrote : %ld\n",wrote_pri);
 
     #ifdef DEBUG
         printf("\n%s\n%s\n", pri_key, pub_key);

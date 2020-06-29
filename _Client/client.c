@@ -35,8 +35,9 @@ GtkApplication *app;
 
 size_t pri_len;            // Length of private key
 size_t pub_len;            // Length of public key
-char   *pri_key;           // Private key
+//char   *pri_key;           // Private key
 //char   *pub_key;           // Public key
+char   pri_key[1676];
 char   pub_key[427];           // Public key
 char   server_pub_key[427];
 
@@ -88,11 +89,16 @@ int main(int argc, char* argv[]) {
 
     if (DEBUG) fprintf(stderr, "Connection established!\n");
 
+   /* memset(pri_key,0,427);
+    memset(pub_key,0,sizeof(pub_key));
+    memset(server_pub_key,0,sizeof(server_pub_key));*/
+    
+
     generatekeys(pri_len,pub_len,pri_key,pub_key);
 
     #ifdef DEBUG
-        printf("pub 1 key len : %ld\n",strlen(pub_key));
-        printf("pri 1 key len : %ld\n",strlen(pri_key));
+        //printf("pub 1 key len : %ld\n",strlen(pub_key));
+        //printf("pri 1 key len : %ld\n",strlen(pri_key));
         printf("\nsecond %s\n second %s\n", pri_key, pub_key);
     #endif
     //GTK init

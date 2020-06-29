@@ -38,8 +38,9 @@ sem_t* sem;
 //RSA KEYS
 size_t pri_len;            // Length of private key
 size_t pub_len;            // Length of public key
-char   *pri_key;           // Private key
+//char   *pri_key;           // Private key
 //char   *pub_key;           // Public key
+char    pri_key[1676];
 char    pub_key[427];      //Public key
 
 
@@ -87,6 +88,8 @@ int main(int argc, char* argv[]) {
     ret = listen(socket_desc, MAX_CONN_QUEUE);
     if (ret) handle_error("Cannot listen on socket");
     generatekeys(pri_len,pub_len,pri_key,pub_key);
+
+    printf("Gend keys %s\n %s\n",pri_key,pub_key);
     printf("%s","Server Online\n");
     
     fflush(stdout);
