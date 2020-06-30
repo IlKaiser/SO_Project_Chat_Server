@@ -126,15 +126,16 @@ void* thread_reciver(void *arg){
     #if DEBUG
     printf("thread reciver msg\n: %s\n",message->mesg_text);
     #endif
-
+    unsigned char decrypted[2048];
     while(1){
         memset(buf1,0,sizeof(buf1));
         recive_msg(socket_desc,buf1,sizeof(buf1),0);
-        fprintf(stderr,"\nmessaggio di\n: %s", buf1);
+        private_decrypt((unsigned char*)buf1,sizeof(buf1),(unsigned char*)pri_key,decrypted);
+        fprintf(stderr,"\nmessaggio di\n: %s", decrypted);
         // msgsnd to send message
         message->mesg_type = 1;
         memset(message->mesg_text,0,sizeof(message->mesg_text));
-        strcpy(message->mesg_text,buf1);
+        strcpy(message->mesg_text,(char*) decrypted);
         msgsnd(update_msg, message, sizeof(message), 0);
         #if DEBUG
         printf("thread reciver msg snd\n: %s",message->mesg_text);
@@ -284,6 +285,7 @@ void* client(void* arg){
 
     // main loop
     int msg_len;
+    unsigned char encrypt[2048];
     while (1) {
         char* quit_command = SERVER_COMMAND;
         //char* list_command = LIST_COMMAND;
@@ -312,7 +314,8 @@ void* client(void* arg){
 
         msg_len = strlen(buf);
         // send message to server
-        send_msg(socket_desc,buf,strlen(buf),0);
+        ret = public_encrypt((unsigned char*)buf,msg_len,(unsigned char *)server_pub_key,encrypt);
+        send_msg(socket_desc,(char*)encrypt,sizeof(encrypt),0);
 
         /* After a quit command we won't receive any more data from
          * the server, thus we must exit the main loop. */
