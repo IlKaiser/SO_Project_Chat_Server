@@ -167,8 +167,9 @@ int public_encrypt(unsigned char * data,int data_len,unsigned char * key, unsign
 }
 int private_decrypt(unsigned char * enc_data,int data_len,unsigned char * key, unsigned char *decrypted)
 {
-    printf("la chiave è: %s",key);
-    char prova[strlen((char*)key)];
+    if (enc_data==NULL) return -1;
+    /*printf("la chiave è: %s",key);
+    char prova[strlen((char*)key)];*/
 
     RSA *rsa= NULL;
     BIO *keybio ;
@@ -178,10 +179,10 @@ int private_decrypt(unsigned char * enc_data,int data_len,unsigned char * key, u
         printf( "Failed to create key BIO");
         return -1;
     }
-    BIO_read(keybio,  prova , strlen((char*)key));
+    /*BIO_read(keybio,  prova , strlen((char*)key));
     printf("bio è: %s",prova);
     if (!strcmp(prova,(char*)key)) printf("SONO UGUALI\n");
-    //return -1;
+    //return -1;*/
 
     unsigned char decry[2100];
     char b_decode[data_len+1];
