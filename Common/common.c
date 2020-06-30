@@ -130,8 +130,8 @@ void generatekeys(size_t pri_len,size_t pub_len,char *pri_key,char*pub_key){
 
 int public_encrypt(unsigned char * data,int data_len,unsigned char * key, unsigned char *encrypted)
 { 
-    printf("la chiave è: %s",key);
-    char prova[strlen((char*)key)];
+    //printf("la chiave è: %s",key);
+    //char prova[strlen((char*)key)];
 
     RSA *rsa= NULL;
     BIO *keybio ;
@@ -149,18 +149,21 @@ int public_encrypt(unsigned char * data,int data_len,unsigned char * key, unsign
     rsa = PEM_read_bio_RSAPublicKey(keybio, &rsa ,NULL, NULL);
     assert(rsa != NULL);
     //return -1;
-    int result = RSA_public_encrypt(data_len,data,encrypted,rsa,RSA_PKCS1_PADDING);
+    unsigned char encry[2100];
+    int result = RSA_public_encrypt(data_len,data,encry,rsa,RSA_PKCS1_PADDING);
     if (result==-1){
         printf("encrypt error: %lu",ERR_get_error());
         return -1;
     }
-    printf("risultato %s\n",(char*)encrypted);
+    printf("risultato %s with len %ld\n",(char*)encry,strlen((char*)encry));
+    strcpy((char*)encrypted,(char*)encry);
+    printf("risultato è after copy %s with len %ld\n",(char*)encrypted,strlen((char*)encrypted));
     return result;
 }
 int private_decrypt(unsigned char * enc_data,int data_len,unsigned char * key, unsigned char *decrypted)
 {
-    printf("la chiave è: %s",key);
-    char prova[strlen((char*)key)];
+    //printf("la chiave è: %s",key);
+    //char prova[strlen((char*)key)];
 
     RSA *rsa= NULL;
     BIO *keybio ;
@@ -178,6 +181,10 @@ int private_decrypt(unsigned char * enc_data,int data_len,unsigned char * key, u
     rsa = PEM_read_bio_RSAPrivateKey(keybio, &rsa ,NULL, NULL);
     assert(rsa != NULL);
     //return -1;
-    int  result = RSA_private_decrypt(data_len,enc_data,decrypted,rsa,RSA_PKCS1_PADDING);
+    unsigned char decry[2100];
+    int  result = RSA_private_decrypt(data_len,enc_data,decry,rsa,RSA_PKCS1_PADDING);
+    printf("risultato %s with len %ld\n",(char*)decry,strlen((char*)decry));
+    strcpy((char*)decrypted,(char*)decry);
+    printf("risultato è after copy %s with len %ld\n",(char*)decrypted,strlen((char*)decrypted));
     return result;
 }
