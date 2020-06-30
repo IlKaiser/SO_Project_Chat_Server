@@ -419,8 +419,8 @@ void connection_handler(int socket_desc, struct sockaddr_in* client_addr) {
         printf("Send second ack %s\n",buf);
     #endif // DEBUG
     /// reciver loop 
-    unsigned char decrypted[2048];
-    unsigned char encrypted[2048];
+    unsigned char decrypted[2100];
+    unsigned char encrypted[2100];
     while (1) {
         /// 5. main loop
 
