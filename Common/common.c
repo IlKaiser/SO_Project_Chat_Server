@@ -150,7 +150,7 @@ int public_encrypt(unsigned char * data,int data_len,unsigned char * key, unsign
     assert(rsa != NULL);
     //return -1;
     unsigned char encry[2100];
-    int result = RSA_public_encrypt(data_len,data,encry,rsa,RSA_PKCS1_PADDING);
+    int result = RSA_public_encrypt(data_len,data,encry,rsa,0x3);
     if (result==-1){
         printf("encrypt error: %lu",ERR_get_error());
         return -1;
@@ -167,6 +167,7 @@ int public_encrypt(unsigned char * data,int data_len,unsigned char * key, unsign
 }
 int private_decrypt(unsigned char * enc_data,int data_len,unsigned char * key, unsigned char *decrypted)
 {
+    printf("Data %s with len %d\n",enc_data,data_len);
     if (enc_data==NULL) return -1;
     /*printf("la chiave è: %s",key);
     char prova[strlen((char*)key)];*/
@@ -184,13 +185,13 @@ int private_decrypt(unsigned char * enc_data,int data_len,unsigned char * key, u
     if (!strcmp(prova,(char*)key)) printf("SONO UGUALI\n");
     //return -1;*/
 
-    unsigned char decry[2100];
-    char b_decode[data_len+1];
-    strcpy(b_decode,base64decode(enc_data,data_len));
+    unsigned char decry[270];
+    char b_decode[256+1];
+    strcpy(b_decode,base64decode(enc_data,256));
     printf("after b_64 decrypt %s\n",b_decode);
     strcpy((char*)decry,b_decode);
 
-    rsa = PEM_read_bio_RSAPrivateKey(keybio, &rsa ,NULL, NULL);
+    rsa = PEM_read_bio_RSAPrivateKey(keybio, NULL ,NULL, NULL);
     if(rsa == NULL) {
         char errore[1024];
         printf("dencrypt error: %lu\n",ERR_get_error());
@@ -199,10 +200,16 @@ int private_decrypt(unsigned char * enc_data,int data_len,unsigned char * key, u
         return -1;
     }
     //return -1;
-    int  result = RSA_private_decrypt(data_len,enc_data,decry,rsa,RSA_PKCS1_PADDING);
-    printf("risultato %s with len %ld\n",(char*)decry,strlen((char*)decry));
+    int  result = RSA_private_decrypt(256,enc_data,decry,rsa,0x3);
+    if(result == -1){
+        char err[1024];
+        ERR_error_string(ERR_get_error(),err);
+        printf("Errore decry%s\n",err);
+    }
+    printf("Decoded ints %d\n",result);
+    printf("decry risultato %s with len %ld\n",(char*)decry,strlen((char*)decry));
     strcpy((char*)decrypted,(char*)decry);
-    printf("risultato è after copy %s with len %ld\n",(char*)decrypted,strlen((char*)decrypted));
+    printf("decry risultato è after copy %s with len %ld\n",(char*)decrypted,strlen((char*)decrypted));
     return result;
 }
 
