@@ -126,7 +126,7 @@ void* thread_reciver(void *arg){
     #if DEBUG
     printf("thread reciver msg\n: %s\n",message->mesg_text);
     #endif
-    unsigned char decrypted[2048];
+    unsigned char decrypted[2100];
     while(1){
         memset(buf1,0,sizeof(buf1));
         recive_msg(socket_desc,buf1,sizeof(buf1),0);
@@ -279,7 +279,7 @@ void* client(void* arg){
 
     // main loop
     int msg_len;
-    unsigned char encrypt[2048];
+    unsigned char encrypt[2100];
     while (1) {
         char* quit_command = SERVER_COMMAND;
         //char* list_command = LIST_COMMAND;
