@@ -158,7 +158,10 @@ int public_encrypt(unsigned char * data,int data_len,unsigned char * key, unsign
     printf("Encrypted data size %d\n",result);
     printf("\n");
     printf("risultato %s with len %ld\n",(char*)encry,strlen((char*)encry));
-    memcpy(encrypted,encry,result);
+    char b_encode[result+1];
+    strcpy(b_encode,base64encode(encry,result));
+    printf("after b_64 encrypt %s\n",b_encode);
+    strcpy((char*)encrypted,b_encode);
     printf("risultato è after copy %s with len %ld\n",(char*)encrypted,strlen((char*)encrypted));
     return result;
 }
@@ -180,10 +183,15 @@ int private_decrypt(unsigned char * enc_data,int data_len,unsigned char * key, u
     if (!strcmp(prova,(char*)key)) printf("SONO UGUALI\n");
     return -1;*/
 
+    unsigned char decry[2100];
+    char b_decode[data_len+1];
+    strcpy(b_decode,base64decode(enc_data,data_len));
+    printf("after b_64 encrypt %s\n",b_decode);
+    strcpy((char*)decry,b_decode);
+
     rsa = PEM_read_bio_RSAPrivateKey(keybio, &rsa ,NULL, NULL);
     assert(rsa != NULL);
     //return -1;
-    unsigned char decry[2100];
     int  result = RSA_private_decrypt(data_len,enc_data,decry,rsa,RSA_PKCS1_PADDING);
     printf("risultato %s with len %ld\n",(char*)decry,strlen((char*)decry));
     strcpy((char*)decrypted,(char*)decry);
