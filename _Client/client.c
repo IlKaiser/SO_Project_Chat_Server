@@ -293,6 +293,7 @@ void* client(void* arg){
          * fgets() reads up to sizeof(buf)-1 bytes and on success
          * returns the first argument passed to it. */
         memset(buf,0,buf_len);
+        memset(encrypt,0,2100);
         //if (fgets(buf, sizeof(buf), stdin) != (char*)buf) {
         msgrcv(input_msg, input_str, sizeof(input_m), 1, 0);
 
@@ -309,7 +310,8 @@ void* client(void* arg){
         msg_len = strlen(buf);
         // send message to server
         ret = public_encrypt((unsigned char*)buf,msg_len,(unsigned char *)server_pub_key,encrypt);
-        send_msg(socket_desc,(char*)encrypt,sizeof(encrypt),0);
+        printf("after b_64 encrypt %s\n",encrypt);
+        send_msg(socket_desc,(char*)encrypt,strlen((char*)encrypt),0);
 
         /* After a quit command we won't receive any more data from
          * the server, thus we must exit the main loop. */
