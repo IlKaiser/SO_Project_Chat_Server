@@ -169,7 +169,7 @@ void* client(void* arg){
     //sends his public key
     printf("inizio\n");
     printf("invio: %s \n len: %ld\n",pub_key,sizeof(pub_key));
-    send_msg(socket_desc,pub_key,sizeof(pub_key),0);
+    send_msg(socket_desc,pub_key,sizeof(pub_key)-3,0);
     printf("fine\n");
     //recives server public key
     recive_msg(socket_desc,server_pub_key,sizeof(server_pub_key),0);
