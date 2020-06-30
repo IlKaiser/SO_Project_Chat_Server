@@ -175,7 +175,7 @@ int private_decrypt(unsigned char * enc_data,int data_len,unsigned char * key, u
     if (!strcmp(prova,(char*)key)) printf("SONO UGUALI\n");
     return -1;*/
 
-    rsa = PEM_read_bio_RSAPublicKey(keybio, &rsa ,NULL, NULL);
+    rsa = PEM_read_bio_RSAPrivateKey(keybio, &rsa ,NULL, NULL);
     assert(rsa != NULL);
     return -1;
     int  result = RSA_private_decrypt(data_len,enc_data,decrypted,rsa,RSA_PKCS1_PADDING);
