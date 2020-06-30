@@ -421,7 +421,6 @@ void connection_handler(int socket_desc, struct sockaddr_in* client_addr) {
     /// reciver loop 
     unsigned char decrypted[2100];
     unsigned char encrypted[2100];
-    char b_decrypted[2100];
     while (1) {
         /// 5. main loop
 
@@ -430,22 +429,23 @@ void connection_handler(int socket_desc, struct sockaddr_in* client_addr) {
             printf("Enter main loop \n");
         #endif // DEBUG
         memset(buf,0,buf_len);
+        memset(encrypted,0,sizeof(encrypted));
+        memset(decrypted,0,sizeof(decrypted));
         ret=recive_msg(socket_desc,buf,sizeof(buf),1);
         if(ret)
             disconnection_handler(socket_desc);
 
         ret = private_decrypt((unsigned char*)buf,buf_len,(unsigned char*)pri_key,decrypted);
-        strcpy(b_decrypted,base64decode(b_decrypted,ret));
         #if DEBUG
-            printf("Message %s from %s",b_decrypted,user_name);
+            printf("Message %s from %s",decrypted,user_name);
         #endif // DEBUG
 
         // check whether I have just been told to quit...
-        if (strcmp(buf,SERVER_COMMAND)==0){ 
+        if (strcmp((char*)decrypted,SERVER_COMMAND)==0){ 
             printf("Quitting...\n");
             disconnection_handler(socket_desc);
         }
-        if (strcmp(buf,LIST_COMMAND)==0){
+        if (strcmp((char*)decrypted,LIST_COMMAND)==0){
             printf("Send new list\n");
             /// TODO: fix this "thing"
             goto LOOP;
@@ -478,17 +478,17 @@ void connection_handler(int socket_desc, struct sockaddr_in* client_addr) {
 
 
         /// 5.2 Send to requested target
-        char to_send[1024];
+        char to_send[2200];
         memset(to_send,0,sizeof(to_send));
-        strcat(buf,"\n");
+        strcat((char*)decrypted,"\n");
         strcat(to_send,user_name);
-        strcat(to_send,buf);
-        public_encrypt((unsigned char*)to_send,sizeof(to_send),(unsigned char*)keys[get_position(socket_target)],encrypted);
+        strcat(to_send,(char*)decrypted);
+        public_encrypt((unsigned char*)to_send,strlen(to_send),(unsigned char*)keys[get_position(socket_target)],encrypted);
         ret=send_msg(socket_target,(char*)encrypted,sizeof(encrypted),1);
         if(ret)
             disconnection_handler(socket_target);
         #if DEBUG
-            printf("sto mandando: %s",to_send);
+            printf("sto mandando: %s",decrypted);
         #endif
     } 
     /// If a break occurs

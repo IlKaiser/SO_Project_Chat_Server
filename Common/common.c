@@ -190,7 +190,13 @@ int private_decrypt(unsigned char * enc_data,int data_len,unsigned char * key, u
     strcpy((char*)decry,b_decode);
 
     rsa = PEM_read_bio_RSAPrivateKey(keybio, &rsa ,NULL, NULL);
-    assert(rsa != NULL);
+    if(rsa == NULL) {
+        char errore[1024];
+        printf("dencrypt error: %lu\n",ERR_get_error());
+        ERR_error_string(ERR_get_error(),errore);
+        printf("error: %s\n",errore);
+        return -1;
+    }
     //return -1;
     int  result = RSA_private_decrypt(data_len,enc_data,decry,rsa,RSA_PKCS1_PADDING);
     printf("risultato %s with len %ld\n",(char*)decry,strlen((char*)decry));
