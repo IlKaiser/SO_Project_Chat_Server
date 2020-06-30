@@ -4,6 +4,7 @@
 #include <ctype.h>
 #include <stdlib.h>
 #include <sys/socket.h>
+#include <assert.h>
 
 #include <openssl/rsa.h>
 #include <openssl/pem.h>
@@ -128,19 +129,55 @@ void generatekeys(size_t pri_len,size_t pub_len,char *pri_key,char*pub_key){
 }
 
 int public_encrypt(unsigned char * data,int data_len,unsigned char * key, unsigned char *encrypted)
-{
+{ 
+    printf("la chiave è: %s",key);
+    char prova[strlen((char*)key)];
+
+    RSA *rsa= NULL;
     BIO *keybio ;
     keybio = BIO_new_mem_buf(key, -1);
-    RSA * rsa = PEM_read_bio_RSA_PUBKEY(keybio, &rsa,NULL, NULL);
-    printf( "la size della rsa è: %d\n",RSA_size(rsa));
+    if (keybio==NULL)
+    {
+        printf( "Failed to create key BIO");
+        return -1;
+    }
+    BIO_read(keybio,  prova , strlen((char*)key));
+    printf("bio è: %s",prova);
+    if (!strcmp(prova,(char*)key)) printf("SONO UGUALI\n");
+    return -1;
+
+    rsa = PEM_read_bio_RSAPublicKey(keybio, &rsa ,NULL, NULL);
+    assert(rsa != NULL);
+    return -1;
     int result = RSA_public_encrypt(data_len,data,encrypted,rsa,RSA_PKCS1_PADDING);
+    if (result==-1){
+        printf("encrypt error: %lu",ERR_get_error());
+        return -1;
+    }
+    printf("risultato %s\n",(char*)encrypted);
     return result;
 }
 int private_decrypt(unsigned char * enc_data,int data_len,unsigned char * key, unsigned char *decrypted)
 {
+    printf("la chiave è: %s",key);
+    char prova[strlen((char*)key)];
+
+    RSA *rsa= NULL;
     BIO *keybio ;
     keybio = BIO_new_mem_buf(key, -1);
-    RSA * rsa = PEM_read_bio_RSAPrivateKey(keybio, &rsa,NULL, NULL);
+    if (keybio==NULL)
+    {
+        printf( "Failed to create key BIO");
+        return -1;
+    }
+    BIO_read(keybio,  prova , strlen((char*)key));
+    printf("bio è: %s",prova);
+    if (!strcmp(prova,(char*)key)) printf("SONO UGUALI\n");
+    return -1;
+
+    rsa = PEM_read_bio_RSAPublicKey(keybio, &rsa ,NULL, NULL);
+    assert(rsa != NULL);
+    return -1;
     int  result = RSA_private_decrypt(data_len,enc_data,decrypted,rsa,RSA_PKCS1_PADDING);
     return result;
 }
