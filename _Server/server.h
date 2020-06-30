@@ -45,6 +45,7 @@ static void exit_nicely(PGconn *conn, PGresult   *res,int socket_desc);
 
 // next postion setter
 void set_next_position();
+int get_position(int socket_desc);
 
 // set disconnect into socket array
 void set_disconnected(int socket_desc);

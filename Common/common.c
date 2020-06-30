@@ -131,6 +131,7 @@ int public_encrypt(unsigned char * data,int data_len,unsigned char * key, unsign
     BIO *keybio ;
     keybio = BIO_new_mem_buf(key, -1);
     RSA * rsa = PEM_read_bio_RSA_PUBKEY(keybio, &rsa,NULL, NULL);
+    printf( "la size della rsa è: %d\n",RSA_size(rsa));
     int result = RSA_public_encrypt(data_len,data,encrypted,rsa,RSA_PKCS1_PADDING);
     return result;
 }

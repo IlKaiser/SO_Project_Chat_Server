@@ -22,3 +22,5 @@ void trim (char *dest, char *src);
 int send_msg (int socket_desc,char* buf,int buf_size,char is_server);
 int recive_msg (int socket_desc,char* buf,int buf_size,char is_server);
 void generatekeys(size_t pri_len,size_t pub_len,char *pri_key,char*pub_key);
+int public_encrypt(unsigned char * data,int data_len,unsigned char * key, unsigned char *encrypted);
+int private_decrypt(unsigned char * enc_data,int data_len,unsigned char * key, unsigned char *decrypted);

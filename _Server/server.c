@@ -25,6 +25,7 @@
 //Connection Arrays
 char* user_names[MAX_SIZE];
 int sockets[MAX_SIZE];
+char* keys[MAX_SIZE];
 
 
 //Previous size of connection arrays
@@ -232,6 +233,18 @@ void connection_handler(int socket_desc, struct sockaddr_in* client_addr) {
     printf("fine\n");
     pub_key[pub_len] = '\0';
     printf("\n%s\n", client_pub_key);
+    ret=sem_wait(sem);
+    if(ret){
+        handle_error("Err sem wait");
+    }
+    int pos = get_position(socket_desc);
+    keys[pos]=client_pub_key;
+    ret=sem_post(sem);
+    if(ret){
+        handle_error("Err sem post");
+    }
+
+
 
     printf("invio: %s \n len: %ld\n",pub_key,sizeof(pub_key));
     ret = send_msg(socket_desc,pub_key,sizeof(pub_key),1);
@@ -404,8 +417,9 @@ void connection_handler(int socket_desc, struct sockaddr_in* client_addr) {
         printf("Send second ack %s\n",buf);
     #endif // DEBUG
     /// reciver loop 
+    unsigned char decrypted[2048];
+    unsigned char encrypted[2048];
     while (1) {
-
         /// 5. main loop
 
         /// read message from client
@@ -416,8 +430,10 @@ void connection_handler(int socket_desc, struct sockaddr_in* client_addr) {
         ret=recive_msg(socket_desc,buf,sizeof(buf),1);
         if(ret)
             disconnection_handler(socket_desc);
+
+        ret = private_decrypt((unsigned char*)buf,buf_len,(unsigned char*)pri_key,decrypted);
         #if DEBUG
-            printf("Message %s from %s",buf,user_name);
+            printf("Message %s from %s",decrypted,user_name);
         #endif // DEBUG
 
         // check whether I have just been told to quit...
@@ -439,7 +455,7 @@ void connection_handler(int socket_desc, struct sockaddr_in* client_addr) {
         char trim_to[32];
         trim(trim_username,user_name);
         trim(trim_to,target_user_name);
-        const char* paramValue[4] = {trim_username,trim_to,buf,cur_time};
+        const char* paramValue[4] = {trim_username,trim_to,(char*)decrypted,cur_time};
         res = PQexecParams(conn,
                        "INSERT INTO messaggi (_from,_to,mes,data) VALUES ($1,$2,$3,$4)",
                        4,       /* one param */
@@ -463,9 +479,10 @@ void connection_handler(int socket_desc, struct sockaddr_in* client_addr) {
         strcat(buf,"\n");
         strcat(to_send,user_name);
         strcat(to_send,buf);
-        ret=send_msg(socket_target,to_send,strlen(to_send),1);
+        public_encrypt((unsigned char*)to_send,sizeof(to_send),(unsigned char*)keys[get_position(socket_target)],encrypted);
+        ret=send_msg(socket_target,(char*)encrypted,sizeof(encrypted),1);
         if(ret)
-            disconnection_handler(socket_desc);
+            disconnection_handler(socket_target);
         #if DEBUG
             printf("sto mandando: %s",to_send);
         #endif
@@ -575,10 +592,10 @@ void set_next_position(){
     next_position=current_size;
     return;
 }
-int get_position(char* user_name){
+int get_position(int socket_desc){
     int i;
     for(i=0;i<current_size;i++){
-        if(!strcmp(user_names[i],user_name)){
+        if(sockets[i]==socket_desc){
             return i;
         }
     }
