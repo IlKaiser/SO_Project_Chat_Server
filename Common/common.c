@@ -155,8 +155,10 @@ int public_encrypt(unsigned char * data,int data_len,unsigned char * key, unsign
         printf("encrypt error: %lu",ERR_get_error());
         return -1;
     }
+    printf("Encrypted data size %d\n",result);
+    printf("\n");
     printf("risultato %s with len %ld\n",(char*)encry,strlen((char*)encry));
-    strcpy((char*)encrypted,(char*)encry);
+    memcpy(encrypted,encry,result);
     printf("risultato è after copy %s with len %ld\n",(char*)encrypted,strlen((char*)encrypted));
     return result;
 }

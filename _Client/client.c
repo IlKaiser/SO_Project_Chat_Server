@@ -253,7 +253,7 @@ void* client(void* arg){
         //char s[2]=";"
         char * token = strtok(messages, "0x0,.");
         while(token!=NULL){
-            sleep(1);
+            sleep(0.5);
             printf("tocken: %s \n",token);
             memset(message->mesg_text,0,sizeof(message->mesg_text));
             strcpy(message->mesg_text,token);
