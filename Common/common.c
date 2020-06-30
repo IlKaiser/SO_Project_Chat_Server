@@ -44,7 +44,7 @@ int send_msg (int socket_desc,char* buf,int buf_size,char is_server){
     while ( bytes_sent < msg_len) {
         ret = send(socket_desc, buf + bytes_sent, msg_len - bytes_sent, 0);
         if (ret == -1 && errno == EINTR) continue;
-        if((ret==-1 || ret==0) && is_server) return -1;
+        if((ret==-1 || ret==0) && is_server){printf("Error send %d\n ",errno); return -1;}
         else{
             /// Called from client
             if (ret == -1) handle_error("Cannot read from the socket");
@@ -57,9 +57,10 @@ int send_msg (int socket_desc,char* buf,int buf_size,char is_server){
 int recive_msg(int socket_desc,char* buf,int buf_size,char is_server){
     int recv_bytes=0;
     int ret;
-    char buff[1024];
+    char buff[2048];
     do {                                
         ret = recv(socket_desc, buff + recv_bytes,1, 0);
+        buff[recv_bytes]=='\0' ? printf("Got 0\n") : printf("Got char %c \n",buff[recv_bytes]);
         if (ret == -1 && errno == EINTR) continue;
         /// Of course we still love you (if called from server)
         if((ret==-1 || ret==0) && is_server) return -1;

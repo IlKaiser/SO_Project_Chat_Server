@@ -38,8 +38,8 @@ size_t pub_len;            // Length of public key
 //char   *pri_key;           // Private key
 //char   *pub_key;           // Public key
 char   pri_key[1676];
-char   pub_key[427];           // Public key
-char   server_pub_key[427];
+char   pub_key[429];           // Public key
+char   server_pub_key[429];
 
 
 struct msqid_ds buf;
@@ -171,17 +171,14 @@ void* client(void* arg){
     printf("invio: %s \n len: %ld\n",pub_key,sizeof(pub_key));
     send_msg(socket_desc,pub_key,sizeof(pub_key),0);
     printf("fine\n");
-    fflush(stdout);
     //recives server public key
-    recive_msg(socket_desc,server_pub_key,sizeof(pub_key),0);
-    printf("\n%s\n", server_pub_key);
+    recive_msg(socket_desc,server_pub_key,sizeof(server_pub_key),0);
+    printf("\nServer pub key:\n%s\n", server_pub_key);
     // DISPLAYS LIST OF LOGGED USERNAMES
-    ///TODO: riceve e stampa la lista delle connessioni
     do{
         memset(buf, 0, buf_len);
         recive_msg(socket_desc,buf,sizeof(buf),0);
         printf("la lista è:\n %s", buf);
-        fflush(stdout);
         if (!(strcmp(buf,ALONE_MSG)==0)){
             memset(message->mesg_text,0,sizeof(message->mesg_text));
             strcpy(message->mesg_text,buf);
@@ -217,7 +214,6 @@ void* client(void* arg){
     // send message to server
     send_msg(socket_desc,buf,strlen(buf),0);
     printf("inviata la scelta\n");
-    fflush(stdout);
 
     
 
@@ -226,10 +222,8 @@ void* client(void* arg){
     //recv_bytes = 0;
  
     printf("aspetto ack\n");
-    fflush(stdout);
     recive_msg(socket_desc,ack,sizeof(ack),0);
     printf("l'ack 2 è\n: %s", ack);
-    fflush(stdout);
     memset(message->mesg_text,0,sizeof(message->mesg_text));
     strcpy(message->mesg_text,ack);
     msgsnd(update_msg, message, sizeof(message), 0);

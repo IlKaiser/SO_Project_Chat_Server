@@ -173,9 +173,9 @@ void connection_handler(int socket_desc, struct sockaddr_in* client_addr) {
 
     /// 1.1 Updates global variables info
     /// Check if is ok to proceed with upddating and if we are able to handle other connections
-    if(previous_size==MAX_SIZE || (strcmp(user_name,"")==0)){
+    if(previous_size==MAX_SIZE || (strcmp(user_name,"")==0)){recive_msg(socket_desc,buf,sizeof(buf),0);
         memset(buf, 0, buf_len);
-        strcpy(buf,ERROR_MSG);
+        strcpy(buf,ERROR_MSG);recive_msg(socket_desc,buf,sizeof(buf),0);
         ret=send_msg(socket_desc,buf,strlen(buf),1);
 
         /// Error closing connection
@@ -224,9 +224,10 @@ void connection_handler(int socket_desc, struct sockaddr_in* client_addr) {
         PQfinish(conn);
         exit(1);
     }
+
     //1.3 recives his public
     printf("inizio\n");
-    char client_pub_key[427];
+    char client_pub_key[429];
     ret = recive_msg(socket_desc,client_pub_key,sizeof(pub_key),1);
     if(ret)
         disconnection_handler(socket_desc);
@@ -261,6 +262,7 @@ void connection_handler(int socket_desc, struct sockaddr_in* client_addr) {
         }
         memset(buf, 0, buf_len);
         strcpy(buf,ALONE_MSG);
+
         #if DEBUG
             printf("Alone\n");
         #endif // DEBUG
@@ -578,6 +580,7 @@ void disconnection_handler(int index){
     current_size--;
     ret|=sem_post(sem);
     if(ret){handle_error("Disconnection semaphore error");}
+    sem_close(sem);
     pthread_exit(NULL);
 }
 
