@@ -421,6 +421,7 @@ void connection_handler(int socket_desc, struct sockaddr_in* client_addr) {
     /// reciver loop 
     unsigned char decrypted[2100];
     unsigned char encrypted[2100];
+    char b_decrypted[2100];
     while (1) {
         /// 5. main loop
 
@@ -434,8 +435,9 @@ void connection_handler(int socket_desc, struct sockaddr_in* client_addr) {
             disconnection_handler(socket_desc);
 
         ret = private_decrypt((unsigned char*)buf,buf_len,(unsigned char*)pri_key,decrypted);
+        strcpy(b_decrypted,base64decode(b_decrypted,ret));
         #if DEBUG
-            printf("Message %s from %s",decrypted,user_name);
+            printf("Message %s from %s",b_decrypted,user_name);
         #endif // DEBUG
 
         // check whether I have just been told to quit...
