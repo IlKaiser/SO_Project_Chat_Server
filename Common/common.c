@@ -141,10 +141,10 @@ int public_encrypt(unsigned char * data,int data_len,unsigned char * key, unsign
         printf( "Failed to create key BIO");
         return -1;
     }
-    BIO_read(keybio,  prova , strlen((char*)key));
+    /*BIO_read(keybio,  prova , strlen((char*)key));
     printf("bio è: %s",prova);
     if (!strcmp(prova,(char*)key)) printf("SONO UGUALI\n");
-    return -1;
+    return -1;*/
 
     rsa = PEM_read_bio_RSAPublicKey(keybio, &rsa ,NULL, NULL);
     assert(rsa != NULL);
@@ -170,10 +170,10 @@ int private_decrypt(unsigned char * enc_data,int data_len,unsigned char * key, u
         printf( "Failed to create key BIO");
         return -1;
     }
-    BIO_read(keybio,  prova , strlen((char*)key));
+    /*BIO_read(keybio,  prova , strlen((char*)key));
     printf("bio è: %s",prova);
     if (!strcmp(prova,(char*)key)) printf("SONO UGUALI\n");
-    return -1;
+    return -1;*/
 
     rsa = PEM_read_bio_RSAPublicKey(keybio, &rsa ,NULL, NULL);
     assert(rsa != NULL);
