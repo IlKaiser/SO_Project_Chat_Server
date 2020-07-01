@@ -353,16 +353,26 @@ static void callback( GtkWidget *widget,gpointer data )
     }
     GtkWidget* id = data;
     char* input = (char*)gtk_entry_get_text(GTK_ENTRY(id));
-
-    
-    memset(input_str->mesg_text,0,sizeof(input_str->mesg_text));
-    memset(upin_str->mesg_text,0,sizeof(input_str->mesg_text));
-    strcpy(input_str->mesg_text,input);
-    strcpy(upin_str->mesg_text,input);
-    printf("input: %s",input);
-    printf("msg: %s",input_str->mesg_text);
-    msgsnd(input_msg, input_str, sizeof(input_m),0);
-    msgsnd(upin_msg, upin_str, sizeof(input_m), 0);
+    //char* input = "";
+    //trim(input,in);
+    printf("len è : %ld",strlen(input));
+    if (strlen(input)<1){
+        printf("NON PUOI MANDARE MESSAGGI VUOTI");
+        memset(upin_str->mesg_text,0,sizeof(input_str->mesg_text));
+        strcpy(upin_str->mesg_text,"NON PUOI MANDARE MESSAGGI VUOTI\n");
+        msgsnd(upin_msg, upin_str, sizeof(input_m), 0);
+    }
+    else{
+        memset(input_str->mesg_text,0,sizeof(input_str->mesg_text));
+        memset(upin_str->mesg_text,0,sizeof(input_str->mesg_text));
+        strcpy(input_str->mesg_text,input);
+        strcpy(upin_str->mesg_text,input);
+        strcat(upin_str->mesg_text,"\n");
+        printf("input: %s",input);
+        printf("msg: %s",input_str->mesg_text);
+        msgsnd(input_msg, input_str, sizeof(input_m),0);
+        msgsnd(upin_msg, upin_str, sizeof(input_m), 0);
+    }
     gtk_entry_set_text(GTK_ENTRY(id),"");
 }
 
@@ -600,13 +610,6 @@ void force_quit(){
     int socket_desc=socket_desc_copy;
     
     // send message to server
-    /*bytes_sent=0;
-    while ( bytes_sent < msg_len) {
-        ret = send(socket_desc, buf + bytes_sent, msg_len - bytes_sent, 0);
-        if (ret == -1 && errno == EINTR) continue;
-        if (ret == -1) handle_error("Cannot write to the socket");
-        bytes_sent += ret;
-    }*/
     send_msg(socket_desc,buf,strlen(buf),0);
 
     msgctl(update_msg, IPC_RMID, NULL);
