@@ -214,244 +214,246 @@ void connection_handler(int socket_desc, struct sockaddr_in* client_addr) {
     }
 
     /// 2. check if there is only one client
-    LOOP:while(current_size<2){
+    while(1){
+        while(current_size<2){
 
-        //test if the client is still up
-        int retval = getsockopt (socket_desc, SOL_SOCKET, SO_ERROR, &error, &len);
-        if(retval){
+            //test if the client is still up
+            int retval = getsockopt (socket_desc, SOL_SOCKET, SO_ERROR, &error, &len);
+            if(retval){
 
-            disconnection_handler(socket_desc);
+                disconnection_handler(socket_desc);
+            }
+            memset(buf, 0, buf_len);
+            strcpy(buf,ALONE_MSG);
+            #if DEBUG
+                printf("Alone\n");
+            #endif // DEBUG
+            ret=send_msg(socket_desc,buf,strlen(buf),1);
+            if(ret)
+                disconnection_handler(socket_desc);
+            ret=sleep(5);
+            if(ret){
+                handle_error("Err sleep");
+            }
         }
-        memset(buf, 0, buf_len);
-        strcpy(buf,ALONE_MSG);
+        /// 3. send user list
+        list_formatter(buf,socket_desc);
         #if DEBUG
-            printf("Alone\n");
-        #endif // DEBUG
+            printf("List %s",buf);
+        #endif
         ret=send_msg(socket_desc,buf,strlen(buf),1);
         if(ret)
             disconnection_handler(socket_desc);
-        ret=sleep(5);
-        if(ret){
-            handle_error("Err sleep");
-        }
-    }
-    /// 3. send user list
-    list_formatter(buf,socket_desc);
-    #if DEBUG
-        printf("List %s",buf);
-    #endif
-    ret=send_msg(socket_desc,buf,strlen(buf),1);
-    if(ret)
-        disconnection_handler(socket_desc);
-    /// 4. get id number from client
-    char user_buf[4];
-    ret=recive_msg(socket_desc,user_buf,sizeof(user_buf),1);
-    if(ret)
-        disconnection_handler(socket_desc);
-    printf("Buffer %s \n",user_buf);
-    int user_id=atoi(user_buf);
-    #if DEBUG
-        printf("User id chosen: %d\n",user_id);
-    #endif // DEBUG
-
-    int socket_target=DISCONNECTED;
-    char* target_user_name=NULL;
-    /// 4.1 get target socket desc
-    if(user_id<=current_size){
-         socket_target=sockets[user_id-1];
-
-        /// Look for target user name
-        target_user_name=user_names[user_id-1];
-    }
-    
-    /// check whether you are trying to contact yourself
-    if (socket_target==socket_desc){
-        memset(buf, 0, buf_len);
-        strcpy(buf,ERROR_MSG);
-        send_msg(socket_desc,buf,strlen(buf),1);
-        disconnection_handler(socket_desc);
-    }
-
-    if(socket_target != DISCONNECTED){
+        /// 4. get id number from client
+        char user_buf[4];
+        ret=recive_msg(socket_desc,user_buf,sizeof(user_buf),1);
+        if(ret)
+            disconnection_handler(socket_desc);
+        printf("Buffer %s \n",user_buf);
+        int user_id=atoi(user_buf);
         #if DEBUG
-            printf("socket target number : %d\n",socket_target);
+            printf("User id chosen: %d\n",user_id);
         #endif // DEBUG
 
-        ///4.2 send second ack //replacing the second ack with old messages
-        /// query for old messages
-        
-        /*const char *conninfo = "hostaddr=15.236.174.17 port=5432 dbname=postgres user=postgres password=Quindicimaggio_20 sslmode=disable";
-        PGconn *conn;
-        PGresult *res;
-        
+        int socket_target=DISCONNECTED;
+        char* target_user_name=NULL;
+        /// 4.1 get target socket desc
+        if(user_id<=current_size){
+            socket_target=sockets[user_id-1];
 
-        conn = PQconnectdb(conninfo);
-        if (PQstatus(conn) != CONNECTION_OK)
-        {
-            fprintf(stderr, "Connection to database failed: %s", PQerrorMessage(conn));
-            PQfinish(conn);
-            exit(1);
-        //We were already connected!
-        }*/
-        char trim_username[32];
-        char trim_to[32];
-        trim(trim_username,user_name);
-        trim(trim_to,target_user_name);
-        printf ("searching messages between %s %s \n",trim_username,trim_to);
-        const char* paramValue[2] = {trim_username,trim_to};
-        res = PQexecParams(conn,"select mess._fro,mess.co,data from( select m._from as _fro, m.mes as co, m.data as data from messaggi as m where m._from=$1 and m._to=$2 union all select m1._from as _fro, m1.mes as co, m1.data as data from messaggi as m1 where m1._from=$2 and m1._to=$1) as mess order by mess.data desc limit 5",
-                        2,       /* two param*/
-                        NULL,    /* let the backend deduce param type*/
-                        paramValue,
-                        NULL,
-                        NULL,
-                        1);      /* ask for binary results*/
-        if (PQresultStatus(res) != PGRES_TUPLES_OK)
-        {
-            fprintf(stderr, "SELECT failed: %s", PQerrorMessage(conn));
-            PQclear(res);
-            exit_nicely(conn,res,socket_desc);
+            /// Look for target user name
+            target_user_name=user_names[user_id-1];
         }
-        int rows=PQntuples(res);
-
-        /// 4.3 Sending second ack 
-
-        if (rows==0){
-            strcpy(buf,OK_MSG);
-            msg_len = strlen(buf);
-            #if DEBUG
-                printf("Sending 2nd ack %s with len %d \n",buf,msg_len);
-            #endif
-            ret=send_msg(socket_desc,buf,strlen(buf),1);
-            if(ret)
-                disconnection_handler(socket_desc);
+        
+        /// check whether you are trying to contact yourself
+        if (socket_target==socket_desc){
+            memset(buf, 0, buf_len);
+            strcpy(buf,ERROR_MSG);
+            send_msg(socket_desc,buf,strlen(buf),1);
+            disconnection_handler(socket_desc);
         }
-        else{
-            strcpy(buf,MSG_MSG);
-            msg_len = strlen(buf);
-            #if DEBUG
-                printf("Sending 2nd ack %s with len %d \n",buf,msg_len);
-            #endif
-            ret=send_msg(socket_desc,buf,strlen(buf),1);
-            if(ret)
-                disconnection_handler(socket_desc);
 
+        if(socket_target != DISCONNECTED){
             #if DEBUG
-                printf("waiting for response \n");
-            #endif
-            memset(buf,0,buf_len);
-            ret = recive_msg(socket_desc,buf,buf_len,1);
-            if(ret)
-                disconnection_handler(socket_desc);
-            if (!strcmp(buf,MSG_MSG)){   
-                memset(buf, 0, buf_len);
-                int ro;
-                int co;
+                printf("socket target number : %d\n",socket_target);
+            #endif // DEBUG
 
-                for (ro=0;ro<rows;ro++){
-                    for (co=0;co<3;co++){
-                        strcat(buf,PQgetvalue(res,ro,co));
-                        strcat(buf,"\n");
-                    }
-                    //if (ro%3==0) strcat(buf,"0x0,.");
-                }
-                strcat(buf,"\n");
+            ///4.2 send second ack //replacing the second ack with old messages
+            /// query for old messages
+            
+            /*const char *conninfo = "hostaddr=15.236.174.17 port=5432 dbname=postgres user=postgres password=Quindicimaggio_20 sslmode=disable";
+            PGconn *conn;
+            PGresult *res;
+            
+
+            conn = PQconnectdb(conninfo);
+            if (PQstatus(conn) != CONNECTION_OK)
+            {
+                fprintf(stderr, "Connection to database failed: %s", PQerrorMessage(conn));
+                PQfinish(conn);
+                exit(1);
+            //We were already connected!
+            }*/
+            char trim_username[32];
+            char trim_to[32];
+            trim(trim_username,user_name);
+            trim(trim_to,target_user_name);
+            printf ("searching messages between %s %s \n",trim_username,trim_to);
+            const char* paramValue[2] = {trim_username,trim_to};
+            res = PQexecParams(conn,"select mess._fro,mess.co,data from( select m._from as _fro, m.mes as co, m.data as data from messaggi as m where m._from=$1 and m._to=$2 union all select m1._from as _fro, m1.mes as co, m1.data as data from messaggi as m1 where m1._from=$2 and m1._to=$1) as mess order by mess.data desc limit 5",
+                            2,       /* two param*/
+                            NULL,    /* let the backend deduce param type*/
+                            paramValue,
+                            NULL,
+                            NULL,
+                            1);      /* ask for binary results*/
+            if (PQresultStatus(res) != PGRES_TUPLES_OK)
+            {
+                fprintf(stderr, "SELECT failed: %s", PQerrorMessage(conn));
+                PQclear(res);
+                exit_nicely(conn,res,socket_desc);
+            }
+            int rows=PQntuples(res);
+
+            /// 4.3 Sending second ack 
+
+            if (rows==0){
+                strcpy(buf,OK_MSG);
                 msg_len = strlen(buf);
                 #if DEBUG
-                    printf("Sending old messages %s with len %d \n",buf,msg_len);
+                    printf("Sending 2nd ack %s with len %d \n",buf,msg_len);
                 #endif
-                
                 ret=send_msg(socket_desc,buf,strlen(buf),1);
                 if(ret)
                     disconnection_handler(socket_desc);
             }
             else{
+                strcpy(buf,MSG_MSG);
+                msg_len = strlen(buf);
+                #if DEBUG
+                    printf("Sending 2nd ack %s with len %d \n",buf,msg_len);
+                #endif
+                ret=send_msg(socket_desc,buf,strlen(buf),1);
+                if(ret)
+                    disconnection_handler(socket_desc);
+
+                #if DEBUG
+                    printf("waiting for response \n");
+                #endif
+                memset(buf,0,buf_len);
+                ret = recive_msg(socket_desc,buf,buf_len,1);
+                if(ret)
+                    disconnection_handler(socket_desc);
+                if (!strcmp(buf,MSG_MSG)){   
+                    memset(buf, 0, buf_len);
+                    int ro;
+                    int co;
+
+                    for (ro=0;ro<rows;ro++){
+                        for (co=0;co<3;co++){
+                            strcat(buf,PQgetvalue(res,ro,co));
+                            strcat(buf,"\n");
+                        }
+                        //if (ro%3==0) strcat(buf,"0x0,.");
+                    }
+                    strcat(buf,"\n");
+                    msg_len = strlen(buf);
+                    #if DEBUG
+                        printf("Sending old messages %s with len %d \n",buf,msg_len);
+                    #endif
+                    
+                    ret=send_msg(socket_desc,buf,strlen(buf),1);
+                    if(ret)
+                        disconnection_handler(socket_desc);
+                }
+                else{
+                    disconnection_handler(socket_desc);
+                }
+            }
+
+        }else{
+            memset(buf, 0, buf_len);
+            strcpy(buf,ERROR_MSG);
+            ret=send_msg(socket_desc,buf,strlen(buf),1);
+            disconnection_handler(socket_desc);
+        }
+
+        #if DEBUG
+            printf("Send second ack %s\n",buf);
+        #endif // DEBUG
+        /// reciver loop 
+        while (1) {
+
+            /// 5. main loop
+
+            /// read message from client
+            #if DEBUG
+                printf("Enter main loop \n");
+            #endif // DEBUG
+            memset(buf,0,buf_len);
+            ret=recive_msg(socket_desc,buf,sizeof(buf),1);
+            if(ret)
+                disconnection_handler(socket_desc);
+            #if DEBUG
+                printf("Message %s from %s",buf,user_name);
+            #endif // DEBUG
+
+            // check whether I have just been told to quit...
+            if (strcmp(buf,SERVER_COMMAND)==0){ 
+                printf("Quitting...\n");
+                char sorry[]="utente disconnesso scrivere _LIST_ per parlare con altri";
+                ret=send_msg(socket_target,sorry,strlen(sorry),1);
                 disconnection_handler(socket_desc);
             }
-        }
+            if (strcmp(buf,LIST_COMMAND)==0){
+                printf("Send new list\n");
+                /// TODO: fix this "thing"
+                break;
+            }
 
-    }else{
-        memset(buf, 0, buf_len);
-        strcpy(buf,ERROR_MSG);
-        ret=send_msg(socket_desc,buf,strlen(buf),1);
+            
+            /// 5.1 insert msg into db
+            time_t t = time(NULL);
+            char * cur_time = asctime(localtime(&t));
+            printf("local:     %s", cur_time);
+            char trim_username[32];
+            char trim_to[32];
+            trim(trim_username,user_name);
+            trim(trim_to,target_user_name);
+            const char* paramValue[4] = {trim_username,trim_to,buf,cur_time};
+            res = PQexecParams(conn,
+                        "INSERT INTO messaggi (_from,_to,mes,data) VALUES ($1,$2,$3,$4)",
+                        4,       /* one param */
+                        NULL,    /* let the backend deduce param type */
+                        paramValue,
+                        NULL,
+                        NULL,
+                        1);      /* ask for binary results */      /* ask for binary results */
+            if (PQresultStatus(res) != PGRES_COMMAND_OK)
+            {
+                fprintf(stderr, "INSERT failed: %s", PQerrorMessage(conn));
+                exit_nicely(conn,res,socket_desc);
+            }
+            PQclear(res);
+
+
+
+            /// 5.2 Send to requested target
+            char to_send[1024];
+            memset(to_send,0,sizeof(to_send));
+            strcat(buf,"\n");
+            strcat(to_send,user_name);
+            strcat(to_send,buf);
+            ret=send_msg(socket_target,to_send,strlen(to_send),1);
+            if(ret)
+                disconnection_handler(socket_desc);
+            #if DEBUG
+                printf("sto mandando: %s",to_send);
+            #endif
+        } 
+        /// If a break occurs
         disconnection_handler(socket_desc);
     }
-
-    #if DEBUG
-        printf("Send second ack %s\n",buf);
-    #endif // DEBUG
-    /// reciver loop 
-    while (1) {
-
-        /// 5. main loop
-
-        /// read message from client
-        #if DEBUG
-            printf("Enter main loop \n");
-        #endif // DEBUG
-        memset(buf,0,buf_len);
-        ret=recive_msg(socket_desc,buf,sizeof(buf),1);
-        if(ret)
-            disconnection_handler(socket_desc);
-        #if DEBUG
-            printf("Message %s from %s",buf,user_name);
-        #endif // DEBUG
-
-        // check whether I have just been told to quit...
-        if (strcmp(buf,SERVER_COMMAND)==0){ 
-            printf("Quitting...\n");
-            char sorry[]="utente disconnesso scrivere _LIST_ per parlare con altri";
-            ret=send_msg(socket_target,sorry,strlen(sorry),1);
-            disconnection_handler(socket_desc);
-        }
-        if (strcmp(buf,LIST_COMMAND)==0){
-            printf("Send new list\n");
-            /// TODO: fix this "thing"
-            goto LOOP;
-        }
-
-        
-        /// 5.1 insert msg into db
-        time_t t = time(NULL);
-        char * cur_time = asctime(localtime(&t));
-        printf("local:     %s", cur_time);
-        char trim_username[32];
-        char trim_to[32];
-        trim(trim_username,user_name);
-        trim(trim_to,target_user_name);
-        const char* paramValue[4] = {trim_username,trim_to,buf,cur_time};
-        res = PQexecParams(conn,
-                       "INSERT INTO messaggi (_from,_to,mes,data) VALUES ($1,$2,$3,$4)",
-                       4,       /* one param */
-                       NULL,    /* let the backend deduce param type */
-                       paramValue,
-                       NULL,
-                       NULL,
-                       1);      /* ask for binary results */      /* ask for binary results */
-        if (PQresultStatus(res) != PGRES_COMMAND_OK)
-        {
-            fprintf(stderr, "INSERT failed: %s", PQerrorMessage(conn));
-            exit_nicely(conn,res,socket_desc);
-        }
-        PQclear(res);
-
-
-
-        /// 5.2 Send to requested target
-        char to_send[1024];
-        memset(to_send,0,sizeof(to_send));
-        strcat(buf,"\n");
-        strcat(to_send,user_name);
-        strcat(to_send,buf);
-        ret=send_msg(socket_target,to_send,strlen(to_send),1);
-        if(ret)
-            disconnection_handler(socket_desc);
-        #if DEBUG
-            printf("sto mandando: %s",to_send);
-        #endif
-    } 
-    /// If a break occurs
-    disconnection_handler(socket_desc);
 }
 
 /// Wrapper function that take as input handler_args_t struct and then call 
