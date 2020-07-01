@@ -150,7 +150,7 @@ int public_encrypt(unsigned char * data,int data_len,unsigned char * key, unsign
     assert(rsa != NULL);
     //return -1;
     unsigned char encry[2100];
-    int result = RSA_public_encrypt(data_len,data,encry,rsa,0x3);
+    int result = RSA_public_encrypt(data_len,data,encry,rsa,RSA_PKCS1_PADDING);
     if (result==-1){
         printf("encrypt error: %lu",ERR_get_error());
         return -1;
@@ -158,10 +158,11 @@ int public_encrypt(unsigned char * data,int data_len,unsigned char * key, unsign
     printf("Encrypted data size %d\n",result);
     printf("\n");
     printf("risultato %s with len %ld\n",(char*)encry,strlen((char*)encry));
-    char b_encode[result+1];
+    /*char b_encode[result+1];
     strcpy(b_encode,base64encode(encry,result));
     printf("after b_64 encrypt %s\n",b_encode);
-    strcpy((char*)encrypted,b_encode);
+    strcpy((char*)encrypted,b_encode);*/
+    strcpy((char*)encrypted,(char*)encry);
     printf("risultato è after copy %s with len %ld\n",(char*)encrypted,strlen((char*)encrypted));
     return result;
 }
@@ -185,11 +186,11 @@ int private_decrypt(unsigned char * enc_data,int data_len,unsigned char * key, u
     if (!strcmp(prova,(char*)key)) printf("SONO UGUALI\n");
     //return -1;*/
 
-    unsigned char decry[270];
-    char b_decode[256+1];
-    strcpy(b_decode,base64decode(enc_data,256));
+    unsigned char decry[2100];
+    /*unsigned char b_decode[256+1];
+    strcpy((char*)b_decode,base64decode(enc_data,256));
     printf("after b_64 decrypt %s\n",b_decode);
-    strcpy((char*)decry,b_decode);
+    strcpy((char*)decry,(char*)b_decode);*/
 
     rsa = PEM_read_bio_RSAPrivateKey(keybio, NULL ,NULL, NULL);
     if(rsa == NULL) {
@@ -200,7 +201,7 @@ int private_decrypt(unsigned char * enc_data,int data_len,unsigned char * key, u
         return -1;
     }
     //return -1;
-    int  result = RSA_private_decrypt(256,enc_data,decry,rsa,0x3);
+    int  result = RSA_private_decrypt(256,enc_data,decry,rsa,RSA_PKCS1_PADDING);
     if(result == -1){
         char err[1024];
         ERR_error_string(ERR_get_error(),err);
