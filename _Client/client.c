@@ -310,7 +310,7 @@ void* client(void* arg){
         msg_len = strlen(buf);
         // send message to server
         ret = public_encrypt((unsigned char*)buf,msg_len,(unsigned char *)server_pub_key,encrypt);
-        printf("after b_64 encrypt %s\n",encrypt);
+        
         send_msg(socket_desc,(char*)encrypt,strlen((char*)encrypt),0);
 
         /* After a quit command we won't receive any more data from
