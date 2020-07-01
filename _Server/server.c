@@ -125,7 +125,7 @@ void connection_handler(int socket_desc, struct sockaddr_in* client_addr) {
     char* tok=(char*)malloc(33*sizeof(char));
 
     /// 1. get client username and password until not correct
-    while(!strcmp(user_name,ERROR_MSG)){
+    while(strcmp(user_name,ERROR_MSG)==0){
         memset(credentials, 0, strlen(credentials));
         ret=recive_msg(socket_desc,credentials,sizeof(credentials),1);
         if(ret)
@@ -136,13 +136,15 @@ void connection_handler(int socket_desc, struct sockaddr_in* client_addr) {
         if (login(credentials,socket_desc)){
             tok = strtok(credentials, ";");
             printf("%s\n",tok);
+            user_name=(char*)malloc(33*sizeof(char));
+            strcpy(user_name,tok);
+            strcat(user_name,"\n");
 
         }
         else{
             strcpy(tok,ERROR_MSG);
-
         }
-        if(!strcmp(tok,ERROR_MSG)){
+        if(strcmp(tok,ERROR_MSG)==0){
             #if DEBUG
                 printf("INVALID CREDENTIALS\n");
             #endif
@@ -152,9 +154,7 @@ void connection_handler(int socket_desc, struct sockaddr_in* client_addr) {
             if(ret)
                 disconnection_handler(socket_desc);
         }
-        user_name=(char*)malloc(33*sizeof(char));
-        strcpy(user_name,tok);
-        strcat(user_name,"\n");
+        
     }
 
     #if DEBUG
@@ -572,6 +572,10 @@ int login(char* credentials,int socket_desc){
     strcpy(password,token);//salvo password
     //password[strlen(password)]='\0';
     //connetto al db
+    printf("Username login is %s\n",username);
+    if(strcmp(username,ERROR_MSG)==0){
+        return -1;
+    }
     const char *conninfo = "hostaddr=15.236.174.17 port=5432 dbname=postgres user=postgres password=Quindicimaggio_20 sslmode=disable";
     PGconn *conn;
     PGresult *res;
