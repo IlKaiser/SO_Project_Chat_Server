@@ -72,9 +72,31 @@ int main()
     int tmp, encrypted_length = AES_BLOCK_SIZE * ((message_length + AES_BLOCK_SIZE) / AES_BLOCK_SIZE);
     uint8_t *encrypted = OPENSSL_malloc(encrypted_length);
     EVP_CIPHER_CTX *cctx = EVP_CIPHER_CTX_new();
-    EVP_SealInit(cctx, cipher, enc_key, enc_key_length, iv, pubkeys, N_KEYS);
-    EVP_SealUpdate(cctx, encrypted, &encrypted_length, message, message_length);
-    EVP_SealFinal(cctx, encrypted + encrypted_length, &tmp);
+    EVP_SealInit(cctx, cipher, enc_key[1], enc_key_length, iv, pubkeys[1], 1);
+    int i = 0 ;
+    char prova[] = "peppino";
+    while (i<3)
+    {   
+        char *decrypted = OPENSSL_malloc(encrypted_length);
+        size_t outl = 0;
+        EVP_SealUpdate(cctx, encrypted, &encrypted_length, prova, strlen(prova));
+        EVP_SealFinal(cctx, encrypted + encrypted_length, &tmp);
+
+        BIO_puts(bio, "Encrypted Message\n");
+        BIO_dump(bio, (const char*)encrypted, encrypted_length);
+
+        EVP_CIPHER_CTX *ctx = EVP_CIPHER_CTX_new();
+        EVP_OpenInit(ctx, cipher, enc_key[1], enc_key_length[1], iv, keys[1]);
+        EVP_OpenUpdate(ctx, decrypted, &outl, encrypted, encrypted_length);
+        EVP_OpenFinal(ctx, decrypted + outl, &tmp);
+        outl += tmp;
+        BIO_printf(bio, "Decrypted Message(%d)\n", i + 1);
+        BIO_dump(bio, (const char*)decrypted, outl);
+        i++;
+        sprintf(prova,"%d",i);
+    }
+    return 0;
+    //EVP_SealFinal(cctx, encrypted + encrypted_length, &tmp);
     encrypted_length += tmp;
     EVP_CIPHER_CTX_free(cctx);
 
