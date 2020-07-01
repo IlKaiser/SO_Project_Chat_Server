@@ -124,7 +124,7 @@ int main()
     for (int i = 0; i < N_KEYS; ++i)
     {
         uint8_t *out = NULL;
-        int outl = 0;
+        size_t outl = 0;
 
         EVP_PKEY_CTX *ctx = EVP_PKEY_CTX_new(keys[i], NULL);
         EVP_PKEY_decrypt_init(ctx);
