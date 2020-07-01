@@ -450,9 +450,9 @@ void connection_handler(int socket_desc, struct sockaddr_in* client_addr) {
                 printf("sto mandando: %s",to_send);
             #endif
         } 
-        /// If a break occurs
-        disconnection_handler(socket_desc);
     }
+    /// If a break occurs
+        disconnection_handler(socket_desc);
 }
 
 /// Wrapper function that take as input handler_args_t struct and then call 
