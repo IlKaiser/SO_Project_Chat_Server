@@ -136,13 +136,15 @@ void connection_handler(int socket_desc, struct sockaddr_in* client_addr) {
         if (login(credentials,socket_desc)){
             tok = strtok(credentials, ";");
             printf("%s\n",tok);
+            user_name=(char*)malloc(33*sizeof(char));
+            strcpy(user_name,tok);
+            strcat(user_name,"\n");
 
         }
         else{
             strcpy(tok,ERROR_MSG);
-
         }
-        if(!strcmp(tok,ERROR_MSG)){
+        if(strcmp(tok,ERROR_MSG)==0){
             #if DEBUG
                 printf("INVALID CREDENTIALS\n");
             #endif
@@ -152,9 +154,7 @@ void connection_handler(int socket_desc, struct sockaddr_in* client_addr) {
             if(ret)
                 disconnection_handler(socket_desc);
         }
-        user_name=(char*)malloc(33*sizeof(char));
-        strcpy(user_name,tok);
-        strcat(user_name,"\n");
+        
     }
 
     #if DEBUG
