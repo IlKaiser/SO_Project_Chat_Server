@@ -435,7 +435,7 @@ void connection_handler(int socket_desc, struct sockaddr_in* client_addr) {
         if(ret)
             disconnection_handler(socket_desc);
 
-        ret = private_decrypt((unsigned char*)buf,buf_len,(unsigned char*)pri_key,decrypted);
+        ret = private_decrypt((unsigned char*)buf,strlen(buf),(unsigned char*)pri_key,decrypted);
         #if DEBUG
             printf("Message %s from %s",decrypted,user_name);
         #endif // DEBUG

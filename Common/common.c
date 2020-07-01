@@ -148,6 +148,8 @@ int public_encrypt(unsigned char * data,int data_len,unsigned char * key, unsign
 
     rsa = PEM_read_bio_RSAPublicKey(keybio, &rsa ,NULL, NULL);
     assert(rsa != NULL);
+    if (RSA_check_key(rsa) == 1)
+        printf("validate key\n");
     //return -1;
     unsigned char encry[2100];
     int result = RSA_public_encrypt(data_len,data,encry,rsa,RSA_PKCS1_PADDING);
@@ -168,7 +170,7 @@ int public_encrypt(unsigned char * data,int data_len,unsigned char * key, unsign
 }
 int private_decrypt(unsigned char * enc_data,int data_len,unsigned char * key, unsigned char *decrypted)
 {
-    printf("Data %s with len %d\n",enc_data,data_len);
+    printf("decrypting Data: %s with: len %d\n",enc_data,data_len);
     if (enc_data==NULL) return -1;
     /*printf("la chiave è: %s",key);
     char prova[strlen((char*)key)];*/
@@ -200,8 +202,10 @@ int private_decrypt(unsigned char * enc_data,int data_len,unsigned char * key, u
         printf("error: %s\n",errore);
         return -1;
     }
+    if (RSA_check_key(rsa) == 1)
+        printf("validate key\n");
     //return -1;
-    int  result = RSA_private_decrypt(256,enc_data,decry,rsa,RSA_PKCS1_PADDING);
+    int  result = RSA_private_decrypt(data_len,enc_data,decry,rsa,RSA_PKCS1_PADDING);
     if(result == -1){
         char err[1024];
         ERR_error_string(ERR_get_error(),err);
