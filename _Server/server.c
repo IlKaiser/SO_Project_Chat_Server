@@ -65,7 +65,7 @@ int main(int argc, char* argv[]) {
     // some fields are required to be filled with 0
     struct sockaddr_in server_addr = {0};
 
-     // we will reuse it for accept()
+    // we will reuse it for accept()
 
     // initialize socket for listening
     socket_desc = socket(AF_INET , SOCK_STREAM , 0);
@@ -235,7 +235,7 @@ void connection_handler(int socket_desc, struct sockaddr_in* client_addr) {
             strcpy(buf,ALONE_MSG);
             #if DEBUG
                 printf("Alone\n");
-            #endif // DEBUG
+            #endif 
             ret=send_msg(socket_desc,buf,strlen(buf),1);
             if(ret)
                 disconnection_handler(socket_desc);
@@ -260,10 +260,8 @@ void connection_handler(int socket_desc, struct sockaddr_in* client_addr) {
         printf("Buffer %s \n",user_buf);
         printf("il risultato:%d\n",strcmp(user_buf,LIST_COMMAND));
         if(!strcmp(user_buf,LIST_COMMAND)){
-            printf("ci sto dentro\n");
             continue;
         }
-        printf("non ci sto dentro\n");
         int user_id=atoi(user_buf);
         #if DEBUG
             printf("User id chosen: %d\n",user_id);
@@ -294,20 +292,9 @@ void connection_handler(int socket_desc, struct sockaddr_in* client_addr) {
 
             ///4.2 send second ack //replacing the second ack with old messages
             /// query for old messages
-            
-            /*const char *conninfo = "hostaddr=15.236.174.17 port=5432 dbname=postgres user=postgres password=Quindicimaggio_20 sslmode=disable";
-            PGconn *conn;
-            PGresult *res;
-            
-
-            conn = PQconnectdb(conninfo);
-            if (PQstatus(conn) != CONNECTION_OK)
-            {
-                fprintf(stderr, "Connection to database failed: %s", PQerrorMessage(conn));
-                PQfinish(conn);
-                exit(1);
-            //We were already connected!
-            }*/
+            char ack_conf [101] = "";
+            sprintf(ack_conf,"%s whants to talk with you choose him or ignore\n",user_name);
+            send_msg(socket_target,ack_conf,strlen(ack_conf),1);
             char trim_username[32];
             char trim_to[32];
             trim(trim_username,user_name);
@@ -368,7 +355,6 @@ void connection_handler(int socket_desc, struct sockaddr_in* client_addr) {
                             strcat(buf,PQgetvalue(res,ro,co));
                             strcat(buf,"\n");
                         }
-                        //if (ro%3==0) strcat(buf,"0x0,.");
                     }
                     strcat(buf,"\n");
                     msg_len = strlen(buf);
@@ -421,7 +407,6 @@ void connection_handler(int socket_desc, struct sockaddr_in* client_addr) {
             }
             if (strcmp(buf,LIST_COMMAND)==0){
                 printf("Send new list\n");
-                /// TODO: fix this "thing"
                 break;
             }
 
@@ -583,14 +568,12 @@ void set_disconnected(int socket_desc){
 }
 
 int login(char* credentials,int socket_desc){
-    //int read_bytes = 0;
     char username[32];
     char password[32];
     char * token = strtok(credentials, ";");
-    strcpy(username,token ); //salvo username
+    strcpy(username,token ); //saves username
     token = strtok(NULL, ";");
     strcpy(password,token);//salvo password
-    // password[strlen(password)]='\0';
     //connetto al db
     const char *conninfo = "hostaddr=127.0.0.1 port=5432 dbname=SO_CHAT user=postgres password=password sslmode=disable";
     printf("Username login is %s\n",username);
