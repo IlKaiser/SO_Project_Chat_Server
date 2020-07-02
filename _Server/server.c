@@ -245,7 +245,7 @@ void connection_handler(int socket_desc, struct sockaddr_in* client_addr) {
         if(ret)
             disconnection_handler(socket_desc);
         /// 4. get id number from client
-        char user_buf[4];
+        char user_buf[12];
         ret=recive_msg(socket_desc,user_buf,sizeof(user_buf),1);
         if(ret)
             disconnection_handler(socket_desc);
