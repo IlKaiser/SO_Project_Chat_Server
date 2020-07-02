@@ -251,9 +251,12 @@ void connection_handler(int socket_desc, struct sockaddr_in* client_addr) {
         if(ret)
             disconnection_handler(socket_desc);
         printf("Buffer %s \n",user_buf);
+        printf("il risultato:%d\n",strcmp(user_buf,LIST_COMMAND));
         if(!strcmp(user_buf,LIST_COMMAND)){
+            printf("ci sto dentro\n");
             continue;
         }
+        printf("non ci sto dentro\n");
         int user_id=atoi(user_buf);
         #if DEBUG
             printf("User id chosen: %d\n",user_id);
