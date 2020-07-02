@@ -36,12 +36,20 @@ int current_size=0;
 int next_position=0;
 //Semaphore for mutual exclusion
 sem_t* sem;
-
+char* WELCOME = "This is a\n"
+    " ######  ##     ##    ###    ########     ######  ######## ########  ##     ## ######## ########  \n"
+    "##    ## ##     ##   ## ##      ##       ##    ## ##       ##     ## ##     ## ##       ##     ## \n"
+    "##       ##     ##  ##   ##     ##       ##       ##       ##     ## ##     ## ##       ##     ## \n"
+    "##       ######### ##     ##    ##        ######  ######   ########  ##     ## ######   ########  \n"
+    "##       ##     ## #########    ##             ## ##       ##   ##    ##   ##  ##       ##   ##   \n"
+    "##    ## ##     ## ##     ##    ##       ##    ## ##       ##    ##    ## ##   ##       ##    ##  \n"
+    " ######  ##     ## ##     ##    ##        ######  ######## ##     ##    ###    ######## ##     ## \n"
+    "By Marco Calamo and Ghenadie Artic\n";
 
 int main(int argc, char* argv[]) {
     // ignore sigpipe so we can handle disconnection errrors manually
     signal(SIGPIPE,SIG_IGN);
-
+    printf("%s",WELCOME);
     int ret;
 
     int socket_desc;
@@ -306,7 +314,7 @@ void connection_handler(int socket_desc, struct sockaddr_in* client_addr) {
             trim(trim_to,target_user_name);
             printf ("searching messages between %s %s \n",trim_username,trim_to);
             const char* paramValue[2] = {trim_username,trim_to};
-            res = PQexecParams(conn,"select mess._fro,mess.co,data from( select m._from as _fro, m.mes as co, m.data as data from messaggi as m where m._from=$1 and m._to=$2 union all select m1._from as _fro, m1.mes as co, m1.data as data from messaggi as m1 where m1._from=$2 and m1._to=$1) as mess order by mess.data desc limit 5",
+            res = PQexecParams(conn,"select mess._fro,mess.co,data from( select m._from as _fro, m.mes as co, m.data as data from messaggi as m where m._from=$1 and m._to=$2 union all select m1._from as _fro, m1.mes as co, m1.data as data from messaggi as m1 where m1._from=$2 and m1._to=$1) as mess order by mess.data limit 5",
                             2,       /* two param*/
                             NULL,    /* let the backend deduce param type*/
                             paramValue,
