@@ -31,9 +31,18 @@ input_m* message;
 int main_window_id;
 int socket_desc_copy;
 GtkApplication *app;
-
-
-
+char* welcome_not_hacker =  "This is a\nCHAT SERVER\nBy Marco Calamo and Ghenadie Artic\n\n\nType QUIT to quit or type _LIST_ to get a new list of users\n\n\n";
+char* WELCOME = "This is a\n"
+    " ######  ##     ##    ###    ########     ######  ######## ########  ##     ## ######## ########  \n"
+    "##    ## ##     ##   ## ##      ##       ##    ## ##       ##     ## ##     ## ##       ##     ## \n"
+    "##       ##     ##  ##   ##     ##       ##       ##       ##     ## ##     ## ##       ##     ## \n"
+    "##       ######### ##     ##    ##        ######  ######   ########  ##     ## ######   ########  \n"
+    "##       ##     ## #########    ##             ## ##       ##   ##    ##   ##  ##       ##   ##   \n"
+    "##    ## ##     ## ##     ##    ##       ##    ## ##       ##    ##    ## ##   ##       ##    ##  \n"
+    " ######  ##     ## ##     ##    ##        ######  ######## ##     ##    ###    ######## ##     ## \n"
+    "By Marco Calamo and Ghenadie Artic\n";
+pthread_t t_copy_reciver;
+pthread_t t_copy_updater;
 
 struct msqid_ds buf;
 
@@ -47,6 +56,7 @@ int main(int argc, char* argv[]) {
     key_t id1 =ftok(argv[0], 1);
     key_t id2 =ftok(argv[0], 2);
     key_t id3 =ftok(argv[0], 3);
+    printf("%s",WELCOME);
     printf ("la chiave è :%d\n",id1);
     printf ("la chiave è :%d\n",id2);
     printf ("la chiave è :%d\n",id3);
@@ -256,6 +266,7 @@ void* client(void* arg){
         handler_args_m *thread_args = malloc(sizeof(handler_args_m));
         thread_args->socket_desc = socket_desc;
         ret = pthread_create(&thread, NULL, thread_reciver, (void *)thread_args);
+        t_copy_reciver = thread;
         if (ret) handle_error_en(ret, "Could not create a new thread");
         
         if (DEBUG) fprintf(stderr, "New thread_reciver created to handle the request!\n");
@@ -274,7 +285,7 @@ void* client(void* arg){
             //size_t quit_command_len = strlen(quit_command);
             //size_t list_command_len = strlen(list_command);
 
-            printf("Insert your message: ");
+            printf("Insert your message:   \n");
 
             /* Read a line from stdin
             *
@@ -285,14 +296,14 @@ void* client(void* arg){
             msgrcv(input_msg, input_str, sizeof(input_m), 1, 0);
 
             #if DEBUG
-            printf("thread client input msg tuo msg: %s",input_str->mesg_text);
+            printf("thread client input msg tuo msg: %s\n",input_str->mesg_text);
             #endif
             /*fprintf(stderr, "Error while reading from stdin, exiting...\n");
             exit(EXIT_FAILURE);*/
             strcpy(buf,input_str->mesg_text);
             strcat(buf,"\n");
             //strcpy(buf,"ciao come va\n");
-            printf("hai scritto: %s",buf);
+            printf("hai scritto: %s\n",buf);
 
             msg_len = strlen(buf);
             // send message to server
@@ -307,7 +318,9 @@ void* client(void* arg){
             //if (msg_len == quit_command_len && !memcmp(buf, quit_command, quit_command_len)) break;
         }
         pthread_cancel(thread);
-        if (!strcmp(buf, quit_command)) break; 
+        if (!strcmp(buf, quit_command)) {
+            break;
+        } 
 
     }
 
@@ -442,6 +455,11 @@ void main_page(GtkApplication *app,gpointer data){
     gtk_text_view_set_wrap_mode (GTK_TEXT_VIEW (view), GTK_WRAP_WORD); 
     gtk_text_view_set_editable (GTK_TEXT_VIEW(view),FALSE);
     gtk_text_view_set_cursor_visible (GTK_TEXT_VIEW(view),FALSE);
+    GtkTextBuffer* buffer = gtk_text_view_get_buffer(GTK_TEXT_VIEW(view));
+    
+    
+    gtk_text_buffer_set_text(buffer,welcome_not_hacker,strlen(welcome_not_hacker));
+    gtk_text_view_set_buffer(GTK_TEXT_VIEW (view),GTK_TEXT_BUFFER (buffer));
     //gtk_text_view_set_border_window_size(GTK_TEXT_VIEW(view),GTK_TEXT_WINDOW_TEXT);GTK_TEXT_WINDOW_TEXT
 
 
@@ -496,6 +514,7 @@ void main_page(GtkApplication *app,gpointer data){
     arg_up->view=view; 
 
     ret = pthread_create(&thread, NULL,update,arg_up);
+    t_copy_updater = thread;
     if (ret) handle_error_en(ret, "Could not create a new thread");
     
     if (DEBUG) fprintf(stderr, "New thread_update created to handle the request!\n");
@@ -613,8 +632,7 @@ static void activate (GtkApplication *app, gpointer data){
 void force_quit(){
     //int ret,bytes_sent,msg_len;
 
-    char buf[strlen(SERVER_COMMAND)+1];
-    strcpy(buf,SERVER_COMMAND);
+    char buf[] = SERVER_COMMAND;
     //msg_len = strlen(buf);
 
 
@@ -622,6 +640,8 @@ void force_quit(){
     
     // send message to server
     send_msg(socket_desc,buf,strlen(buf),0);
+    pthread_cancel(t_copy_updater);
+    pthread_cancel(t_copy_reciver);
 
     msgctl(update_msg, IPC_RMID, NULL);
     msgctl(input_msg, IPC_RMID, NULL);
@@ -629,6 +649,7 @@ void force_quit(){
     free(input_str);
     free(upin_str);
     free(message);
+    printf("quitting...\n");
     exit(EXIT_SUCCESS);
 
 }
