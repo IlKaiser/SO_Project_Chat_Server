@@ -135,8 +135,8 @@ void* client(void* arg){
 
     GtkWindow* main_window=gtk_application_get_window_by_id(app,main_window_id);
 
+    //socket_desc_copy=socket_desc;
     socket_desc_copy=socket_desc;
-
     g_signal_connect(G_OBJECT(main_window), "destroy", G_CALLBACK(force_quit),NULL);
 
     char ack[15];
@@ -256,11 +256,13 @@ void* client(void* arg){
 
         // main loop
         int msg_len;
+        char* quit_command = SERVER_COMMAND;
         while (1) {
-            char* quit_command = SERVER_COMMAND;
+            char* list_command = LIST_COMMAND;
             //char* list_command = LIST_COMMAND;
             //size_t list_command_len = strlen(list_command);
-            size_t quit_command_len = strlen(quit_command);
+            //size_t quit_command_len = strlen(quit_command);
+            //size_t list_command_len = strlen(list_command);
 
             printf("Insert your message: ");
 
@@ -284,15 +286,19 @@ void* client(void* arg){
 
             msg_len = strlen(buf);
             // send message to server
-            send_msg(socket_desc,buf,strlen(buf),0);
+            send_msg(socket_desc,buf,msg_len,0);
 
+            if(!strcmp(buf,quit_command)||!strcmp(buf,list_command)){
+                break;
+            }
             /* After a quit command we won't receive any more data from
             * the server, thus we must exit the main loop. */
             //if (msg_len == list_command_len && !memcmp(buf, list_command, list_command_len)) goto LOOP;
-            if (msg_len == quit_command_len && !memcmp(buf, quit_command, quit_command_len)) break;
-
-            
+            //if (msg_len == quit_command_len && !memcmp(buf, quit_command, quit_command_len)) break;
         }
+        pthread_cancel(thread);
+        if (!strcmp(buf, quit_command)) break; 
+
     }
 
 
@@ -510,15 +516,6 @@ void login( GtkWidget *widget,gpointer data ){
     strcat(snd,"\n");
     int usr_len = strlen(snd);
     printf("Usr len:%d, %s\n ",usr_len,snd);
-    // send message to server
-    /*int bytes_sent=0;
-    while ( bytes_sent < usr_len) {
-        ret = send(socket_desc, snd + bytes_sent, usr_len - bytes_sent, 0);
-        if (ret == -1 && errno == EINTR) continue;
-        if (ret == -1) handle_error("Cannot write to the socket");
-        bytes_sent += ret;
-        printf("Sent %s, Bytes sent %d\n",snd,ret);
-    }*/
     send_msg(socket_desc,snd,strlen(snd),0);
 
     #if DEBUG
@@ -605,7 +602,6 @@ static void activate (GtkApplication *app, gpointer data){
     gtk_widget_show_all (window);
 }
 void force_quit(){
-
     //int ret,bytes_sent,msg_len;
 
     char buf[strlen(SERVER_COMMAND)+1];
