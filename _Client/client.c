@@ -187,6 +187,16 @@ void* client(void* arg){
         printf("Pick: %s\n",buf);
         // send message to server
         send_msg(socket_desc,buf,strlen(buf),0);
+        if(!strcmp(input_str->mesg_text,SERVER_COMMAND)){
+                break;
+        }
+        if(!strcmp(input_str->mesg_text,"_LIST_")){
+
+            printf("ci sto dentro\n");
+            //pthread_cancel(thread);
+            continue;
+        }
+        printf("non ci sto dentro\n");
         printf("inviata la scelta\n");
         fflush(stdout);
 
@@ -228,16 +238,16 @@ void* client(void* arg){
             recive_msg(socket_desc,messages,sizeof(messages),0);
             printf("messaggi sono\n: %s", messages);
             //char s[2]=";"
-            char * token = strtok(messages, "0x0,.");
-            while(token!=NULL){
-                sleep(1);
-                printf("token: %s \n",token);
+            //char * token = strtok(messages, "0x0,.");
+            //while(token!=NULL){
+            //    sleep(1);
+            //    printf("token: %s \n",token);
                 memset(message->mesg_text,0,sizeof(message->mesg_text));
-                strcpy(message->mesg_text,token);
+                strcpy(message->mesg_text,messages);
                 printf("messages: %s\n",message->mesg_text);
                 msgsnd(update_msg, message, sizeof(message), 0);
-                token = strtok(NULL,"0x0,.");
-            }
+            //    token = strtok(NULL,"0x0,.");
+            //}
         }
         ///TODO: creare il thread di recive(per ricevere messaggi solo dal numero che hai selezionato async)
         pthread_t thread;
@@ -248,7 +258,7 @@ void* client(void* arg){
         ret = pthread_create(&thread, NULL, thread_reciver, (void *)thread_args);
         if (ret) handle_error_en(ret, "Could not create a new thread");
         
-        if (DEBUG) fprintf(stderr, "New thread created to handle the request!\n");
+        if (DEBUG) fprintf(stderr, "New thread_reciver created to handle the request!\n");
         
         ret = pthread_detach(thread); // I won't phtread_join() on this thread
         if (ret) handle_error_en(ret, "Could not detach the thread");
@@ -388,7 +398,6 @@ static void callback( GtkWidget *widget,gpointer data )
     gtk_entry_set_text(GTK_ENTRY(id),"");
 }
 
-
 /*static void exit_nicely(PGconn *conn, PGresult   *res)
 {
     PQclear(res);
@@ -403,7 +412,7 @@ void main_page(GtkApplication *app,gpointer data){
     ret = pthread_create(&thread, NULL,client,data);
     if (ret) handle_error_en(ret, "Could not create a new thread");
     
-    if (DEBUG) fprintf(stderr, "New thread created to handle the request!\n");
+    if (DEBUG) fprintf(stderr, "New thread_client created to handle the request!\n");
     
     ret = pthread_detach(thread); // I won't phtread_join() on this thread
     if (ret) handle_error_en(ret, "Could not detach the thread");
@@ -489,7 +498,7 @@ void main_page(GtkApplication *app,gpointer data){
     ret = pthread_create(&thread, NULL,update,arg_up);
     if (ret) handle_error_en(ret, "Could not create a new thread");
     
-    if (DEBUG) fprintf(stderr, "New thread created to handle the request!\n");
+    if (DEBUG) fprintf(stderr, "New thread_update created to handle the request!\n");
     
     ret = pthread_detach(thread); // I won't phtread_join() on this thread
     if (ret) handle_error_en(ret, "Could not detach the thread");
