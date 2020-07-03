@@ -307,16 +307,19 @@ void connection_handler(int socket_desc, struct sockaddr_in* client_addr) {
             if(ret){
                 handle_error("Err sem post");
             }
-           
 
-
-            ///4.2 send second ack //replacing the second ack with old messages
-            /// query for old messages
             char trim_username[32];
             char trim_to[32];
             trim(trim_username,user_name);
             trim(trim_to,target_user_name);
-            printf ("searching messages between %s %s \n",trim_username,trim_to);
+
+            char choose[101];
+            sprintf(choose,"%s wants to talk with you\n",trim_username);
+            send_msg(socket_target,choose,strlen(choose),1);
+           
+            ///4.2 send second ack //replacing the second ack with old messages
+            /// query for old messages
+            printf ("searching messages between %s %s",user_name,target_user_name);
             const char* paramValue[2] = {trim_username,trim_to};
             res = PQexecParams(conn,"select mess._fro,mess.co,data from( select m._from as _fro, m.mes as co, m.data as data from messaggi as m where m._from=$1 and m._to=$2 union all select m1._from as _fro, m1.mes as co, m1.data as data from messaggi as m1 where m1._from=$2 and m1._to=$1) as mess order by mess.data limit 5",
                             2,       /* two param*/
