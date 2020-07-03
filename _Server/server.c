@@ -302,7 +302,7 @@ void connection_handler(int socket_desc, struct sockaddr_in* client_addr) {
 
             /// determinate next free position
             int pos = get_position(socket_desc);
-            occupied[pos]=get_position(socket_target);
+            occupied[pos]=socket_target;
 
 
             ret=sem_post(sem);
