@@ -292,9 +292,6 @@ void connection_handler(int socket_desc, struct sockaddr_in* client_addr) {
 
             ///4.2 send second ack //replacing the second ack with old messages
             /// query for old messages
-            char ack_conf [101] = "";
-            sprintf(ack_conf,"%s started talking with you\n",user_name);
-            send_msg(socket_target,ack_conf,strlen(ack_conf),1);
             char trim_username[32];
             char trim_to[32];
             trim(trim_username,user_name);
