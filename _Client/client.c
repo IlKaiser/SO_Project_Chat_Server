@@ -211,8 +211,6 @@ void* client(void* arg){
         fflush(stdout);
 
         
-        memset(ack, 0, ack_len);
-        recive_msg(socket_desc,ack,sizeof(ack),0);
 
         ///TODO: riceve l'ack e entra nel loop
         memset(ack, 0, ack_len);
