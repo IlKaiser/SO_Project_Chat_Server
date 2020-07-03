@@ -25,6 +25,7 @@
 
 //Connection Arrays
 char* user_names[MAX_SIZE];
+char occupied[MAX_SIZE];
 int sockets[MAX_SIZE];
 
 
@@ -285,10 +286,29 @@ void connection_handler(int socket_desc, struct sockaddr_in* client_addr) {
             disconnection_handler(socket_desc);
         }
 
+    
         if(socket_target != DISCONNECTED){
             #if DEBUG
                 printf("socket target number : %d\n",socket_target);
             #endif // DEBUG
+
+            //is occupied
+            ret=sem_wait(sem);
+            if(ret){
+                handle_error("Err sem wait");
+            }
+
+            /// determinate next free position
+            int pos = get_position(socket_desc);
+            occupied[pos]=1;
+
+
+            ret=sem_post(sem);
+            if(ret){
+                handle_error("Err sem post");
+            }
+           
+
 
             ///4.2 send second ack //replacing the second ack with old messages
             /// query for old messages
@@ -506,7 +526,7 @@ void list_formatter(char buf[],int socket_desc){
     memset(buf, 0,strlen(buf));
     int i;
     for (i=0;i<current_size;i++){ 
-        if(sockets[i]!=DISCONNECTED){ 
+        if(sockets[i]!=DISCONNECTED && occupied[i]!=1){ 
             char number[15];
             sprintf(number, "%d: ",i+1);
             strcat(buf,number);
@@ -554,6 +574,15 @@ void set_next_position(){
     }
     next_position=current_size;
     return;
+}
+int get_position(int socket){
+    int i;
+    for(i=0;i<current_size;i++){
+        if(sockets[i]==socket){
+            return i;
+        }
+    }
+    return 0;
 }
 
 void set_disconnected(int socket_desc){
