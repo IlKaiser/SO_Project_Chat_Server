@@ -315,6 +315,7 @@ void connection_handler(int socket_desc, struct sockaddr_in* client_addr) {
             trim(trim_to,target_user_name);
 
             char choose[101];
+
             if (!is_occupied(get_position(socket_target))){
                 sprintf(choose,"%s wants to talk with you choose him or ignore\n",trim_username);
                 send_msg(socket_target,choose,strlen(choose),1);
@@ -324,7 +325,7 @@ void connection_handler(int socket_desc, struct sockaddr_in* client_addr) {
                 send_msg(socket_desc,choose,strlen(choose),1);
                 continue;
             }
-            sleep(6);
+            sleep(10);
             if (!is_occupied(pos)){
                 sprintf(choose,"request to chat with %s is finished\n",trim_username);
                 send_msg(socket_target,choose,strlen(choose),1);
@@ -628,6 +629,11 @@ int get_position(int socket){
     return 0;
 }
 int is_occupied(int socket){
+    int k;
+    printf("la lista è:\n");
+    for (k=0;k<current_size;k++){
+        printf ("idx: %d socket: %d,occupied: %d\n",k,sockets[k],occupied[k]);
+    }
     int i = get_position(socket);
     if (occupied[i] == occupied[occupied[i]]) return 1 ;
     else return 0 ;
