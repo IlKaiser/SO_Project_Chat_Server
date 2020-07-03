@@ -324,6 +324,7 @@ void connection_handler(int socket_desc, struct sockaddr_in* client_addr) {
             else{
                 sprintf(choose,"%s is occupied; _LIST_ for a new list\n",trim_to);
                 send_msg(socket_desc,choose,strlen(choose),1);
+                occupied[get_position(socket_desc)]=0;
                 continue;
             }
             sleep(20);
@@ -332,6 +333,7 @@ void connection_handler(int socket_desc, struct sockaddr_in* client_addr) {
                 send_msg(socket_target,choose,strlen(choose),1);
                 sprintf(choose,"%s declined your invite; _LIST_ for a new list\n",trim_to);
                 send_msg(socket_desc,choose,strlen(choose),1);
+                occupied[get_position(socket_desc)]=0;
                 continue;
             }
             
