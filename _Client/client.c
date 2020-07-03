@@ -142,23 +142,30 @@ void* client(void* arg){
     handler_args_m* data_socket = arg;
     int socket_desc = data_socket->socket_desc;
 
+     handler_args_m *thread_args = malloc(sizeof(handler_args_m));
+    thread_args->socket_desc = socket_desc;
+    pthread_t thread;
+    ret = pthread_create(&thread, NULL, thread_reciver, (void *)thread_args);
+    t_copy_reciver = thread;
+    if (ret) handle_error_en(ret, "Could not create a new thread");
+    if (DEBUG) fprintf(stderr, "New thread_reciver created to handle the request!\n");
 
     GtkWindow* main_window=gtk_application_get_window_by_id(app,main_window_id);
 
     //socket_desc_copy=socket_desc;
     socket_desc_copy=socket_desc;
-    g_signal_connect(G_OBJECT(main_window), "destroy", G_CALLBACK(force_quit),NULL);
+    /*g_signal_connect(G_OBJECT(main_window), "destroy", G_CALLBACK(force_quit),NULL);
 
     char ack[15];
     size_t ack_len = sizeof(ack);
     memset(ack, 0, ack_len);
-
+    */
     char buf[1024];
     size_t buf_len = sizeof(buf);
     // DISPLAYS LIST OF LOGGED USERNAMES
     ///TODO: riceve e stampa la lista delle connessioni
     while(1){
-        do{
+      /*  do{
             memset(buf, 0, buf_len);
             recive_msg(socket_desc,buf,sizeof(buf),0);
             printf("la lista è:\n %s", buf);
@@ -177,6 +184,7 @@ void* client(void* arg){
             //check if recived errore msg from server
         }while (strcmp(buf,ALONE_MSG)==0);
 
+
         ///TODO:input numero di return
         //printf("select a username with his number: ");
         memset(buf,0,buf_len);
@@ -185,9 +193,8 @@ void* client(void* arg){
         #if DEBUG
         printf("thread client input msg : %s\n",input_str->mesg_text);
         #endif
-        /*fprintf(stderr, "Error while reading from stdin, exiting...\n");
-        exit(EXIT_FAILURE);*/
-        ///TODO: manda il numero scelto
+        
+       /* ///TODO: manda il numero scelto
         printf("scelta nel msg è: %s\n",input_str->mesg_text);
         strcpy(buf,input_str->mesg_text);
         strcat(buf,"\n");
@@ -208,12 +215,12 @@ void* client(void* arg){
         }
         printf("non ci sto dentro\n");
         printf("inviata la scelta\n");
-        fflush(stdout);
+        fflush(stdout);*/
 
         
 
         ///TODO: riceve l'ack e entra nel loop
-        memset(ack, 0, ack_len);
+       /* memset(ack, 0, ack_len);
         //recv_bytes = 0;
     
         printf("aspetto ack\n");
@@ -260,20 +267,20 @@ void* client(void* arg){
             //}
         }
         ///TODO: creare il thread di recive(per ricevere messaggi solo dal numero che hai selezionato async)
-        pthread_t thread;
+        pthread_t thread;*/
 
-        // prepare arguments for the new thread
+        /*// prepare arguments for the new thread
         handler_args_m *thread_args = malloc(sizeof(handler_args_m));
         thread_args->socket_desc = socket_desc;
         ret = pthread_create(&thread, NULL, thread_reciver, (void *)thread_args);
         t_copy_reciver = thread;
-        if (ret) handle_error_en(ret, "Could not create a new thread");
+        if (ret) handle_error_en(ret, "Could not create a new thread");*/
         
-        if (DEBUG) fprintf(stderr, "New thread_reciver created to handle the request!\n");
+        /*if (DEBUG) fprintf(stderr, "New thread_reciver created to handle the request!\n");*/
         
-        ret = pthread_detach(thread); // I won't phtread_join() on this thread
+       /* ret = pthread_detach(thread); // I won't phtread_join() on this thread
         if (ret) handle_error_en(ret, "Could not detach the thread");
-        
+        */
 
         // main loop
         int msg_len;
@@ -285,7 +292,7 @@ void* client(void* arg){
             //size_t quit_command_len = strlen(quit_command);
             //size_t list_command_len = strlen(list_command);
 
-            printf("Insert your message:   \n");
+            //printf("Insert your message:   \n");
 
             /* Read a line from stdin
             *
@@ -298,8 +305,7 @@ void* client(void* arg){
             #if DEBUG
             printf("thread client input msg tuo msg: %s\n",input_str->mesg_text);
             #endif
-            /*fprintf(stderr, "Error while reading from stdin, exiting...\n");
-            exit(EXIT_FAILURE);*/
+            
             strcpy(buf,input_str->mesg_text);
             strcat(buf,"\n");
             //strcpy(buf,"ciao come va\n");
@@ -309,9 +315,9 @@ void* client(void* arg){
             // send message to server
             send_msg(socket_desc,buf,msg_len,0);
 
-            if(!strcmp(buf,quit_command)||!strcmp(buf,list_command)){
+           /* if(!strcmp(buf,quit_command)||!strcmp(buf,list_command)){
                 break;
-            }
+            }*/
             /* After a quit command we won't receive any more data from
             * the server, thus we must exit the main loop. */
             //if (msg_len == list_command_len && !memcmp(buf, list_command, list_command_len)) goto LOOP;
