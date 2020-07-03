@@ -420,12 +420,36 @@ void connection_handler(int socket_desc, struct sockaddr_in* client_addr) {
                 printf("Quitting...\n");
                 char sorry[]="utente disconnesso scrivere _LIST_ per parlare con altri";
                 ret=send_msg(socket_target,sorry,strlen(sorry),1);
+                ret=sem_wait(sem);
+                if(ret){
+                    handle_error("Err sem wait");
+                }
+                int pos = get_position(socket_desc);
+                occupied[pos]=0;
+
+
+
+                ret=sem_post(sem);
+                if(ret){
+                    handle_error("Err sem post");
+                }
                 disconnection_handler(socket_desc);
             }
             if (strcmp(buf,LIST_COMMAND)==0){
                 printf("Send new list\n");
                 char sorry[]="utente disconnesso scrivere _LIST_ per parlare con altri";
-                ret=send_msg(socket_target,sorry,strlen(sorry),1);
+                ret=send_msg(socket_target,sorry,strlen(sorry),1);if(ret){
+                    handle_error("Err sem wait");
+                }
+                int pos = get_position(socket_desc);
+                occupied[pos]=0;
+                
+
+
+                ret=sem_post(sem);
+                if(ret){
+                    handle_error("Err sem post");
+                }
                 break;
             }
 
