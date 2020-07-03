@@ -109,6 +109,7 @@ int main(int argc, char* argv[]) {
 void* thread_reciver(void *arg){
     handler_args_m *args = (handler_args_m *)arg;
     int socket_desc = args->socket_desc;
+    char buf[1024];
     char buf1[1024];
     //int ret;
 
@@ -122,6 +123,20 @@ void* thread_reciver(void *arg){
         memset(buf1,0,sizeof(buf1));
         recive_msg(socket_desc,buf1,sizeof(buf1),0);
         fprintf(stderr,"\nmessaggio di\n: %s", buf1);
+        if(strcmp(buf1,ERROR_MSG)==0){
+            //close connection with the server
+            handle_error_en(-1,"recived ERROR_MSG");
+            int ret = close(socket_desc);
+            if(ret) handle_error("Cannot close socket");
+        }
+        
+        if (!strcmp(buf1,MSG_MSG)){
+            printf("aspetto messaggi\n");
+            memset(buf,0,sizeof(buf));
+            strcpy(buf,MSG_MSG);
+            send_msg(socket_desc,buf,strlen(buf),0);
+
+        }
         // msgsnd to send message
         message->mesg_type = 1;
         memset(message->mesg_text,0,sizeof(message->mesg_text));
@@ -152,20 +167,18 @@ void* client(void* arg){
 
     GtkWindow* main_window=gtk_application_get_window_by_id(app,main_window_id);
 
-    //socket_desc_copy=socket_desc;
     socket_desc_copy=socket_desc;
-    /*g_signal_connect(G_OBJECT(main_window), "destroy", G_CALLBACK(force_quit),NULL);
+    g_signal_connect(G_OBJECT(main_window), "destroy", G_CALLBACK(force_quit),NULL);
 
-    char ack[15];
-    size_t ack_len = sizeof(ack);
-    memset(ack, 0, ack_len);
-    */
+    /*char ack[15];*/
+    /*size_t ack_len = sizeof(ack);
+    memset(ack, 0, ack_len);*/
     char buf[1024];
     size_t buf_len = sizeof(buf);
     // DISPLAYS LIST OF LOGGED USERNAMES
-    ///TODO: riceve e stampa la lista delle connessioni
+    ///TODO: riceve e stampa la lista delle connessioni*/
     while(1){
-      /*  do{
+       /* do{
             memset(buf, 0, buf_len);
             recive_msg(socket_desc,buf,sizeof(buf),0);
             printf("la lista è:\n %s", buf);
@@ -194,7 +207,7 @@ void* client(void* arg){
         printf("thread client input msg : %s\n",input_str->mesg_text);
         #endif
         
-       /* ///TODO: manda il numero scelto
+        ///TODO: manda il numero scelto
         printf("scelta nel msg è: %s\n",input_str->mesg_text);
         strcpy(buf,input_str->mesg_text);
         strcat(buf,"\n");
@@ -215,12 +228,12 @@ void* client(void* arg){
         }
         printf("non ci sto dentro\n");
         printf("inviata la scelta\n");
-        fflush(stdout);*/
+        fflush(stdout);
 
         
 
         ///TODO: riceve l'ack e entra nel loop
-       /* memset(ack, 0, ack_len);
+        memset(ack, 0, ack_len);
         //recv_bytes = 0;
     
         printf("aspetto ack\n");
@@ -267,18 +280,18 @@ void* client(void* arg){
             //}
         }
         ///TODO: creare il thread di recive(per ricevere messaggi solo dal numero che hai selezionato async)
-        pthread_t thread;*/
+        pthread_t thread;
 
-        /*// prepare arguments for the new thread
+        // prepare arguments for the new thread
         handler_args_m *thread_args = malloc(sizeof(handler_args_m));
         thread_args->socket_desc = socket_desc;
         ret = pthread_create(&thread, NULL, thread_reciver, (void *)thread_args);
         t_copy_reciver = thread;
-        if (ret) handle_error_en(ret, "Could not create a new thread");*/
+        if (ret) handle_error_en(ret, "Could not create a new thread");
         
-        /*if (DEBUG) fprintf(stderr, "New thread_reciver created to handle the request!\n");*/
+        if (DEBUG) fprintf(stderr, "New thread_reciver created to handle the request!\n");
         
-       /* ret = pthread_detach(thread); // I won't phtread_join() on this thread
+        ret = pthread_detach(thread); // I won't phtread_join() on this thread
         if (ret) handle_error_en(ret, "Could not detach the thread");
         */
 
@@ -286,7 +299,7 @@ void* client(void* arg){
         int msg_len;
         char* quit_command = SERVER_COMMAND;
         while (1) {
-            char* list_command = LIST_COMMAND;
+            //char* list_command = LIST_COMMAND;
             //char* list_command = LIST_COMMAND;
             //size_t list_command_len = strlen(list_command);
             //size_t quit_command_len = strlen(quit_command);
