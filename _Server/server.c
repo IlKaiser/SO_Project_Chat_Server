@@ -189,6 +189,7 @@ void connection_handler(int socket_desc, struct sockaddr_in* client_addr) {
         previous_size=current_size;
         user_names[next_position]=user_name;
         sockets[next_position]=socket_desc;
+        occupied[next_position]=0;
         current_size++;
         /// determinate next free position
         set_next_position();
