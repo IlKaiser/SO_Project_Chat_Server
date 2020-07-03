@@ -210,7 +210,7 @@ void connection_handler(int socket_desc, struct sockaddr_in* client_addr) {
 
 
     /// 1.2 Open db connection
-    const char *conninfo = "hostaddr=15.236.174.17 port=5432 dbname=postgres user=postgres password=Quindicimaggio_20 sslmode=disable";
+    const char *conninfo = "hostaddr=93.151.144.221 port=5432 dbname=SO_CHAT user=postgres password=password sslmode=disable";
     PGconn *conn;
     PGresult *res;
     
@@ -321,7 +321,7 @@ void connection_handler(int socket_desc, struct sockaddr_in* client_addr) {
                 sprintf(choose,"%s wants to talk with you choose him or ignore\n",trim_username);
                 send_msg(socket_target,choose,strlen(choose),1);
             }
-            else if ((occupied[socket_target]==socket_desc)){
+            else if (occupied[socket_target]==socket_desc){
                 sprintf(choose,"%s is occupied; _LIST_ for a new list\n",trim_to);
                 send_msg(socket_desc,choose,strlen(choose),1);
                 occupied[get_position(socket_desc)]=0;
@@ -459,6 +459,7 @@ void connection_handler(int socket_desc, struct sockaddr_in* client_addr) {
                 }
                 disconnection_handler(socket_desc);
             }
+            // Checking if i was asked for list...
             if (strcmp(buf,LIST_COMMAND)==0){
                 printf("Send new list\n");
                 char sorry[]="utente disconnesso scrivere _LIST_ per parlare con altri";
@@ -665,7 +666,7 @@ int login(char* credentials,int socket_desc){
     if(strcmp(username,ERROR_MSG)==0){
         return -1;
     }
-    const char *conninfo = "hostaddr=15.236.174.17 port=5432 dbname=postgres user=postgres password=Quindicimaggio_20 sslmode=disable";
+    const char *conninfo = "hostaddr=93.151.144.221 port=5432 dbname=SO_CHAT user=postgres password=password sslmode=disable";
     PGconn *conn;
     PGresult *res;
     
