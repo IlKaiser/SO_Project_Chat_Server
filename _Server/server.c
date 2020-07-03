@@ -320,14 +320,13 @@ void connection_handler(int socket_desc, struct sockaddr_in* client_addr) {
                 sprintf(choose,"%s wants to talk with you choose him or ignore\n",trim_username);
                 send_msg(socket_target,choose,strlen(choose),1);
             }
-            else if (!(occupied[socket_target]==socket_desc));
-            else{
+            else if ((occupied[socket_target]==socket_desc)){
                 sprintf(choose,"%s is occupied; _LIST_ for a new list\n",trim_to);
                 send_msg(socket_desc,choose,strlen(choose),1);
                 occupied[get_position(socket_desc)]=0;
                 continue;
             }
-            sleep(20);
+            sleep(7);
             if (!is_occupied(socket_desc,socket_target)){
                 sprintf(choose,"request to chat with %s is finished\n",trim_username);
                 send_msg(socket_target,choose,strlen(choose),1);
@@ -336,6 +335,8 @@ void connection_handler(int socket_desc, struct sockaddr_in* client_addr) {
                 occupied[get_position(socket_desc)]=0;
                 continue;
             }
+            sprintf(choose,"request accepted by %s \n",trim_username);
+            send_msg(socket_target,choose,strlen(choose),1);
             
             ///4.2 send second ack //replacing the second ack with old messages
             /// query for old messages
