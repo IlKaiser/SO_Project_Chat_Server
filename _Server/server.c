@@ -323,6 +323,7 @@ void connection_handler(int socket_desc, struct sockaddr_in* client_addr) {
             else{
                 sprintf(choose,"%s is occupied; _LIST_ for a new list\n",trim_to);
                 send_msg(socket_desc,choose,strlen(choose),1);
+                continue;
             }
             sleep(6);
             if (!is_occupied(pos)){
