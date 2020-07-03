@@ -317,9 +317,24 @@ void connection_handler(int socket_desc, struct sockaddr_in* client_addr) {
 
             char choose[101];
 
-            if (!is_occupied(get_position(socket_target))){
-                sprintf(choose,"%s started to talk with you choose him or ignore\n",trim_username);
+            if (!is_occupied(socket_target,socket_desc)){
+                sprintf(choose,"%s wants to talk with you choose him or ignore\n",trim_username);
                 send_msg(socket_target,choose,strlen(choose),1);
+            }
+            else{
+                sprintf(choose,"%s is occupied; _LIST_ for a new list\n",trim_to);
+                send_msg(socket_desc,choose,strlen(choose),1);
+                occupied[get_position(socket_desc)]=0;
+                continue;
+            }
+            sleep(20);
+            if (!is_occupied(socket_desc,socket_target)){
+                sprintf(choose,"request to chat with %s is finished\n",trim_username);
+                send_msg(socket_target,choose,strlen(choose),1);
+                sprintf(choose,"%s declined your invite; _LIST_ for a new list\n",trim_to);
+                send_msg(socket_desc,choose,strlen(choose),1);
+                occupied[get_position(socket_desc)]=0;
+                continue;
             }
             
             ///4.2 send second ack //replacing the second ack with old messages
@@ -556,7 +571,7 @@ void list_formatter(char buf[],int socket_desc){
     memset(buf, 0,strlen(buf));
     int i;
     for (i=0;i<current_size;i++){ 
-        if(sockets[i]!=DISCONNECTED && is_occupied(sockets[i])){ 
+        if(sockets[i]!=DISCONNECTED){ 
             char number[15];
             sprintf(number, "%d: ",i+1);
             strcat(buf,number);
@@ -614,14 +629,15 @@ int get_position(int socket){
     }
     return 0;
 }
-int is_occupied(int socket){
+int is_occupied(int socket,int target){
     int k;
     printf("la lista è:\n");
     for (k=0;k<current_size;k++){
         printf ("idx: %d socket: %d,occupied: %d\n",k,sockets[k],occupied[k]);
     }
     int i = get_position(socket);
-    if (occupied[i] == occupied[occupied[i]]) return 1 ;
+    int j = get_position(target);
+    if (occupied[i] == target && occupied[j]==socket) return 1 ;
     else return 0 ;
 }
 
