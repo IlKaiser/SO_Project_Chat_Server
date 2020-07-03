@@ -294,7 +294,7 @@ void connection_handler(int socket_desc, struct sockaddr_in* client_addr) {
             ///4.2 send second ack //replacing the second ack with old messages
             /// query for old messages
             char ack_conf [101] = "";
-            sprintf(ack_conf,"%s whants to talk with you choose him or ignore\n",user_name);
+            sprintf(ack_conf,"%s started talking with you\n",user_name);
             send_msg(socket_target,ack_conf,strlen(ack_conf),1);
             char trim_username[32];
             char trim_to[32];
@@ -407,6 +407,8 @@ void connection_handler(int socket_desc, struct sockaddr_in* client_addr) {
             }
             if (strcmp(buf,LIST_COMMAND)==0){
                 printf("Send new list\n");
+                char sorry[]="utente disconnesso scrivere _LIST_ per parlare con altri";
+                ret=send_msg(socket_target,sorry,strlen(sorry),1);
                 break;
             }
 
