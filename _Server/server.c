@@ -321,12 +321,13 @@ void connection_handler(int socket_desc, struct sockaddr_in* client_addr) {
                 sprintf(choose,"%s wants to talk with you choose him or ignore\n",trim_username);
                 send_msg(socket_target,choose,strlen(choose),1);
             }
+            else if (!(occupied[get_position(socket_target)]==socket_desc));
             else{
                 sprintf(choose,"%s is occupied; _LIST_ for a new list\n",trim_to);
                 send_msg(socket_desc,choose,strlen(choose),1);
                 continue;
             }
-            sleep(10);
+            sleep(20);
             if (!is_occupied(pos)){
                 sprintf(choose,"request to chat with %s is finished\n",trim_username);
                 send_msg(socket_target,choose,strlen(choose),1);
