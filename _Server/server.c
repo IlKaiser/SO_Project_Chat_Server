@@ -301,7 +301,7 @@ void connection_handler(int socket_desc, struct sockaddr_in* client_addr) {
 
             /// determinate next free position
             int pos = get_position(socket_desc);
-            occupied[pos]=socket_target;
+            occupied[pos]=get_position(socket_target);
 
 
             ret=sem_post(sem);
@@ -315,9 +315,23 @@ void connection_handler(int socket_desc, struct sockaddr_in* client_addr) {
             trim(trim_to,target_user_name);
 
             char choose[101];
-            sprintf(choose,"%s wants to talk with you\n",trim_username);
-            send_msg(socket_target,choose,strlen(choose),1);
-           
+            if (!is_occupied(get_position(socket_target))){
+                sprintf(choose,"%s wants to talk with you choose him or ignore\n",trim_username);
+                send_msg(socket_target,choose,strlen(choose),1);
+            }
+            else{
+                sprintf(choose,"%s is occupied; _LIST_ for a new list\n",trim_to);
+                send_msg(socket_desc,choose,strlen(choose),1);
+            }
+            sleep(6);
+            if (!is_occupied(pos)){
+                sprintf(choose,"request to chat with %s is finished\n",trim_username);
+                send_msg(socket_target,choose,strlen(choose),1);
+                sprintf(choose,"%s declined your invite; _LIST_ for a new list\n",trim_to);
+                send_msg(socket_desc,choose,strlen(choose),1);
+                continue;
+            }
+            
             ///4.2 send second ack //replacing the second ack with old messages
             /// query for old messages
             printf ("searching messages between %s %s",user_name,target_user_name);
