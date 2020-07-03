@@ -25,7 +25,7 @@
 
 //Connection Arrays
 char* user_names[MAX_SIZE];
-char occupied[MAX_SIZE];
+int occupied[MAX_SIZE];
 int sockets[MAX_SIZE];
 
 
@@ -300,7 +300,7 @@ void connection_handler(int socket_desc, struct sockaddr_in* client_addr) {
 
             /// determinate next free position
             int pos = get_position(socket_desc);
-            occupied[pos]=1;
+            occupied[pos]=socket_target;
 
 
             ret=sem_post(sem);
@@ -526,7 +526,7 @@ void list_formatter(char buf[],int socket_desc){
     memset(buf, 0,strlen(buf));
     int i;
     for (i=0;i<current_size;i++){ 
-        if(sockets[i]!=DISCONNECTED && occupied[i]!=1){ 
+        if(sockets[i]!=DISCONNECTED && is_occupied(sockets[i])){ 
             char number[15];
             sprintf(number, "%d: ",i+1);
             strcat(buf,number);
@@ -583,6 +583,11 @@ int get_position(int socket){
         }
     }
     return 0;
+}
+int is_occupied(int socket){
+    int i = get_position(socket);
+    if (occupied[i] == occupied[occupied[i]]) return 1 ;
+    else return 0 ;
 }
 
 void set_disconnected(int socket_desc){
