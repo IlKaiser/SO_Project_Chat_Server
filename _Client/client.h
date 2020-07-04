@@ -4,23 +4,13 @@
 #define handle_error(msg)           do { perror(msg); exit(EXIT_FAILURE); } while (0)
 
 /* Configuration parameters */
-#define DEBUG           1   // display debug messages
-#define MAX_CONN_QUEUE  3   // max number of connections the server can queue
 #define AWS             1
 #if AWS
     #define SERVER_ADDRESS  "93.151.144.221" //AWS
 #else
     #define SERVER_ADDRESS  "127.0.0.1" //AWS
 #endif
-#define SERVER_COMMAND  "QUIT\n"
-#define SERVER_PORT     2015
-#define ERROR_MSG       "0xAFFAF\n"
-#define ERROR_OFF       0xDEAD
-#define OK_MSG          "OK\n"
-#define MSG_MSG         "H_MSG\n"
-#define ALONE_MSG       "Alone\n" 
-#define NAME            1
-#define LIST_COMMAND    "_LIST_\n"
+#define MAX_QUEUE_LEN 1024
 
 //Struct define
 typedef struct handler_args_m
@@ -29,7 +19,7 @@ typedef struct handler_args_m
 } handler_args_m;
 typedef struct input_m { 
     long mesg_type; 
-    char mesg_text[512]; 
+    char mesg_text[MAX_QUEUE_LEN]; 
 } input_m;
 typedef struct handler_args_u{
     GtkWidget * view;
