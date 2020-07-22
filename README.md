@@ -51,3 +51,25 @@ or
 ```
 ./server
 ```
+
+## Database Structure
+
+### Users
+```
+  Column  |         Type          | Collation | Nullable | Default | Storage  | Stats target | Description 
+----------+-----------------------+-----------+----------+---------+----------+--------------+-------------
+ username | character varying(32) |           | not null |         | extended |              | 
+ password | character varying(32) |           |          |         | extended |              | 
+```
+
+
+### Messaggi
+```
+ Column |          Type           | Collation | Nullable | Default | Storage  | Stats target | Description 
+--------+-------------------------+-----------+----------+---------+----------+--------------+-------------
+ _from  | character varying(32)   |           | not null |         | extended |              | 
+ _to    | character varying(32)   |           | not null |         | extended |              | 
+ mes    | character varying(1024) |           | not null |         | extended |              | 
+ data   | character varying(64)   |           | not null |         | extended |              | 
+ ```
+ 
