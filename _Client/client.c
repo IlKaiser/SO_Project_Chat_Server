@@ -14,7 +14,6 @@
  
 #include <libpq-fe.h>
 
-
 #include "client.h"
 #include "../Common/common.h"
 

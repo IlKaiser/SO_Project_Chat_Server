@@ -6,7 +6,7 @@
 /* Configuration parameters */
 #define AWS             1
 #if AWS
-    #define SERVER_ADDRESS  "93.151.144.221" //AWS
+    #define SERVER_ADDRESS  "93.146.91.184" //AWS
 #else
     #define SERVER_ADDRESS  "127.0.0.1" //AWS
 #endif
