@@ -636,7 +636,6 @@ int get_position(int socket){
     return 0;
 }
 int is_occupied(int socket,int target){
-    int k;
     int i = get_position(socket);
     int j = get_position(target);
     if (occupied[i] == target && occupied[j]==socket) return 1 ;
