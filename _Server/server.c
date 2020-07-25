@@ -260,8 +260,6 @@ void connection_handler(int socket_desc, struct sockaddr_in* client_addr) {
         ret=recive_msg(socket_desc,user_buf,sizeof(user_buf),1);
         if(ret)
             disconnection_handler(socket_desc);
-        printf("Buffer %s \n",user_buf);
-        printf("il risultato:%d\n",strcmp(user_buf,LIST_COMMAND));
         if(!strcmp(user_buf,LIST_COMMAND)){
             continue;
         }
