@@ -342,12 +342,12 @@ void connection_handler(int socket_desc, struct sockaddr_in* client_addr) {
             /// query for old messages
             printf ("searching messages between %s %s",user_name,target_user_name);
             const char* paramValue[2] = {trim_username,trim_to};
-            res = PQexecParams(conn,"select mess._fro,mess.co,data from(" 
+            res = PQexecParams(conn,"select mess._fro,mess.co,data from ( " 
                                     "select m._from as _fro, m.mes as co, m.data as data, m._time as _time "
-                                    "from messaggi as m where m._from=$1 and m._to=$2" 
-                                    "union all" 
+                                    "from messaggi as m where m._from=$1 and m._to=$2 " 
+                                    "union all " 
                                     "select m1._from as _fro, m1.mes as co, m1.data as data, m1._time as _time "
-                                    "from messaggi as m1" 
+                                    "from messaggi as m1 " 
                                     "where m1._from=$2 and m1._to=$1)"
                                     "as mess order by mess._time desc limit 10",
                                     2,       /* two param*/
