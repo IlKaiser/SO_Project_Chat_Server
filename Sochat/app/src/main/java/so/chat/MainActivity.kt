@@ -43,6 +43,8 @@ class MainActivity : AppCompatActivity() {
                 val reList=".*List.*".toRegex()
                 val reOk=".*OK.*".toRegex()
                 val reAffaf=".*AFFAF.*".toRegex()
+                val reMsg=".*H_MSG.*".toRegex()
+                val reSemi=".*0x.,.*".toRegex()
                 Log.d(tag, "run: update td start")
                 while(true){
                     try {
@@ -57,14 +59,20 @@ class MainActivity : AppCompatActivity() {
                                         Log.d(tag, "run: Lista")
                                         textView.text = line.plus("\n")
                                     }
+                                    reMsg.containsMatchIn(line) -> {
+                                        LoginActivity.printWriter!!.print("H_MSG\n".plus('\u0000'))
+                                        LoginActivity.printWriter!!.flush()
+                                        textView.text = "Vecchi messaggi:\n"
+                                    }
                                     reAffaf.containsMatchIn(line) -> {
                                         Log.d(tag, "run: AFFAF, closing...")
-                                        LoginActivity.printWriter!!.println("QUIT\n")
-                                        Toast.makeText(applicationContext, "Errore del server riprova pi� tardi", Toast.LENGTH_LONG).show()
+                                        LoginActivity.printWriter!!.print(("QUIT\n").plus('\u0000'))
+                                        Toast.makeText(applicationContext, "Errore del server", Toast.LENGTH_LONG).show()
                                         finish()
                                         exitProcess(-1)
 
                                     }
+
                                     else -> {
                                         textView.text = text.plus("\n").plus(line)
                                     }
@@ -100,7 +108,7 @@ class MainActivity : AppCompatActivity() {
                     }else{
                         textView.text=""
                     }
-                    LoginActivity.printWriter!!.println(line)
+                    LoginActivity.printWriter!!.print(line.plus('\u0000'))
                     LoginActivity.printWriter!!.flush()
                     if(reQuit.containsMatchIn(line)){
                         Log.d(tag, "run:QUIT")
@@ -119,7 +127,7 @@ class MainActivity : AppCompatActivity() {
             override fun run() {
                 super.run()
                 try {
-                    LoginActivity.printWriter!!.println("QUIT\n")
+                    LoginActivity.printWriter!!.print("QUIT\n".plus('\u0000'))
                     LoginActivity.printWriter!!.flush()
                     LoginActivity.printWriter!!.close()
                     LoginActivity.reader!!.close()

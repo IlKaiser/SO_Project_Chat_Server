@@ -16,7 +16,6 @@ import java.io.PrintWriter
 import java.net.Socket
 import kotlin.system.exitProcess
 
-
 class LoginActivity : AppCompatActivity() {
 
     object LoginActivity{
@@ -45,7 +44,7 @@ class LoginActivity : AppCompatActivity() {
                     LoginActivity.socket = Socket("msocal.ddns.net", 2015)
                 }catch (e:Exception) {
                     super.run()
-                    Toast.makeText(applicationContext, "Server su aws offline", Toast.LENGTH_LONG).show()
+                    Toast.makeText(applicationContext, "Server offline", Toast.LENGTH_LONG).show()
                     //finish()
                     exitProcess(-1)
                 }
@@ -72,9 +71,14 @@ class LoginActivity : AppCompatActivity() {
                     loading.visibility=View.VISIBLE
                 }
 
-
-                LoginActivity.printWriter!!.println(credentials)
-                LoginActivity.printWriter!!.flush()
+                try {
+                    Log.d(tag, "run: Print ".plus(credentials.plus(0.toChar())))
+                    LoginActivity.printWriter!!.print(credentials.plus(0.toChar()))
+                    LoginActivity.printWriter!!.flush()
+                }catch (e:NullPointerException){
+                    Toast.makeText(applicationContext, "Server offline", Toast.LENGTH_LONG).show()
+                    exitProcess(-1)
+                }
 
                 when(val line=LoginActivity.reader!!.readLine()){
                     "0xAFFAF" -> {
@@ -100,7 +104,7 @@ class LoginActivity : AppCompatActivity() {
                         Toast.makeText(applicationContext, "$line non valido!", Toast.LENGTH_LONG).show()
                     }
                 }
-                Toast.makeText(applicationContext, "Ciao!", Toast.LENGTH_LONG).show()
+                Toast.makeText(applicationContext, "Ciao $usernameString!", Toast.LENGTH_LONG).show()
             }
         }
 
