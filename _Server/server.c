@@ -371,7 +371,7 @@ void connection_handler(int socket_desc, struct sockaddr_in* client_addr) {
                 strcpy(buf,OK_MSG);
                 msg_len = strlen(buf);
                 #if DEBUG
-                    printf("Sending 2nd ack %s with len %d \n",buf,msg_len);
+                    printf("Sending 2nd ack %s\n",buf);
                 #endif
                 ret=send_msg(socket_desc,buf,strlen(buf),1);
                 if(ret)
@@ -488,7 +488,6 @@ void connection_handler(int socket_desc, struct sockaddr_in* client_addr) {
             /// 5.1 insert msg into db
             time_t t = time(NULL);
             char * cur_time = asctime(localtime(&t));
-            printf("local:     %s", cur_time);
             char trim_username[32];
             char trim_to[32];
             trim(trim_username,user_name);
@@ -520,9 +519,6 @@ void connection_handler(int socket_desc, struct sockaddr_in* client_addr) {
             ret=send_msg(socket_target,to_send,strlen(to_send),1);
             if(ret)
                 disconnection_handler(socket_desc);
-            #if DEBUG
-                printf("sto mandando: %s",to_send);
-            #endif
         } 
     }
     /// If a break occurs
@@ -604,7 +600,7 @@ static void exit_nicely(PGconn *conn, PGresult   *res,int socket_desc){
 void disconnection_handler(int index){
     int ret;
     #if DEBUG
-        printf("Index got in handler %d\n",index);
+        printf("Disconnecting %s\n",user_names[get_position(index)]);
     #endif
     if(index!=-1){
         ret=close(index);
@@ -641,10 +637,6 @@ int get_position(int socket){
 }
 int is_occupied(int socket,int target){
     int k;
-    printf("la lista è:\n");
-    for (k=0;k<current_size;k++){
-        printf ("idx: %d socket: %d,occupied: %d\n",k,sockets[k],occupied[k]);
-    }
     int i = get_position(socket);
     int j = get_position(target);
     if (occupied[i] == target && occupied[j]==socket) return 1 ;
@@ -689,7 +681,6 @@ int login(char* credentials,int socket_desc){
     char trim_password[32];
     trim(trim_username,username);
     trim(trim_password,password);
-    printf("hai inserito: %s,%s \n",trim_username,trim_password);
     const char* paramValue[2] = {trim_username,trim_password};
     res = PQexecParams(conn,
                     "select username from users where username=$1 and password=$2",
