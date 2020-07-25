@@ -144,9 +144,6 @@ void* thread_reciver(void *arg){
             memset(message->mesg_text,0,sizeof(message->mesg_text));
             strcpy(message->mesg_text,buf1);
             msgsnd(update_msg, message, sizeof(message), 0);
-            #if DEBUG
-                printf("thread reciver msg snd\n: %s",message->mesg_text);
-            #endif
         }
     }
     return NULL;
@@ -184,10 +181,6 @@ void* client(void* arg){
         
         memset(buf,0,buf_len);
         msgrcv(input_msg, input_str, sizeof(input_m), 1, 0);
-
-        #if DEBUG
-        printf("thread client input msg tuo msg: %s\n",input_str->mesg_text);
-        #endif
         
         strcpy(buf,input_str->mesg_text);
         strcat(buf,"\n");
@@ -229,11 +222,7 @@ void* update (void* arg){
         if (info_update_queue.msg_qnum > 0){
             
             msgrcv(update_msg, message, sizeof(message), 1, 0);
-            #if DEBUG
-                printf("thread update msg\n: %s\n",message->mesg_text);
-            #endif
             // display the message 
-            printf("Data Received is \n: %s \n",  message->mesg_text);
             GtkTextBuffer* buffer = gtk_text_view_get_buffer(GTK_TEXT_VIEW(view));
             gtk_text_buffer_get_end_iter (buffer,&iter);
             
@@ -269,7 +258,6 @@ static void callback( GtkWidget *widget,gpointer data )
     }
     GtkWidget* id = data;
     char* input = (char*)gtk_entry_get_text(GTK_ENTRY(id));
-    printf("len è : %ld",strlen(input));
     if (strlen(input)<1){
         printf("NON PUOI MANDARE MESSAGGI VUOTI");
         memset(upin_str->mesg_text,0,sizeof(input_str->mesg_text));
@@ -282,8 +270,6 @@ static void callback( GtkWidget *widget,gpointer data )
         strcpy(input_str->mesg_text,input);
         strcpy(upin_str->mesg_text,input);
         strcat(upin_str->mesg_text,"\n");
-        printf("input: %s",input);
-        printf("msg: %s",input_str->mesg_text);
         msgsnd(input_msg, input_str, sizeof(input_m),0);
         msgsnd(upin_msg, upin_str, sizeof(input_m), 0);
     }
