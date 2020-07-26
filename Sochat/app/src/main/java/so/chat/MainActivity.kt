@@ -66,7 +66,7 @@ class MainActivity : AppCompatActivity() {
                                     }
                                     reAffaf.containsMatchIn(line) -> {
                                         Log.d(tag, "run: AFFAF, closing...")
-                                        LoginActivity.printWriter!!.print(("QUIT\n").plus('\u0000'))
+                                        LoginActivity.printWriter!!.print(("_QUIT_\n").plus('\u0000'))
                                         Toast.makeText(applicationContext, "Errore del server", Toast.LENGTH_LONG).show()
                                         finish()
                                         exitProcess(-1)
