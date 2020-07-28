@@ -44,7 +44,7 @@ class MainActivity : AppCompatActivity() {
                 val reOk=".*OK.*".toRegex()
                 val reAffaf=".*AFFAF.*".toRegex()
                 val reMsg=".*H_MSG.*".toRegex()
-                val reSemi=".*0x.,.*".toRegex()
+                //val reSemi=".*0x.,.*".toRegex()
                 Log.d(tag, "run: update td start")
                 while(true){
                     try {

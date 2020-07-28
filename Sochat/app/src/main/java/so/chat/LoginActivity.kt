@@ -80,31 +80,36 @@ class LoginActivity : AppCompatActivity() {
                     exitProcess(-1)
                 }
 
-                when(val line=LoginActivity.reader!!.readLine()){
+                when(val line=LoginActivity.reader!!.readLine()) {
                     "0xAFFAF" -> {
-                        this@LoginActivity.runOnUiThread{
-                            username.visibility= View.VISIBLE
+                        Log.d(tag, line)
+                        this@LoginActivity.runOnUiThread {
+                            username.visibility = View.VISIBLE
                             username.requestFocus()
-                            password.visibility=View.VISIBLE
-                            sendButton.visibility=View.VISIBLE
-                            loading.visibility=View.GONE
+                            password.visibility = View.VISIBLE
+                            sendButton.visibility = View.VISIBLE
+                            loading.visibility = View.GONE
                         }
-
-                        Toast.makeText(applicationContext, "Errore nelle credenziali!", Toast.LENGTH_LONG).show()
+                        LoginActivity.reader!!.read()
+                        Toast.makeText(
+                            applicationContext,
+                            "Errore nelle credenziali!",
+                            Toast.LENGTH_LONG
+                        ).show()
                     }
                     "OK" -> {
-                        this@LoginActivity.runOnUiThread{
-                            loading.visibility=View.GONE
+                        this@LoginActivity.runOnUiThread {
+                            loading.visibility = View.GONE
                         }
                         username.setText("")
                         password.setText("")
+                        Toast.makeText(applicationContext, "Ciao $usernameString!", Toast.LENGTH_LONG).show()
                         startActivity(intent)
                     }
-                    else ->{
+                    else -> {
                         Toast.makeText(applicationContext, "$line non valido!", Toast.LENGTH_LONG).show()
                     }
                 }
-                Toast.makeText(applicationContext, "Ciao $usernameString!", Toast.LENGTH_LONG).show()
             }
         }
 
