@@ -26,7 +26,7 @@ server: server.o
 client.o: $(CLIENTFOLDER)/client.c $(CLIENTFOLDER)/client.h common.o
 	$(CC) $(GTK1) -c -o $@ $<  $(CFLAGS)
 client: client.o
-	$(CC) $(GTK2) -o client  client.o common.o  -lpthread -lpq
+	$(CC) $(GTK2) -o client  client.o common.o  -lpthread 
 		  
 clean:
 	rm -rf *.o client server
