@@ -614,10 +614,12 @@ void disconnection_handler(int index){
     if(index!=-1){
         ret=close(index);
         if(ret){handle_error("Disconnection error");}
-        set_disconnected(index);
+        set_disconnected(get_position(index));
         set_next_position();
     }
     ret=sem_wait(sem);
+    //Clear all things we used
+    occupied[get_position(index)]=0;
     current_size--;
     ret|=sem_post(sem);
     if(ret){handle_error("Disconnection semaphore error");}
