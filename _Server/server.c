@@ -142,6 +142,7 @@ void connection_handler(int socket_desc, struct sockaddr_in* client_addr) {
         #if DEBUG
             printf("Credntials are  %s \n",credentials );
         #endif
+        
         if (login(credentials,socket_desc)){
             tok = strtok(credentials, ";");
             printf("%s\n",tok);
@@ -652,10 +653,14 @@ void set_disconnected(int socket_desc){
 int login(char* credentials,int socket_desc){
     char username[32];
     char password[32];
+    
     char * token = strtok(credentials, ";");
-    strcpy(username,token ); //saves username
+    strcpy(username,token); //saves username
     token = strtok(NULL, ";");
     strcpy(password,token);//saves password
+
+    // Check if the credentials are null
+    if(!strcmp(username,"")|| !strcmp(password,"")) return 0;
     //connect to db
     printf("Username login is %s\n",username);
     if(strcmp(username,ERROR_MSG)==0){
