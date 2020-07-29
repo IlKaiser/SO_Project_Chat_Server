@@ -270,7 +270,7 @@ void connection_handler(int socket_desc, struct sockaddr_in* client_addr) {
         int socket_target=DISCONNECTED;
         char* target_user_name=NULL;
         /// 4.1 get target socket desc
-        if(user_id<=current_size){
+        if(user_id>0 && user_id<=current_size){
             socket_target=sockets[user_id-1];
 
             /// Look for target user name
@@ -419,9 +419,10 @@ void connection_handler(int socket_desc, struct sockaddr_in* client_addr) {
 
         }else{
             memset(buf, 0, buf_len);
-            strcpy(buf,ERROR_MSG);
+            strcpy(buf,"Try again choosing!\n");
             ret=send_msg(socket_desc,buf,strlen(buf),1);
-            disconnection_handler(socket_desc);
+            continue;
+            //disconnection_handler(socket_desc);
         }
 
         #if DEBUG
@@ -574,6 +575,7 @@ void mthreadServer(int server_desc) {
 void list_formatter(char buf[],int socket_desc){
     memset(buf, 0,strlen(buf));
     int i;
+    strcat(buf,"Type the number corresponding to the user you want to chat with!\n");
     for (i=0;i<current_size;i++){ 
         if(sockets[i]!=DISCONNECTED){ 
             char number[15];
