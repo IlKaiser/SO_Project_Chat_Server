@@ -275,7 +275,22 @@ static void callback( GtkWidget *widget,gpointer data )
     }
     gtk_entry_set_text(GTK_ENTRY(id),"");
 }
-
+static void list_callback( GtkWidget *widget,gpointer data )
+{
+    if (data==NULL){
+        return;
+    }
+    GtkWidget* id = data;
+    char* input = "_LIST_";
+    memset(input_str->mesg_text,0,sizeof(input_str->mesg_text));
+    memset(upin_str->mesg_text,0,sizeof(upin_str->mesg_text));
+    strcpy(input_str->mesg_text,input);
+    strcpy(upin_str->mesg_text,input);
+    strcat(upin_str->mesg_text,"\n");
+    msgsnd(input_msg, input_str, sizeof(input_m),0);
+    msgsnd(upin_msg, upin_str, sizeof(input_m), 0);
+    gtk_entry_set_text(GTK_ENTRY(id),"");
+}
 //Gui that show after the login page
 void main_page(GtkApplication *app,gpointer data){
     //AFTER LOGIN CODE
@@ -293,6 +308,7 @@ void main_page(GtkApplication *app,gpointer data){
     GtkWidget *paned;
     GtkWidget *grid;
     GtkWidget *button;
+    GtkWidget *list_button;
     GtkWidget *im;
     GtkWidget *scrolled_window;
     GtkWidget *view;
@@ -346,10 +362,13 @@ void main_page(GtkApplication *app,gpointer data){
 
   
     button = gtk_button_new_with_label ("Send");
+    list_button = gtk_button_new_with_label ("List");
     g_signal_connect (button, "clicked",G_CALLBACK (callback),im);
+    g_signal_connect (list_button, "clicked",G_CALLBACK (list_callback),im);
 
     gtk_grid_attach(GTK_GRID(grid),im,0,0,4,1);
     gtk_grid_attach (GTK_GRID (grid), button, 0,5,2,1);
+    gtk_grid_attach (GTK_GRID (grid), list_button, 3,5,2,1);
 
 
     gtk_widget_show_all (window);

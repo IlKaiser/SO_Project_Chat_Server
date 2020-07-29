@@ -1,6 +1,8 @@
 # SO Project Chat Server
 SO project by Marco Calamo and Ghenadie Artic
 ## Setup
+
+### Client
 Our Chat Client and Server are fully compatible with any Linux flavour and MacOs.
 To make client work you need gtk and pkg-config libraries to be installed.
 
@@ -18,6 +20,7 @@ brew install gtk+3 pkg-config
 ```
 Note: If you use other distros (i.e. OpenSuse, RedHat...) with different packet managers you probably already know the procedure
 
+### Server
 Our server is currently running on our remote RasperryPi 4B machine and accepting any request.
 If you want to compile server on your machine you may need libpq for postgresql. It will connect to our remote DB on Raspberry.
 To make client connect to local server you need to change AWS flag to 0 in _Client/client.h

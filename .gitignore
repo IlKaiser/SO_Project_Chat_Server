@@ -54,3 +54,4 @@ dkms.conf
 server
 client
 .v*
+.DS_Store
