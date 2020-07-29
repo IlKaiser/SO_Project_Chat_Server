@@ -445,7 +445,7 @@ void connection_handler(int socket_desc, struct sockaddr_in* client_addr) {
             // check whether I have just been told to quit...
             if (strcmp(buf,SERVER_COMMAND)==0){ 
                 printf("Quitting...\n");
-                char sorry[]="utente disconnesso scrivere _LIST_ per parlare con altri";
+                char sorry[]="User tisconnected, type _LIST_ to chat to someone else\n";
                 ret=send_msg(socket_target,sorry,strlen(sorry),1);
                 ret=sem_wait(sem);
                 if(ret){
