@@ -139,7 +139,13 @@ void* thread_reciver(void *arg){
 
         }
         //send message to update thread
-        if (strcmp(buf1,ALONE_MSG) && strcmp(buf1,MSG_MSG)){
+        if (!strcmp(buf1,ALONE_MSG)){
+            message->mesg_type = 1;
+            memset(message->mesg_text,0,sizeof(message->mesg_text));
+            strcpy(message->mesg_text,"You are the only User online!\nWait until someone connects\n");
+            msgsnd(update_msg, message, sizeof(message), 0);
+        }
+        if (strcmp(buf1,MSG_MSG)){
             message->mesg_type = 1;
             memset(message->mesg_text,0,sizeof(message->mesg_text));
             strcpy(message->mesg_text,buf1);
