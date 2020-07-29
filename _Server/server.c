@@ -655,8 +655,12 @@ int login(char* credentials,int socket_desc){
     char password[32];
     
     char * token = strtok(credentials, ";");
+    if(token==NULL) return 0;
     strcpy(username,token); //saves username
     token = strtok(NULL, ";");
+    if(token==NULL) return 0;
+    strcpy(password,token);//salvo password
+    //connetto al db
     strcpy(password,token);//saves password
 
     // Check if the credentials are null
