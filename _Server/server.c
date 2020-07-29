@@ -223,28 +223,32 @@ void connection_handler(int socket_desc, struct sockaddr_in* client_addr) {
         exit(1);
     }
 
-    /// 2. check if there is only one client
-    while(1){
+    
+    while (1){
+        /// 2. check if there is only one client
+        int alone_flag=0;
         while(current_size<2){
-
             //test if the client is still up
             int retval = getsockopt (socket_desc, SOL_SOCKET, SO_ERROR, &error, &len);
             if(retval){
 
                 disconnection_handler(socket_desc);
             }
-            memset(buf, 0, buf_len);
-            strcpy(buf,ALONE_MSG);
-            #if DEBUG
-                printf("Alone\n");
-            #endif 
-            ret=send_msg(socket_desc,buf,strlen(buf),1);
-            if(ret)
-                disconnection_handler(socket_desc);
-            ret=sleep(5);
-            if(ret){
-                handle_error("Err sleep");
+            if(alone_flag==0){
+                memset(buf, 0, buf_len);
+                strcpy(buf,ALONE_MSG);
+                #if DEBUG
+                    printf("Alone\n");
+                #endif 
+                ret=send_msg(socket_desc,buf,strlen(buf),1);
+                if(ret)
+                    disconnection_handler(socket_desc);
+                ret=sleep(5);
+                if(ret){
+                    handle_error("Err sleep");
+                }
             }
+            alone_flag=1;
         }
         /// 3. send user list
         list_formatter(buf,socket_desc);
@@ -287,10 +291,7 @@ void connection_handler(int socket_desc, struct sockaddr_in* client_addr) {
 
     
         if(socket_target != DISCONNECTED){
-            #if DEBUG
-                printf("socket target number : %d\n",socket_target);
-            #endif // DEBUG
-
+            
             //is occupied
             ret=sem_wait(sem);
             if(ret){
@@ -434,9 +435,6 @@ void connection_handler(int socket_desc, struct sockaddr_in* client_addr) {
             /// 5. main loop
 
             /// read message from client
-            #if DEBUG
-                printf("Enter main loop \n");
-            #endif // DEBUG
             memset(buf,0,buf_len);
             ret=recive_msg(socket_desc,buf,sizeof(buf),1);
             if(ret)
