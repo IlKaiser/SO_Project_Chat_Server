@@ -12,8 +12,6 @@
 #include <sys/ipc.h>
 #include <sys/msg.h>
  
-#include <libpq-fe.h>
-
 #include "client.h"
 #include "../Common/common.h"
 
