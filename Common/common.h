@@ -17,6 +17,7 @@
 #define MSG_MSG         "H_MSG\n"
 #define LIST_COMMAND    "_LIST_\n"
 #define ERROR_OFF       0xDEAD
+#define TIMEOUT_TIME    8
 
 
 //Utility functions
