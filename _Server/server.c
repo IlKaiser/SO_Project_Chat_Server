@@ -447,8 +447,10 @@ void connection_handler(int socket_desc, struct sockaddr_in* client_addr) {
             // check whether I have just been told to quit...
             if (strcmp(buf,SERVER_COMMAND)==0){ 
                 printf("Quitting...\n");
-                char sorry[]="User tisconnected, type _LIST_ to chat to someone else\n";
-                ret=send_msg(socket_target,sorry,strlen(sorry),1);
+                if(is_occupied(socket_desc,socket_target)){
+                    char sorry[]="User tisconnected, type _LIST_ to chat to someone else\n";
+                    ret=send_msg(socket_target,sorry,strlen(sorry),1);
+                }
                 ret=sem_wait(sem);
                 if(ret){
                     handle_error("Err sem wait");
@@ -467,8 +469,11 @@ void connection_handler(int socket_desc, struct sockaddr_in* client_addr) {
             if (strcmp(buf,LIST_COMMAND)==0){
                 printf("Send new list\n");
                 char sorry[]="User tisconnected, type _LIST_ to chat to someone else\n";
-                ret=send_msg(socket_target,sorry,strlen(sorry),1);if(ret){
-                    handle_error("Err sem wait");
+                if(is_occupied(socket_desc,socket_target)){
+                    ret=send_msg(socket_target,sorry,strlen(sorry),1);
+                    if(ret){
+                        handle_error("Err sem wait");
+                    }
                 }
                 int pos = get_position(socket_desc);
 
