@@ -30,3 +30,4 @@ client: client.o
 		  
 clean:
 	rm -rf *.o client server
+#### For Ubuntu compile you may use gcc $(pkg-config --cflags gtk+-3.0) _Client/client.c common.o $(pkg-config --libs gtk+-3.0) -o client -lpthread
