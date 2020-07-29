@@ -8,7 +8,7 @@ To make client work you need gtk and pkg-config libraries to be installed.
 
 To install on Debian based distros:
 ```
-sudo apt install libgtk3.0-dev pkgconf
+sudo apt install libgtk-3-dev pkgconf
 ```
 To install on Arch based distros:
 ```
