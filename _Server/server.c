@@ -466,15 +466,19 @@ void connection_handler(int socket_desc, struct sockaddr_in* client_addr) {
             }
             if (strcmp(buf,LIST_COMMAND)==0){
                 printf("Send new list\n");
-                char sorry[]="utente disconnesso scrivere _LIST_ per parlare con altri";
+                char sorry[]="User tisconnected, type _LIST_ to chat to someone else\n";
                 ret=send_msg(socket_target,sorry,strlen(sorry),1);if(ret){
                     handle_error("Err sem wait");
                 }
                 int pos = get_position(socket_desc);
+
+                ret=sem_wait(sem);
+                if(ret){
+                    handle_error("Err sem wait");
+                }
+
                 occupied[pos]=0;
                 
-
-
                 ret=sem_post(sem);
                 if(ret){
                     handle_error("Err sem post");
@@ -514,7 +518,9 @@ void connection_handler(int socket_desc, struct sockaddr_in* client_addr) {
             strcat(buf,"\n");
             strcat(to_send,user_name);
             strcat(to_send,buf);
-            ret=send_msg(socket_target,to_send,strlen(to_send),1);
+            if(is_occupied(socket_desc,socket_target)){
+                ret=send_msg(socket_target,to_send,strlen(to_send),1);
+            }
             if(ret)
                 disconnection_handler(socket_desc);
         } 
