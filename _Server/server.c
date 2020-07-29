@@ -325,7 +325,7 @@ void connection_handler(int socket_desc, struct sockaddr_in* client_addr) {
                 occupied[get_position(socket_desc)]=0;
                 continue;
             }
-            sleep(7);
+            sleep(TIMEOUT_TIME);
             if (!is_occupied(socket_desc,socket_target)){
                 sprintf(choose,"request to chat with %s is finished\n",trim_username);
                 send_msg(socket_target,choose,strlen(choose),1);
