@@ -586,8 +586,8 @@ void list_formatter(char buf[],int socket_desc){
     memset(buf, 0,strlen(buf));
     int i;
     strcat(buf,"Type the number corresponding to the user you want to chat with!\n");
-    for (i=0;i<current_size;i++){ 
-        if(sockets[i]!=DISCONNECTED){ 
+    for (i=0;i<MAX_SIZE;i++){ 
+        if(sockets[i]!=DISCONNECTED && sockets[i]>0){ 
             char number[15];
             sprintf(number, "%d: ",i+1);
             strcat(buf,number);
