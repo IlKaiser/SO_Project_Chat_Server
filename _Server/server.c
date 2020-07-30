@@ -615,7 +615,7 @@ void disconnection_handler(int index){
     if(index!=-1){
         ret=close(index);
         if(ret){handle_error("Disconnection error");}
-        set_disconnected(get_position(index));
+        set_disconnected(index);
         set_next_position();
         array_defrag();
     }
