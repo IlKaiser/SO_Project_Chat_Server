@@ -275,7 +275,7 @@ void connection_handler(int socket_desc, struct sockaddr_in* client_addr) {
         int socket_target=DISCONNECTED;
         char* target_user_name=NULL;
         /// 4.1 get target socket desc
-        if(user_id>0 && user_id<=current_size){
+        if(user_id>0 && in_array(user_id-1)){
             socket_target=sockets[user_id-1];
 
             /// Look for target user name
@@ -716,4 +716,11 @@ int login(char* credentials,int socket_desc){
     }
     int ris=PQntuples(res);
     return ris;
+}
+int in_array(int index){
+    int i;
+    for(i=0;i<MAX_SIZE;i++){
+        if(sockets[i]==index) return 1;
+    }
+    return 0;
 }

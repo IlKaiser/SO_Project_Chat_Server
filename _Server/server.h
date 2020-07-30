@@ -43,3 +43,6 @@ void disconnection_handler(int socket_desc);
 
 //check credentials in db
 int login(char* credentials,int socket_desc);
+ 
+// checks if the index is ok
+int in_array(int index);
