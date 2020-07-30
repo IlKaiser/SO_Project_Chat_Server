@@ -43,6 +43,3 @@ void disconnection_handler(int socket_desc);
 
 //check credentials in db
 int login(char* credentials,int socket_desc);
-
-//compacts sockets array on disconnections
-void array_defrag();
