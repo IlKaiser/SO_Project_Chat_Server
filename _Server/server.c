@@ -620,7 +620,9 @@ void disconnection_handler(int index){
     ret=sem_wait(sem);
     //Clear all things we used
     occupied[get_position(index)]=0;
-    current_size--;
+    if(current_size>0){
+        current_size--;
+    }
     ret|=sem_post(sem);
     if(ret){handle_error("Disconnection semaphore error");}
     pthread_exit(NULL);
@@ -628,7 +630,7 @@ void disconnection_handler(int index){
 
 void set_next_position(){
     int i;
-    for(i=0;i<current_size;i++){
+    for(i=0;i<MAX_SIZE;i++){
         if(sockets[i]==DISCONNECTED){
             next_position=i;
             return;
