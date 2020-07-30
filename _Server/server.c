@@ -349,7 +349,7 @@ void connection_handler(int socket_desc, struct sockaddr_in* client_addr) {
                                     "select m1._from as _fro, m1.mes as co, m1.data as data, m1._time as _time "
                                     "from messaggi as m1 " 
                                     "where m1._from=$2 and m1._to=$1) "
-                                    "as mess order by mess._time desc limit 10",
+                                    "as mess order by mess._time limit 10",
                                     2,       /* two param*/
                                     NULL,    /* let the backend deduce param type*/
                                     paramValue,
@@ -639,7 +639,7 @@ void set_next_position(){
 }
 int get_position(int socket){
     int i;
-    for(i=0;i<current_size;i++){
+    for(i=0;i<MAX_SIZE;i++){
         if(sockets[i]==socket){
             return i;
         }
@@ -718,9 +718,6 @@ int login(char* credentials,int socket_desc){
     return ris;
 }
 int in_array(int index){
-    int i;
-    for(i=0;i<MAX_SIZE;i++){
-        if(sockets[i]==index) return 1;
-    }
-    return 0;
+    if(sockets[index]==DISCONNECTED || sockets[index]<=0) return 0;
+    return 1;
 }
