@@ -128,16 +128,7 @@ void connection_handler(int socket_desc, struct sockaddr_in* client_addr) {
         printf("Client ip %s, client port %hu\n",client_ip,client_port);
     #endif // DEBUG
 
-    //Incement size
-    ret=sem_wait(sem);
-    if(ret){
-        handle_error("Err sem wait");
-    }
-    current_size++;
-    ret=sem_post(sem);
-    if(ret){
-        handle_error("Err sem post");
-    }
+
     char* user_name=(char*)malloc(33*sizeof(char));
     user_name=ERROR_MSG;
     char* tok=(char*)malloc(33*sizeof(char));
@@ -200,7 +191,7 @@ void connection_handler(int socket_desc, struct sockaddr_in* client_addr) {
         user_names[next_position]=user_name;
         sockets[next_position]=socket_desc;
         occupied[next_position]=0;
-        
+        current_size++;
         /// determinate next free position
         set_next_position();
 
