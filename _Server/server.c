@@ -616,6 +616,7 @@ void disconnection_handler(int index){
         if(ret){handle_error("Disconnection error");}
         set_disconnected(index);
         set_next_position();
+        array_defrag();
     }
     ret=sem_wait(sem);
     //Clear all things we used
@@ -716,4 +717,18 @@ int login(char* credentials,int socket_desc){
     }
     int ris=PQntuples(res);
     return ris;
+}
+void array_defrag(){
+    int i,j;
+    for(i=0;i<previous_size;i++){
+        if(sockets[i]==DISCONNECTED){
+            for(j=i;j<previous_size;j++){
+                if(sockets[j]!=DISCONNECTED){
+                    sockets[i]=sockets[j];
+                    break;
+                }
+            }
+        }
+    }
+    set_next_position();
 }
