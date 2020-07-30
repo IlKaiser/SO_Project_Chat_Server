@@ -621,7 +621,9 @@ void disconnection_handler(int index){
     ret=sem_wait(sem);
     //Clear all things we used
     occupied[get_position(index)]=0;
-    current_size--;
+    if(current_size>0){
+        current_size--;
+    }
     ret|=sem_post(sem);
     if(ret){handle_error("Disconnection semaphore error");}
     pthread_exit(NULL);
