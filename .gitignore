@@ -62,3 +62,4 @@ build/
 # Our Hidden folders
 .idea/
 .gradle/
+.DS_Store
